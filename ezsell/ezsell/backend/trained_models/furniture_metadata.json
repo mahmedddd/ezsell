@@ -1,0 +1,42 @@
+{
+  "category": "furniture",
+  "timestamp": "20251213_144917",
+  "model_type": "Ultimate Ensemble (XGB+LGB+RF+GB)",
+  "metrics": {
+    "mae": 3559.7802568386414,
+    "median_ae": 2769.028920182026,
+    "rmse": 4624.9484888909765,
+    "r2_score": 0.9294637114006551,
+    "mape": 24.95276083956605,
+    "accuracy_5pct": 14.864864864864865,
+    "accuracy_10pct": 32.432432432432435,
+    "accuracy_15pct": 51.35135135135135,
+    "accuracy_20pct": 66.8918918918919,
+    "accuracy_25pct": 79.05405405405406,
+    "samples": 148
+  },
+  "features": [
+    "material_quality",
+    "seating_capacity",
+    "length",
+    "width",
+    "height",
+    "volume",
+    "is_imported",
+    "is_handmade",
+    "has_storage",
+    "is_modern",
+    "is_antique",
+    "condition_score",
+    "price_category",
+    "volume_log",
+    "size_tier",
+    "quality",
+    "seating_value",
+    "premium_count",
+    "seating_value_poly",
+    "volume_poly",
+    "seating_capacity_poly"
+  ],
+  "production_ready": true
+}

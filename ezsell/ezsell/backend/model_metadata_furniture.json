@@ -1,0 +1,24 @@
+{
+  "category": "furniture",
+  "feature_names": [
+    "type",
+    "condition",
+    "material",
+    "material_quality",
+    "volume",
+    "seating_capacity",
+    "size_score",
+    "capacity_score",
+    "age_factor",
+    "has_brand"
+  ],
+  "metrics": {
+    "train_r2": 0.18398082821878814,
+    "test_r2": 0.11756458751845189,
+    "mae": 16749.41010261292,
+    "rmse": 21687.808618450326,
+    "mape": 28227.24345669248,
+    "accuracy_percent": 11.756458751845189
+  },
+  "feature_importance": null
+}

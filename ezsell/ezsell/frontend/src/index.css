@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 128 56% 7%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 128 56% 7%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 128 56% 7%;
+
+    --primary: 128 56% 13%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 68 23% 61%;
+    --secondary-foreground: 128 56% 7%;
+
+    --muted: 68 23% 95%;
+    --muted-foreground: 68 15% 40%;
+
+    --accent: 68 23% 61%;
+    --accent-foreground: 128 56% 7%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 68 23% 85%;
+    --input: 68 23% 85%;
+    --ring: 128 56% 13%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(128 56% 13%) 0%, hsl(68 23% 61%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(68 23% 98%) 0%, hsl(68 23% 91%) 100%);
+    --gradient-glow: linear-gradient(135deg, hsl(128 56% 13% / 0.1) 0%, hsl(68 23% 61% / 0.1) 100%);
+    
+    /* Glassmorphism */
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(68 23% 91% / 0.5);
+    
+    /* Shadows & Glows */
+    --shadow-glow: 0 0 30px hsl(128 56% 13% / 0.2);
+    --shadow-glow-hover: 0 0 40px hsl(128 56% 13% / 0.3);
+    --shadow-card: 0 8px 24px hsl(128 56% 7% / 0.08);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-foreground antialiased;
+    background: linear-gradient(135deg, hsl(68 30% 96%) 0%, hsl(50 25% 95%) 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism utilities */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-card);
+  }
+  
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+  
+  .glass-card-hover:hover {
+    box-shadow: var(--shadow-glow-hover), var(--shadow-card);
+    transform: translateY(-4px);
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Glow effects */
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .glow-hover {
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .glow-hover:hover {
+    box-shadow: var(--shadow-glow-hover);
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

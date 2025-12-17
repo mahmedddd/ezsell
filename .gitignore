@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+
+# Frontend build
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ML Models and Data (optional - you may want to version these)
+# Uncomment if models are too large for GitHub
+# backend/trained_models/
+# backend/scraped_data/
+
+# Uploads
+backend/uploads/
+
+# AR previews
+backend/data/ar_previews/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Lock files (optional - keep if you want consistent dependencies)
+# bun.lockb
+# package-lock.json

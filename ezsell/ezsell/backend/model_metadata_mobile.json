@@ -1,0 +1,24 @@
+{
+  "category": "mobile",
+  "feature_names": [
+    "brand",
+    "condition",
+    "ram",
+    "storage",
+    "battery",
+    "screen_size",
+    "camera",
+    "ram_storage_ratio",
+    "capacity_score",
+    "age_factor"
+  ],
+  "metrics": {
+    "train_r2": 0.2628768327097577,
+    "test_r2": 0.27157863673659965,
+    "mae": 24573.94745711115,
+    "rmse": 37997.10321377693,
+    "mape": 121.02203943694403,
+    "accuracy_percent": 27.157863673659964
+  },
+  "feature_importance": null
+}

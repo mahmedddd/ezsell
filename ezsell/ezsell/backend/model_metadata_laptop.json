@@ -1,0 +1,41 @@
+{
+  "category": "laptop",
+  "feature_names": [
+    "brand",
+    "condition",
+    "processor_type",
+    "generation",
+    "ram",
+    "storage",
+    "is_ssd",
+    "has_gpu",
+    "screen_size",
+    "ram_storage_ratio",
+    "capacity_score",
+    "processor_score",
+    "age_factor"
+  ],
+  "metrics": {
+    "train_r2": 0.2557091540099262,
+    "test_r2": 0.08327825413760237,
+    "mae": 22303.084947582825,
+    "rmse": 27777.19458404035,
+    "mape": 29139.25378590863,
+    "accuracy_percent": 8.327825413760237
+  },
+  "feature_importance": [
+    0.5047197747020686,
+    0.03683899434711956,
+    0.0,
+    0.0,
+    0.018604168822705255,
+    0.14135988064991362,
+    0.0,
+    0.0,
+    0.0,
+    0.12943065744428345,
+    0.13569141725441153,
+    0.0,
+    0.033355106779497996
+  ]
+}

@@ -1,0 +1,14 @@
+# ML Pipeline Requirements
+# Install these packages before running the pipeline
+
+# Core dependencies (if not already installed)
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Already installed in main requirements.txt:
+# pandas
+# numpy
+# scikit-learn
+# xgboost
+# joblib
