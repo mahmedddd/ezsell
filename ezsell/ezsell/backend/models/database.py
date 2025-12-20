@@ -121,5 +121,47 @@ class Favorite(Base):
     user = relationship("User", back_populates="favorites")
     listing = relationship("Listing", back_populates="favorites")
 
+class UserActivity(Base):
+    """Track user interactions for recommendations"""
+    __tablename__ = "user_activities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for anonymous users
+    session_id = Column(String, index=True)  # For anonymous tracking
+    activity_type = Column(String, index=True)  # 'search', 'view', 'click', 'favorite', 'message'
+    listing_id = Column(Integer, ForeignKey("listings.id"), nullable=True)
+    search_query = Column(String, nullable=True)
+    category = Column(String, nullable=True)
+    keywords = Column(Text, nullable=True)  # JSON array of extracted keywords
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    duration_seconds = Column(Integer, nullable=True)  # Time spent on listing
+    
+class UserInterest(Base):
+    """Aggregated user interests based on activity"""
+    __tablename__ = "user_interests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    categories = Column(Text)  # JSON object with category counts
+    keywords = Column(Text)  # JSON object with keyword frequencies
+    brands = Column(Text, nullable=True)  # JSON object with brand preferences
+    price_range_min = Column(Float, nullable=True)
+    price_range_max = Column(Float, nullable=True)
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    total_activities = Column(Integer, default=0)
+
+class RecommendationHistory(Base):
+    """Track recommendations shown to users"""
+    __tablename__ = "recommendation_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    recommendation_type = Column(String)  # 'interest_based', 'collaborative', 'trending', 'similar'
+    score = Column(Float)
+    shown_at = Column(DateTime, default=datetime.utcnow)
+    clicked = Column(Boolean, default=False)
+    clicked_at = Column(DateTime, nullable=True)
+
 # Create all tables
 Base.metadata.create_all(bind=engine)

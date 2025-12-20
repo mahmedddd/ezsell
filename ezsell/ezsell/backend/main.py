@@ -5,7 +5,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 
-from routers import users, listings, predictions, ar_customization, google_auth, messages, favorites, approvals
+from routers import (
+    users, listings, predictions, ar_customization, google_auth, 
+    messages, favorites, approvals, recommendations, analytics
+)
 from core.config import settings
 
 app = FastAPI(
@@ -51,6 +54,8 @@ app.include_router(ar_customization.router, prefix=settings.API_V1_STR, tags=["A
 app.include_router(messages.router, prefix=settings.API_V1_STR, tags=["Messages"])
 app.include_router(favorites.router, prefix=settings.API_V1_STR, tags=["Favorites"])
 app.include_router(approvals.router, prefix=settings.API_V1_STR, tags=["Approvals"])
+app.include_router(recommendations.router, tags=["Recommendations"])
+app.include_router(analytics.router, tags=["Analytics"])
 
 @app.get("/")
 def read_root():
