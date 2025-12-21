@@ -1,6 +1,6 @@
 # Pydantic schemas for request/response validation
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 
 # User Schemas
@@ -55,6 +55,9 @@ class ListingBase(BaseModel):
     condition: str
     location: Optional[str] = None
     image_url: Optional[str] = None
+    brand: Optional[str] = None
+    furniture_type: Optional[str] = None
+    material: Optional[str] = None
 
 class ListingCreate(ListingBase):
     # Category-specific details
@@ -98,13 +101,47 @@ class ListingResponse(ListingBase):
 # Price Prediction Schemas
 class PricePredictionRequest(BaseModel):
     category: str
-    features: dict
+    title: str
+    description: Optional[str] = ""
+    condition: Optional[str] = "used"
+    # Mobile fields
+    brand: Optional[str] = ""
+    ram: Optional[int] = 0
+    storage: Optional[int] = 0
+    camera: Optional[int] = 0
+    battery: Optional[int] = 0
+    screen_size: Optional[float] = 0
+    has_5g: Optional[bool] = False
+    has_pta: Optional[bool] = False
+    has_amoled: Optional[bool] = False
+    has_warranty: Optional[bool] = False
+    has_box: Optional[bool] = False
+    # Laptop fields
+    processor: Optional[str] = ""
+    generation: Optional[Union[str, int]] = ""  # Accept both string and int
+    gpu: Optional[str] = ""
+    has_ssd: Optional[bool] = False
+    is_gaming: Optional[bool] = False
+    is_touchscreen: Optional[bool] = False
+    # Furniture fields
+    material: Optional[str] = ""
+    furniture_type: Optional[str] = ""
+    furniture_subtype: Optional[str] = ""  # e.g., king_size, queen_size for bed; dining, coffee for table
+    seating_capacity: Optional[int] = 0
+    is_imported: Optional[bool] = False
+    is_handmade: Optional[bool] = False
+    has_storage: Optional[bool] = False
+    is_modern: Optional[bool] = False
+    is_antique: Optional[bool] = False
 
 class PricePredictionResponse(BaseModel):
     predicted_price: float
-    confidence_score: float
-    price_range_min: float
-    price_range_max: float
+    confidence_score: Optional[float] = 0.95
+    confidence_lower: Optional[float] = None
+    confidence_upper: Optional[float] = None
+    price_range_min: Optional[float] = None
+    price_range_max: Optional[float] = None
+    recommendation: Optional[str] = None
     extracted_features: Optional[dict] = None
 
 # AR Customization Schemas

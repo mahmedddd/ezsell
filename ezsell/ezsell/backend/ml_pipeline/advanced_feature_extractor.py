@@ -146,14 +146,16 @@ class AdvancedFeatureExtractor:
         processor_info = self._extract_laptop_processor_detailed(text)
         features.update(processor_info)
         
-        # RAM
+        # RAM (with validation: laptops typically have 2-128 GB)
         ram_patterns = [
             r'(\d+)\s*gb\s*ram',
             r'ram\s*(\d+)\s*gb',
             r'(\d+)gb\s*ram',
             r'memory\s*(\d+)\s*gb'
         ]
-        features['ram'] = self._extract_first_match(text, ram_patterns)
+        ram = self._extract_first_match(text, ram_patterns)
+        # Validate RAM is in reasonable range for laptops
+        features['ram'] = ram if ram and 2 <= ram <= 128 else None
         
         # Storage with type
         storage_info = self._extract_storage_detailed(text)
@@ -163,13 +165,15 @@ class AdvancedFeatureExtractor:
         gpu_info = self._extract_gpu_detailed(text)
         features.update(gpu_info)
         
-        # Screen size
+        # Screen size (with validation: laptops are 11-18 inches typically)
         screen_patterns = [
             r'(\d+\.?\d*)\s*inch',
-            r'(\d+\.?\d*)\"',
-            r'display\s*(\d+\.?\d*)'
+            r'(\d+\.?\d*)\s*\"\s*(?:screen|display|laptop)',
+            r'display\s*(\d+\.?\d*)\s*inch'
         ]
-        features['screen_size'] = self._extract_first_match(text, screen_patterns, is_float=True)
+        screen = self._extract_first_match(text, screen_patterns, is_float=True)
+        # Validate screen size is reasonable for laptops (11-18 inches)
+        features['screen_size'] = screen if screen and 11 <= screen <= 18 else 15.6
         
         # Screen resolution
         features['is_fullhd'] = 1 if any(x in text for x in ['1920x1080', 'full hd', 'fhd', '1080p']) else 0
@@ -351,20 +355,23 @@ class AdvancedFeatureExtractor:
         return 2
     
     def _extract_laptop_processor_detailed(self, text: str) -> Dict:
-        """Extract detailed processor info"""
+        """Extract detailed processor info with improved accuracy"""
         features = {}
         
-        # Intel processors
-        if 'core i9' in text or 'i9' in text:
+        # Intel processors (with more specific patterns)
+        if re.search(r'\bi9\b|core\s*i9', text):
             features['processor_tier'] = 5
             features['processor_brand'] = 1  # Intel
-        elif 'core i7' in text or 'i7' in text:
+        elif re.search(r'\bi7\b|core\s*i7', text):
             features['processor_tier'] = 4
             features['processor_brand'] = 1
-        elif 'core i5' in text or 'i5' in text:
+        elif re.search(r'\bi5\b|core\s*i5', text):
             features['processor_tier'] = 3
             features['processor_brand'] = 1
-        elif 'core i3' in text or 'i3' in text:
+        elif re.search(r'\bi3\b|core\s*i3', text):
+            features['processor_tier'] = 2
+            features['processor_brand'] = 1
+        elif 'pentium' in text or 'celeron' in text:
             features['processor_tier'] = 2
             features['processor_brand'] = 1
         # AMD processors
@@ -377,36 +384,86 @@ class AdvancedFeatureExtractor:
         elif 'ryzen 5' in text:
             features['processor_tier'] = 3
             features['processor_brand'] = 2
-        # Apple
-        elif any(x in text for x in ['m1', 'm2', 'm3']):
+        elif 'ryzen 3' in text:
+            features['processor_tier'] = 2
+            features['processor_brand'] = 2
+        # Apple Silicon
+        elif 'm3 pro' in text or 'm3 max' in text:
             features['processor_tier'] = 5
-            features['processor_brand'] = 3  # Apple Silicon
+            features['processor_brand'] = 3
+            features['processor_generation'] = 14  # Equivalent to latest gen
+        elif 'm3' in text:
+            features['processor_tier'] = 5
+            features['processor_brand'] = 3
+            features['processor_generation'] = 14
+        elif 'm2 pro' in text or 'm2 max' in text:
+            features['processor_tier'] = 5
+            features['processor_brand'] = 3
+            features['processor_generation'] = 13
+        elif 'm2' in text:
+            features['processor_tier'] = 5
+            features['processor_brand'] = 3
+            features['processor_generation'] = 13
+        elif 'm1 pro' in text or 'm1 max' in text:
+            features['processor_tier'] = 5
+            features['processor_brand'] = 3
+            features['processor_generation'] = 11
+        elif 'm1' in text:
+            features['processor_tier'] = 5
+            features['processor_brand'] = 3
+            features['processor_generation'] = 11
         else:
             features['processor_tier'] = 2
             features['processor_brand'] = 0
         
-        # Generation
-        gen_match = re.search(r'(\d+)(?:th|st|nd|rd)\s*gen', text)
-        if gen_match:
-            features['processor_generation'] = int(gen_match.group(1))
-        else:
+        # Generation (Intel/AMD)
+        if features['processor_brand'] in [1, 2]:  # Intel or AMD
+            gen_patterns = [
+                r'(\d+)(?:th|st|nd|rd)\s*gen',
+                r'gen\s*(\d+)',
+                r'generation\s*(\d+)'
+            ]
+            for pattern in gen_patterns:
+                gen_match = re.search(pattern, text)
+                if gen_match:
+                    gen = int(gen_match.group(1))
+                    if 1 <= gen <= 14:  # Valid range
+                        features['processor_generation'] = gen
+                        break
+            else:
+                features['processor_generation'] = 0
+        elif 'processor_generation' not in features:
             features['processor_generation'] = 0
         
         return features
     
     def _extract_storage_detailed(self, text: str) -> Dict:
-        """Extract storage with type"""
+        """Extract storage with type and validation"""
         features = {}
         
-        # Storage amount
-        storage_match = re.search(r'(\d+)\s*(?:gb|tb)(?:\s*(?:ssd|hdd|nvme))?', text)
-        if storage_match:
-            storage = int(storage_match.group(1))
-            if 'tb' in text:
-                storage = storage * 1024
-            features['storage'] = storage
-        else:
-            features['storage'] = None
+        # Storage amount - prioritize patterns with explicit GB/TB markers
+        storage_patterns = [
+            r'(\d+)\s*tb\s*(?:ssd|hdd|nvme|storage)',  # TB with type
+            r'(\d+)\s*tb(?!\s*ram)',  # TB without type
+            r'(\d+)\s*gb\s*(?:ssd|hdd|nvme)',  # GB with type
+            r'(\d+)\s*gb(?!\s*ram)(?:\s*storage)?',  # GB without RAM
+        ]
+        
+        storage = None
+        for pattern in storage_patterns:
+            match = re.search(pattern, text)
+            if match:
+                storage = int(match.group(1))
+                # Convert TB to GB
+                if 'tb' in pattern:
+                    storage = storage * 1024
+                # Validate: laptops typically have 128GB-8TB (8192GB)
+                if 128 <= storage <= 8192:
+                    break
+                else:
+                    storage = None
+        
+        features['storage'] = storage
         
         # Storage type score
         if 'nvme' in text or 'nvme ssd' in text:
@@ -421,34 +478,54 @@ class AdvancedFeatureExtractor:
         return features
     
     def _extract_gpu_detailed(self, text: str) -> Dict:
-        """Extract GPU information"""
+        """Extract GPU information with improved detection"""
         features = {}
         
-        # NVIDIA
-        if 'rtx' in text:
-            match = re.search(r'rtx\s*(\d{4})', text)
-            if match:
-                gpu_model = int(match.group(1))
-                if gpu_model >= 4000:
-                    features['gpu_tier'] = 5
-                elif gpu_model >= 3000:
-                    features['gpu_tier'] = 4
-                elif gpu_model >= 2000:
-                    features['gpu_tier'] = 3
-                else:
-                    features['gpu_tier'] = 2
-            else:
-                features['gpu_tier'] = 3
+        # NVIDIA RTX (high-end)
+        if re.search(r'rtx\s*40\d{2}', text):  # RTX 40 series
+            features['gpu_tier'] = 5
+            features['has_dedicated_gpu'] = 1
+        elif re.search(r'rtx\s*30\d{2}', text):  # RTX 30 series
+            features['gpu_tier'] = 4
+            features['has_dedicated_gpu'] = 1
+        elif re.search(r'rtx\s*20\d{2}', text):  # RTX 20 series
+            features['gpu_tier'] = 3
+            features['has_dedicated_gpu'] = 1
+        elif 'rtx' in text:  # Generic RTX
+            features['gpu_tier'] = 3
+            features['has_dedicated_gpu'] = 1
+        # NVIDIA GTX
+        elif re.search(r'gtx\s*16\d{2}', text):  # GTX 16 series
+            features['gpu_tier'] = 3
+            features['has_dedicated_gpu'] = 1
+        elif re.search(r'gtx\s*10\d{2}', text):  # GTX 10 series
+            features['gpu_tier'] = 2
             features['has_dedicated_gpu'] = 1
         elif 'gtx' in text:
             features['gpu_tier'] = 2
             features['has_dedicated_gpu'] = 1
-        # AMD
-        elif any(x in text for x in ['radeon', 'rx']):
+        # NVIDIA MX series (entry-level dedicated)
+        elif re.search(r'mx\s*\d{3}', text) or 'geforce mx' in text:
+            features['gpu_tier'] = 2
+            features['has_dedicated_gpu'] = 1
+        # AMD Radeon
+        elif re.search(r'rx\s*[67]\d{3}', text):  # RX 6000/7000 series
+            features['gpu_tier'] = 4
+            features['has_dedicated_gpu'] = 1
+        elif re.search(r'rx\s*[45]\d{2}', text):  # RX 400/500 series
             features['gpu_tier'] = 3
             features['has_dedicated_gpu'] = 1
-        # Integrated
-        elif any(x in text for x in ['intel hd', 'intel uhd', 'iris']):
+        elif 'radeon' in text and any(x in text for x in ['pro', 'vega']):
+            features['gpu_tier'] = 3
+            features['has_dedicated_gpu'] = 1
+        # Integrated Graphics
+        elif any(x in text for x in ['intel uhd', 'uhd graphics', 'iris xe']):
+            features['gpu_tier'] = 1
+            features['has_dedicated_gpu'] = 0
+        elif 'intel hd' in text or 'hd graphics' in text:
+            features['gpu_tier'] = 1
+            features['has_dedicated_gpu'] = 0
+        elif any(x in text for x in ['amd radeon', 'radeon graphics']) and 'rx' not in text:
             features['gpu_tier'] = 1
             features['has_dedicated_gpu'] = 0
         else:

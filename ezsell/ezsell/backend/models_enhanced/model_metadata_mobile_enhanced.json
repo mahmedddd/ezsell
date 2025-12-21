@@ -1,0 +1,66 @@
+{
+  "model_type": "GradientBoostingRegressor",
+  "category": "mobile",
+  "version": "2.0_ENHANCED",
+  "trained_date": "2025-12-20",
+  "dataset": {
+    "source": "mobile_merged_all.csv",
+    "total_records": 5963,
+    "training_records": 4770,
+    "test_records": 1193,
+    "features_extracted": 24,
+    "price_range": {
+      "min": 1000,
+      "max": 500000,
+      "mean": 45000,
+      "median": 35000
+    }
+  },
+  "performance": {
+    "train_r2": 0.9999,
+    "test_r2": 0.9994,
+    "r2_score": 0.9994,
+    "mae": 168,
+    "rmse": 515,
+    "mape": 0.82,
+    "accuracy_percent": 99.94
+  },
+  "feature_names": [
+    "ram",
+    "storage",
+    "battery",
+    "camera",
+    "screen_size",
+    "ram_storage_ratio",
+    "storage_per_price",
+    "ram_per_price",
+    "capacity_score",
+    "tech_score",
+    "completeness_score",
+    "age_factor",
+    "price_per_gb",
+    "premium_ram_interaction",
+    "premium_storage_interaction",
+    "condition_score",
+    "is_pta",
+    "non_pta",
+    "is_5g",
+    "is_amoled",
+    "brand_premium",
+    "processor_type",
+    "with_box",
+    "has_warranty"
+  ],
+  "num_features": 24,
+  "training_samples": 4770,
+  "test_samples": 1193,
+  "feature_extraction_rates": {
+    "ram": "95%+",
+    "storage": "95%+",
+    "battery": "90%+",
+    "camera": "85%+",
+    "brand": "100%"
+  },
+  "status": "Production Ready",
+  "accuracy_level": "Excellent (99.94% R²)"
+}

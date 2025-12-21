@@ -1,0 +1,46 @@
+{
+  "model_type": "XGBoost",
+  "category": "laptop",
+  "version": "3.0_ADVANCED",
+  "trained_date": "2025-12-21",
+  "dataset": {
+    "source": "laptop_scraped_20251221_051440.csv",
+    "total_records": 4320,
+    "cleaned_records": 1269,
+    "features_extracted": 44,
+    "price_range": {
+      "min": 5000,
+      "max": 98900,
+      "mean": 48377,
+      "median": 49500
+    }
+  },
+  "performance": {
+    "train_r2": 0.9778,
+    "test_r2": 0.9229,
+    "mae": 1702,
+    "rmse": 6911,
+    "mape": 3.60
+  },
+  "hyperparameters": {
+    "colsample_bytree": 0.7,
+    "learning_rate": 0.1,
+    "max_depth": 10,
+    "n_estimators": 300,
+    "subsample": 0.7
+  },
+  "feature_extraction_rates": {
+    "ram": "40.6%",
+    "storage": "29.6%",
+    "processor": "100%",
+    "gpu": "100%",
+    "brand": "100%"
+  },
+  "improvements": {
+    "from_v1": "+57.96 pts R²",
+    "from_v2": "+27.92 pts R²",
+    "error_reduction": "88.5% MAE reduction"
+  },
+  "status": "Production Ready",
+  "accuracy_level": "Excellent (>90% R²)"
+}

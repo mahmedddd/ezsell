@@ -1,11 +1,18 @@
 """
 Enhanced Price Prediction Schemas with Validation
 Ensures all required fields are present for accurate predictions
+Includes strict title validation to prevent irrelevant predictions
 """
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, Dict, Any
 from enum import Enum
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.title_validator import TitleValidator
 
 class CategoryEnum(str, Enum):
     mobile = "mobile"
@@ -18,8 +25,8 @@ class ConditionEnum(str, Enum):
     refurbished = "refurbished"
 
 class MobilePredictionInput(BaseModel):
-    """Mobile price prediction input with required fields"""
-    title: str = Field(..., min_length=10, description="Product title (required, min 10 characters)")
+    """Mobile price prediction input with required fields and title validation"""
+    title: str = Field(..., min_length=10, description="Product title (required, min 10 characters, must include brand/model)")
     description: str = Field(..., min_length=20, description="Product description (required, min 20 characters)")
     condition: ConditionEnum = Field(..., description="Product condition (required)")
     
@@ -38,6 +45,14 @@ class MobilePredictionInput(BaseModel):
             raise ValueError('Field cannot be empty')
         return v.strip()
     
+    @model_validator(mode='after')
+    def validate_mobile_title_content(self):
+        """Validate that title contains relevant mobile phone information"""
+        is_valid, error_msg, _ = TitleValidator.validate_mobile_title(self.title, self.description)
+        if not is_valid:
+            raise ValueError(error_msg)
+        return self
+    
     class Config:
         json_schema_extra = {
             "example": {
@@ -48,8 +63,8 @@ class MobilePredictionInput(BaseModel):
         }
 
 class LaptopPredictionInput(BaseModel):
-    """Laptop price prediction input with required fields"""
-    title: str = Field(..., min_length=10, description="Product title (required, min 10 characters)")
+    """Laptop price prediction input with required fields and title validation"""
+    title: str = Field(..., min_length=10, description="Product title (required, min 10 characters, must include brand/model)")
     description: str = Field(..., min_length=20, description="Product description (required, min 20 characters)")
     condition: ConditionEnum = Field(..., description="Product condition (required)")
     
@@ -67,6 +82,14 @@ class LaptopPredictionInput(BaseModel):
             raise ValueError('Field cannot be empty')
         return v.strip()
     
+    @model_validator(mode='after')
+    def validate_laptop_title_content(self):
+        """Validate that title contains relevant laptop information"""
+        is_valid, error_msg, _ = TitleValidator.validate_laptop_title(self.title, self.description)
+        if not is_valid:
+            raise ValueError(error_msg)
+        return self
+    
     class Config:
         json_schema_extra = {
             "example": {
@@ -77,8 +100,8 @@ class LaptopPredictionInput(BaseModel):
         }
 
 class FurniturePredictionInput(BaseModel):
-    """Furniture price prediction input with required fields"""
-    title: str = Field(..., min_length=10, description="Product title (required, min 10 characters)")
+    """Furniture price prediction input with required fields and title validation"""
+    title: str = Field(..., min_length=10, description="Product title (required, min 10 characters, must include furniture type)")
     description: str = Field(..., min_length=20, description="Product description (required, min 20 characters)")
     condition: ConditionEnum = Field(..., description="Product condition (required)")
     material: str = Field(..., min_length=3, description="Material type (required, e.g., wood, metal, leather)")
@@ -94,6 +117,16 @@ class FurniturePredictionInput(BaseModel):
         if not v or not v.strip():
             raise ValueError('Field cannot be empty - this field is critical for price prediction')
         return v.strip()
+    
+    @model_validator(mode='after')
+    def validate_furniture_title_content(self):
+        """Validate that title contains relevant furniture information"""
+        is_valid, error_msg, _ = TitleValidator.validate_furniture_title(
+            self.title, self.description, self.material
+        )
+        if not is_valid:
+            raise ValueError(error_msg)
+        return self
     
     class Config:
         json_schema_extra = {

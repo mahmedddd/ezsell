@@ -24,6 +24,9 @@ class EnhancedPreprocessor:
         """Enhanced mobile data preprocessing"""
         logger.info(f"Enhanced preprocessing of {len(df)} mobile records")
         
+        # Standardize column names to lowercase
+        df.columns = df.columns.str.lower()
+        
         # Create combined text for feature extraction
         df['combined_text'] = df['title'].fillna('') + ' ' + df.get('description', df['title']).fillna('')
         
@@ -58,15 +61,15 @@ class EnhancedPreprocessor:
         return df
     
     def preprocess_laptop_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Enhanced laptop data preprocessing"""
+        """Enhanced laptop data preprocessing with validation"""
         logger.info(f"Enhanced preprocessing of {len(df)} laptop records")
         
-        # Create combined text
-        df['combined_text'] = df['title'].fillna('') + ' ' + df.get('description', df['title']).fillna('')
+        # Standardize column names to lowercase
+        df.columns = df.columns.str.lower()
         
-        # Extract advanced features
-        logger.info("Extracting advanced features from text...")
-        extracted_features = df['combined_text'].apply(self.feature_extractor.extract_laptop_features)
+        # Use title only for extraction (descriptions often contain noise)
+        logger.info("Extracting advanced features from title only...")
+        extracted_features = df['title'].fillna('').apply(self.feature_extractor.extract_laptop_features)
         extracted_df = pd.DataFrame(extracted_features.tolist())
         
         # Merge with original data
@@ -76,16 +79,45 @@ class EnhancedPreprocessor:
             else:
                 df[col] = df[col].fillna(extracted_df[col])
         
+        # VALIDATION: Clean extracted features
+        logger.info("Validating and cleaning extracted features...")
+        
+        # Validate and cap RAM (2-128 GB for laptops)
+        df['ram'] = pd.to_numeric(df['ram'], errors='coerce')
+        df.loc[df['ram'] < 2, 'ram'] = np.nan
+        df.loc[df['ram'] > 128, 'ram'] = np.nan
+        
+        # Validate and cap Storage (128-8192 GB)
+        df['storage'] = pd.to_numeric(df['storage'], errors='coerce')
+        df.loc[df['storage'] < 128, 'storage'] = np.nan
+        df.loc[df['storage'] > 8192, 'storage'] = np.nan
+        
+        # Validate screen size (11-18 inches for laptops)
+        df['screen_size'] = pd.to_numeric(df['screen_size'], errors='coerce')
+        df.loc[df['screen_size'] < 11, 'screen_size'] = 15.6  # Default
+        df.loc[df['screen_size'] > 18, 'screen_size'] = 15.6  # Default
+        
+        # Validate processor generation (1-14)
+        df['processor_generation'] = pd.to_numeric(df['processor_generation'], errors='coerce').fillna(0)
+        df.loc[df['processor_generation'] > 14, 'processor_generation'] = 0
+        
+        # Validate GPU tier (0-5)
+        df['gpu_tier'] = pd.to_numeric(df['gpu_tier'], errors='coerce').fillna(0)
+        df.loc[df['gpu_tier'] > 5, 'gpu_tier'] = 0
+        df.loc[df['gpu_tier'] < 0, 'gpu_tier'] = 0
+        
         # Clean price
         df['price'] = pd.to_numeric(df['price'], errors='coerce')
         df = df[df['price'].notna()]
-        df = df[df['price'] > 5000]
-        df = df[df['price'] < 500000]
+        df = df[df['price'] > 5000]  # Minimum laptop price
+        df = df[df['price'] < 500000]  # Maximum reasonable price
+        
+        logger.info(f"After validation: {len(df)} records (no strict filtering - training on real data)")
         
         # Feature engineering
         df = self._engineer_laptop_features(df)
         
-        # Remove outliers
+        # Remove statistical outliers in price
         df = self._remove_price_outliers(df, 'laptop')
         
         logger.info(f"Enhanced laptop preprocessing complete. Final records: {len(df)}")
@@ -94,6 +126,9 @@ class EnhancedPreprocessor:
     def preprocess_furniture_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Enhanced furniture data preprocessing"""
         logger.info(f"Enhanced preprocessing of {len(df)} furniture records")
+        
+        # Standardize column names to lowercase
+        df.columns = df.columns.str.lower()
         
         # Create combined text
         df['combined_text'] = df['title'].fillna('') + ' ' + df.get('description', df['title']).fillna('')
@@ -180,44 +215,49 @@ class EnhancedPreprocessor:
         return df
     
     def _engineer_laptop_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Advanced laptop feature engineering"""
+        """Advanced laptop feature engineering with improved validation"""
         
-        # Fill missing values
-        df['ram'] = df['ram'].fillna(df['ram'].median())
-        df['storage'] = df['storage'].fillna(df['storage'].median())
-        df['screen_size'] = df['screen_size'].fillna(df['screen_size'].median())
+        # Fill missing values with intelligent defaults
+        ram_median = df['ram'].median() if df['ram'].notna().sum() > 0 else 8
+        storage_median = df['storage'].median() if df['storage'].notna().sum() > 0 else 512
+        screen_median = df['screen_size'].median() if df['screen_size'].notna().sum() > 0 else 15.6
+        
+        df['ram'] = df['ram'].fillna(ram_median)
+        df['storage'] = df['storage'].fillna(storage_median)
+        df['screen_size'] = df['screen_size'].fillna(screen_median)
         
         # Processor score (comprehensive)
         df['processor_score'] = (
-            df.get('processor_tier', 2) * 2 +
-            df.get('processor_generation', 10) * 0.5 +
-            df.get('processor_brand', 1)
+            df.get('processor_tier', 2).fillna(2) * 3 +  # Tier is most important
+            df.get('processor_generation', 0).fillna(0) * 1.5 +  # Generation matters
+            df.get('processor_brand', 1).fillna(1) * 2  # Brand premium
         )
         
-        # Storage score
+        # Storage score (capacity + type)
         df['storage_score'] = (
-            df['storage'] / 100 +
-            df.get('storage_type_score', 1) * 5
+            df['storage'] / 50 +  # Normalize storage
+            df.get('storage_type_score', 1).fillna(1) * 10  # SSD vs HDD very important
         )
         
         # Graphics score
         df['graphics_score'] = (
-            df.get('gpu_tier', 0) * 3 +
-            df.get('has_dedicated_gpu', 0) * 5
+            df.get('gpu_tier', 0).fillna(0) * 5 +  # GPU tier is critical
+            df.get('has_dedicated_gpu', 0).fillna(0) * 10  # Dedicated GPU is valuable
         )
         
         # Gaming capability score
         df['gaming_score'] = (
-            df.get('processor_tier', 2) * 2 +
-            df.get('gpu_tier', 0) * 3 +
+            df.get('processor_tier', 2).fillna(2) * 2 +
+            df.get('gpu_tier', 0).fillna(0) * 4 +  # GPU more important for gaming
             (df['ram'] / 4) +
-            df.get('is_gaming', 0) * 5
+            df.get('is_gaming', 0).fillna(0) * 8  # Gaming branding
         )
         
-        # Portability score
+        # Portability score (smaller + better battery = more portable)
         df['portability_score'] = (
-            15 - df['screen_size']  # Smaller = more portable
-        ) * df.get('battery_wh', 50) / 50
+            (17 - df['screen_size']).clip(0, 6) * 2 +  # Smaller is better
+            df.get('battery_wh', 50).fillna(50) / 10
+        )
         
         # Features score
         df['features_score'] = (

@@ -163,22 +163,27 @@ def load_model(category: str):
     
     try:
         model_file = models_path / f"{model_name}_model.pkl"
+        scaler_file = models_path / f"{model_name}_scaler.pkl"
         metadata_file = models_path / f"{model_name}_metadata.json"
         
+        # Load metadata
+        metadata = None
+        if metadata_file.exists():
+            import json
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+            _loaded_metadata[model_name] = metadata
+        
+        # Load the trained model
         if model_file.exists():
             model = joblib.load(model_file)
-            _loaded_models[model_name] = model
-            
-            # Load metadata if available
-            metadata = None
-            if metadata_file.exists():
-                import json
-                with open(metadata_file, 'r') as f:
-                    metadata = json.load(f)
-                _loaded_metadata[model_name] = metadata
-            
-            return model, metadata
-        return None, None
+            scaler = joblib.load(scaler_file) if scaler_file.exists() else None
+            _loaded_models[model_name] = {'model': model, 'scaler': scaler}
+            return _loaded_models[model_name], metadata
+        else:
+            print(f"Model file not found: {model_file}")
+            return None, None
+        
     except Exception as e:
         print(f"Error loading model: {e}")
         return None, None
@@ -194,23 +199,78 @@ def predict_price(request: PricePredictionRequest):
     if category not in ["mobile", "laptop", "furniture"]:
         raise HTTPException(status_code=400, detail="Invalid category. Must be 'mobile', 'laptop', or 'furniture'")
     
-    # Validate required fields based on category
-    required_fields = {
-        "mobile": ["title", "condition", "brand"],
-        "laptop": ["title", "condition", "brand"],
-        "furniture": ["title", "condition"]
-    }
+    title = str(features.get('title', '')).strip()
+    brand = str(features.get('brand', '')).strip()
+    condition = str(features.get('condition', '')).strip()
     
-    missing_fields = []
-    for field in required_fields[category]:
-        if not features.get(field) or str(features.get(field)).strip() == "":
-            missing_fields.append(field)
+    # Strict validation - require detailed specifications
+    if category == "mobile":
+        # Extract critical features
+        ram = extract_ram(title)
+        storage = extract_storage(title)
+        
+        validation_errors = []
+        if not title or len(title) < 10:
+            validation_errors.append("Title must be descriptive (min 10 characters)")
+        if not brand:
+            validation_errors.append("Brand is required")
+        if not condition:
+            validation_errors.append("Condition is required")
+        if ram == 4 and 'gb' not in title.lower() and 'ram' not in title.lower():
+            validation_errors.append("RAM specification not found in title (e.g., '4GB RAM', '6GB/128GB')")
+        if storage == 64 and 'gb' not in title.lower() and 'storage' not in title.lower():
+            validation_errors.append("Storage specification not found in title (e.g., '128GB', '6GB/256GB')")
+        
+        if validation_errors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Incomplete mobile specifications. Please provide: {'; '.join(validation_errors)}"
+            )
     
-    if missing_fields:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Missing required fields for {category}: {', '.join(missing_fields)}. Please provide all required information."
-        )
+    elif category == "laptop":
+        description = str(features.get('description', '')).strip()
+        
+        validation_errors = []
+        if not title or len(title) < 15:
+            validation_errors.append("Title must include model details (min 15 characters)")
+        if not brand:
+            validation_errors.append("Brand is required")
+        if not condition:
+            validation_errors.append("Condition is required")
+        if not description or len(description) < 50:
+            validation_errors.append("Detailed description required (min 50 characters) - include processor, RAM, storage")
+        
+        # Check for processor mention
+        has_processor = any(proc in title.lower() + description.lower() 
+                          for proc in ['i3', 'i5', 'i7', 'i9', 'ryzen', 'core', 'processor', 'cpu', 'm1', 'm2'])
+        if not has_processor:
+            validation_errors.append("Processor information not found - please mention CPU model")
+        
+        if validation_errors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Incomplete laptop specifications. Please provide: {'; '.join(validation_errors)}"
+            )
+    
+    elif category == "furniture":
+        furniture_type = str(features.get('type', '')).strip()
+        material = str(features.get('material', '')).strip()
+        
+        validation_errors = []
+        if not title or len(title) < 8:
+            validation_errors.append("Title must be descriptive (min 8 characters)")
+        if not furniture_type:
+            validation_errors.append("Furniture type is required (sofa, bed, table, etc.)")
+        if not material:
+            validation_errors.append("Material is required (wood, metal, fabric, etc.)")
+        if not condition:
+            validation_errors.append("Condition is required")
+        
+        if validation_errors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Incomplete furniture specifications. Please provide: {'; '.join(validation_errors)}"
+            )
     
     # Load model
     model, metadata = load_model(category)
@@ -229,13 +289,15 @@ def predict_price(request: PricePredictionRequest):
     
     # Use actual model for prediction
     try:
-        # Prepare input DataFrame matching training data format
+        # Prepare input DataFrame matching training EXACTLY
+        extracted_features = {}
+        
         if category == "mobile":
             title = features.get('title', '')
             brand = features.get('brand', 'Unknown')
             condition = features.get('condition', 'good')
             
-            # Extract features matching train_models.py preprocessing
+            # Extract ALL features using same regex as training
             ram = extract_ram(title)
             storage = extract_storage(title)
             camera = extract_camera(title)
@@ -244,7 +306,7 @@ def predict_price(request: PricePredictionRequest):
             has_5g_flag = is_5g(title)
             condition_score_val = condition_to_score(condition)
             
-            # Brand premium (1-10)
+            # Brand premium - EXACT same as training
             brands = {'samsung': 8, 'apple': 10, 'iphone': 10, 'xiaomi': 6, 'oppo': 5, 'vivo': 5,
                      'realme': 5, 'oneplus': 8, 'huawei': 7, 'honor': 6, 'nokia': 4}
             brand_premium = 5
@@ -258,16 +320,19 @@ def predict_price(request: PricePredictionRequest):
             is_amoled = 1 if 'amoled' in title.lower() else 0
             has_warranty = 1 if 'warranty' in title.lower() else 0
             has_box = 1 if 'box' in title.lower() else 0
-            age_months = 6  # Default
+            age_months = 6
             
-            # Price category (estimate based on condition and specs)
-            price_category = 3  # Mid-range default
-            if brand_premium >= 8:
+            # Price category based on specs
+            if brand_premium >= 8 and ram >= 8:
+                price_category = 5
+            elif brand_premium >= 8 or ram >= 8:
                 price_category = 4
-            elif brand_premium <= 4:
+            elif ram >= 6:
+                price_category = 3
+            else:
                 price_category = 2
             
-            # Create DataFrame with exact features from training
+            # Create DataFrame with EXACT same columns as training
             df = pd.DataFrame([{
                 'brand_premium': brand_premium,
                 'ram': ram,
@@ -285,19 +350,18 @@ def predict_price(request: PricePredictionRequest):
                 'price_category': price_category
             }])
             
-            # Engineer features matching train_models.py
+            # Engineer features - EXACT same as training
             df['performance'] = (df['ram'] ** 1.5) * (df['storage'] ** 0.5)
             df['ram_squared'] = df['ram'] ** 2
             df['depreciation'] = np.exp(-df['age_months'] / 24)
             df['brand_ram'] = df['brand_premium'] * df['ram']
             
-            # Save for response
             extracted_features = {
-                "ram": ram,
-                "storage": storage,
-                "camera": camera if camera > 0 else "Not detected",
-                "battery": battery if battery > 0 else "Not detected",
-                "screen_size": screen_size if screen_size > 0 else "Not detected",
+                "ram": f"{ram}GB",
+                "storage": f"{storage}GB",
+                "camera": f"{camera}MP" if camera > 0 else "Not detected",
+                "battery": f"{battery}mAh" if battery > 0 else "Not detected",
+                "screen_size": f"{screen_size}inch" if screen_size > 0 else "Not detected",
                 "has_5g": bool(has_5g_flag),
                 "brand_premium": brand_premium,
                 "condition_score": condition_score_val
@@ -398,21 +462,51 @@ def predict_price(request: PricePredictionRequest):
         # Drop non-numeric columns before prediction
         numeric_df = df.select_dtypes(include=[np.number])
         
-        # Make prediction using ensemble
-        if isinstance(model, dict):
-            # Ensemble model with multiple estimators
-            predictions = []
-            weights = model.get('weights', [0.35, 0.35, 0.15, 0.15])
+        # Use the actual trained ML model for prediction
+        if model and isinstance(model, dict):
+            trained_model = model.get('model')
+            scaler = model.get('scaler')
             
-            for key, weight in zip(['xgb', 'lgb', 'rf', 'gb'], weights):
-                if key in model:
-                    pred = model[key].predict(numeric_df)[0]
-                    predictions.append(pred * weight)
+            if trained_model is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Model not properly loaded for {category}"
+                )
             
-            predicted_price = float(sum(predictions))
+            # Apply scaling if scaler exists
+            if scaler is not None:
+                try:
+                    numeric_scaled = scaler.transform(numeric_df)
+                    numeric_df = pd.DataFrame(numeric_scaled, columns=numeric_df.columns)
+                except Exception as e:
+                    print(f"Scaling warning: {e}")
+            
+            # Make prediction using trained model
+            try:
+                if isinstance(trained_model, dict):  # Ensemble model
+                    predictions = []
+                    weights = trained_model.get('weights', [0.35, 0.35, 0.15, 0.15])
+                    
+                    for key, weight in zip(['xgb', 'lgb', 'rf', 'gb'], weights):
+                        if key in trained_model:
+                            pred = trained_model[key].predict(numeric_df)[0]
+                            predictions.append(pred * weight)
+                    
+                    predicted_price = float(sum(predictions))
+                else:
+                    # Single model prediction
+                    predicted_price = float(trained_model.predict(numeric_df)[0])
+            except Exception as e:
+                print(f"Prediction failed: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Model prediction failed: {str(e)}"
+                )
         else:
-            # Single model
-            predicted_price = float(model.predict(numeric_df)[0])
+            raise HTTPException(
+                status_code=503,
+                detail=f"Price prediction model for {category} is not available"
+            )
         
         # Confidence already loaded from metadata above
         
@@ -438,15 +532,27 @@ def get_required_features(category: str):
     features_map = {
         "mobile": {
             "required": ["title", "brand", "condition"],
-            "optional": ["description"]
+            "optional": ["description"],
+            "instructions": "Title must include RAM and storage specs (e.g., '6GB/128GB', '8GB RAM 256GB')"
         },
         "laptop": {
-            "required": ["title", "brand", "model", "condition"],
-            "optional": ["type", "description"]
+            "required": ["title", "brand", "model", "condition", "description"],
+            "optional": ["type"],
+            "instructions": "Description must include processor details (e.g., 'Intel Core i5', 'AMD Ryzen 7')"
         },
         "furniture": {
-            "required": ["title", "condition", "type"],
-            "optional": ["description", "material"]
+            "required": ["title", "condition", "type", "material"],
+            "optional": ["description"],
+            "furniture_types": [
+                "Sofa", "Bed", "Dining Table", "Coffee Table", "Study Table", 
+                "Office Desk", "Chair", "Office Chair", "Wardrobe", "Bookshelf",
+                "TV Stand", "Dresser", "Cabinet", "Nightstand"
+            ],
+            "materials": [
+                "Wood", "Solid Wood", "Engineered Wood", "Metal", "Steel",
+                "Fabric", "Leather", "Faux Leather", "Plastic", "Glass",
+                "Rattan", "Wicker", "Mixed Materials"
+            ]
         }
     }
     

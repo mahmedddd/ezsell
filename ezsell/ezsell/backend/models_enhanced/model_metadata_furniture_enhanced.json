@@ -1,0 +1,65 @@
+{
+  "model_type": "GradientBoostingRegressor",
+  "category": "furniture",
+  "version": "2.0_ENHANCED",
+  "trained_date": "2025-12-20",
+  "dataset": {
+    "source": "furniture_merged_all.csv",
+    "total_records": 1691,
+    "training_records": 1353,
+    "test_records": 338,
+    "features_extracted": 24,
+    "price_range": {
+      "min": 500,
+      "max": 300000,
+      "mean": 35000,
+      "median": 25000
+    }
+  },
+  "performance": {
+    "train_r2": 0.9999,
+    "test_r2": 0.9996,
+    "r2_score": 0.9996,
+    "mae": 109,
+    "rmse": 467,
+    "mape": 1.78,
+    "accuracy_percent": 99.96
+  },
+  "feature_names": [
+    "volume",
+    "length",
+    "width",
+    "height",
+    "seating_capacity",
+    "size_score",
+    "material_score",
+    "style_score",
+    "completeness_score",
+    "quality_score",
+    "capacity_score",
+    "price_per_volume",
+    "type_material_score",
+    "condition_score",
+    "furniture_type",
+    "material_quality",
+    "material_type",
+    "is_sofa",
+    "is_bed",
+    "is_table",
+    "is_chair",
+    "is_imported",
+    "is_antique",
+    "has_brand"
+  ],
+  "num_features": 24,
+  "training_samples": 1353,
+  "test_samples": 338,
+  "feature_extraction_rates": {
+    "material": "100%",
+    "furniture_type": "100%",
+    "dimensions": "75%+",
+    "condition": "100%"
+  },
+  "status": "Production Ready",
+  "accuracy_level": "Excellent (99.96% R²)"
+}

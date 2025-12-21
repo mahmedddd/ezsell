@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -11,37 +12,131 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { listingService, predictionService } from '@/lib/api';
-import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle } from 'lucide-react';
+import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function CreateListingForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [predicting, setPredicting] = useState(false);
+  const [validatingTitle, setValidatingTitle] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [dropdownOptions, setDropdownOptions] = useState<any>({});
+  const [titleValidation, setTitleValidation] = useState<{
+    is_valid: boolean;
+    message: string;
+    hints?: any;
+  } | null>(null);
   const [prediction, setPrediction] = useState<{
     predicted_price: number;
-    confidence_score: number;
-    price_range_min: number;
-    price_range_max: number;
-    extracted_features?: any;
+    confidence_lower: number;
+    confidence_upper: number;
+    model_confidence: number;
+    category: string;
+    message: string;
+    recommendation: string;
   } | null>(null);
   const [predictionError, setPredictionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
-    category: '',
-    condition: '',
+    category: 'mobile',
+    condition: 'used',
     location: '',
     brand: '',
     model: '',
     furniture_type: '',
     material: '',
+    // Mobile specs
+    ram: 8,
+    storage: 128,
+    camera: 0,
+    battery: 0,
+    screen_size: 0,
+    has_5g: false,
+    has_pta: false,
+    has_amoled: false,
+    has_warranty: false,
+    has_box: false,
+    // Laptop specs
+    processor: '',
+    generation: 10,
+    gpu: '',
+    has_ssd: true,
+    is_gaming: false,
+    is_touchscreen: false,
+    // Furniture specs
+    seating_capacity: 0,
+    is_imported: false,
+    is_handmade: false,
+    has_storage: false,
+    is_modern: false,
+    is_antique: false,
   });
+
+  // Load dropdown options for selected category
+  const loadDropdownOptions = async (category: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/dropdown-options/${category}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDropdownOptions(data);
+      }
+    } catch (err) {
+      console.error('Error loading dropdown options:', err);
+    }
+  };
+
+  // Validate title in real-time
+  const validateTitle = async (category: string, title: string, description: string = '', material: string = '') => {
+    if (!title || title.length < 5) {
+      setTitleValidation(null);
+      return;
+    }
+
+    setValidatingTitle(true);
+    try {
+      const params = new URLSearchParams({
+        category,
+        title,
+        description,
+        material
+      });
+
+      const response = await fetch(`http://localhost:8000/api/v1/validate-title?${params}`);
+      if (response.ok) {
+        const result = await response.json();
+        setTitleValidation(result);
+      }
+    } catch (err) {
+      console.error('Error validating title:', err);
+    } finally {
+      setValidatingTitle(false);
+    }
+  };
+
+  // Load dropdown options when category changes
+  useEffect(() => {
+    if (formData.category) {
+      loadDropdownOptions(formData.category);
+    }
+  }, [formData.category]);
+
+  // Validate title with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.title && formData.category) {
+        const material = formData.category === 'furniture' ? formData.material : '';
+        validateTitle(formData.category, formData.title, formData.description, material);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [formData.title, formData.description, formData.material, formData.category]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,57 +164,96 @@ export function CreateListingForm() {
     }
   };
 
-  // Auto-predict price when relevant fields are filled
+  // Auto-predict price when title is valid and relevant fields are filled
   useEffect(() => {
     const canPredict = () => {
       if (!formData.category || !formData.title || !formData.condition) return false;
-      
-      if (formData.category === 'mobile' && !formData.brand) return false;
-      if (formData.category === 'laptop' && !formData.brand) return false;
+      if (!titleValidation || !titleValidation.is_valid) return false;
       
       return true;
     };
 
     if (canPredict()) {
-      handlePredictPrice();
+      const timer = setTimeout(() => {
+        handlePredictPrice();
+      }, 1000);
+      return () => clearTimeout(timer);
     } else {
       setPrediction(null);
-      setPredictionError(null);
     }
-  }, [formData.title, formData.category, formData.condition, formData.brand, formData.description, formData.furniture_type, formData.material]);
+  }, [formData.title, formData.category, formData.condition, formData.description, formData.material, titleValidation]);
 
   const handlePredictPrice = async () => {
+    if (!titleValidation || !titleValidation.is_valid) {
+      setPredictionError('Please provide a valid title with relevant product information');
+      return;
+    }
+
     setPredicting(true);
     setPredictionError(null);
     
     try {
-      const features: Record<string, any> = {
+      const requestData: any = {
+        category: formData.category,
         title: formData.title,
-        condition: formData.condition,
         description: formData.description,
+        condition: formData.condition,
       };
 
+      // Add category-specific fields
       if (formData.category === 'mobile') {
-        features.brand = formData.brand;
+        requestData.brand = formData.brand;
+        requestData.ram = formData.ram;
+        requestData.storage = formData.storage;
+        requestData.camera = formData.camera;
+        requestData.battery = formData.battery;
+        requestData.screen_size = formData.screen_size;
+        requestData.has_5g = formData.has_5g;
+        requestData.has_pta = formData.has_pta;
+        requestData.has_amoled = formData.has_amoled;
+        requestData.has_warranty = formData.has_warranty;
+        requestData.has_box = formData.has_box;
       } else if (formData.category === 'laptop') {
-        features.brand = formData.brand;
-        features.model = formData.model;
+        requestData.brand = formData.brand;
+        requestData.processor = formData.processor;
+        requestData.generation = formData.generation;
+        requestData.ram = formData.ram;
+        requestData.storage = formData.storage;
+        requestData.gpu = formData.gpu;
+        requestData.screen_size = formData.screen_size;
+        requestData.has_ssd = formData.has_ssd;
+        requestData.is_gaming = formData.is_gaming;
+        requestData.is_touchscreen = formData.is_touchscreen;
       } else if (formData.category === 'furniture') {
-        features.type = formData.furniture_type;
-        features.material = formData.material;
+        requestData.material = formData.material;
+        requestData.furniture_type = formData.furniture_type;
+        requestData.seating_capacity = formData.seating_capacity;
+        requestData.is_imported = formData.is_imported;
+        requestData.is_handmade = formData.is_handmade;
+        requestData.has_storage = formData.has_storage;
+        requestData.is_modern = formData.is_modern;
+        requestData.is_antique = formData.is_antique;
       }
 
-      const result = await predictionService.predictPrice({
-        category: formData.category,
-        features,
+      const response = await fetch('http://localhost:8000/api/v1/predict-price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail?.message || errorData.detail || 'Prediction failed');
+      }
+
+      const result = await response.json();
       setPrediction(result);
+      
       // Auto-fill the price with predicted value
       setFormData({ ...formData, price: Math.round(result.predicted_price).toString() });
     } catch (error: any) {
       console.error('Prediction error:', error);
-      setPredictionError(error.response?.data?.detail || 'Unable to predict price. Please ensure all required fields are filled.');
+      setPredictionError(error.message || 'Unable to predict price. Please ensure all required fields are filled.');
       setPrediction(null);
     } finally {
       setPredicting(false);
@@ -129,6 +263,12 @@ export function CreateListingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Title validation check
+    if (!titleValidation || !titleValidation.is_valid) {
+      alert('Please provide a valid title with relevant product information (brand, model, specs)');
+      return;
+    }
+
     // Validation
     if (!imageFile) {
       alert('Please upload a product image');
@@ -146,8 +286,8 @@ export function CreateListingForm() {
     }
 
     // Category-specific validation
-    if ((formData.category === 'mobile' || formData.category === 'laptop') && !formData.brand) {
-      alert(`Please enter the brand for ${formData.category}`);
+    if (formData.category === 'furniture' && !formData.material) {
+      alert('Please select the material for furniture');
       return;
     }
 

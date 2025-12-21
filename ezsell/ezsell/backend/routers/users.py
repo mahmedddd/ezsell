@@ -68,9 +68,19 @@ async def send_verification_code(request: dict, db: Session = Depends(get_db)):
     code = email_service.generate_verification_code()
     
     # Send email
-    email_sent = await email_service.send_verification_email(email, code)
-    if not email_sent:
-        raise HTTPException(status_code=500, detail="Failed to send verification email")
+    try:
+        email_sent = await email_service.send_verification_email(email, code)
+        if not email_sent:
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to send verification email. Please check your email address or try again later."
+            )
+    except Exception as e:
+        print(f"Email sending error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Email service is temporarily unavailable. Please try again later or contact support."
+        )
     
     # Store verification code in database (expires in 2 minutes)
     verification = EmailVerification(
@@ -233,7 +243,7 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         print(f"User not found: {user_credentials.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="User not found. Please check your username or sign up for a new account.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

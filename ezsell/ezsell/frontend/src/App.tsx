@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import GoogleCallback from "./pages/GoogleCallback";
 import Messages from "./pages/Messages";
+import CreateListing from "./pages/CreateListing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/listings" element={<Listings />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create-listing" element={<CreateListing />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />

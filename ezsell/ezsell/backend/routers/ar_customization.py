@@ -1,5 +1,5 @@
 # AR furniture customization endpoints
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 import cv2
 import numpy as np
@@ -16,7 +16,7 @@ ar_previews_path.mkdir(parents=True, exist_ok=True)
 
 @router.post("/ar-preview", response_model=ARResponse)
 async def generate_ar_preview(
-    furniture_item: str,
+    furniture_item: str = Form(...),
     room_image: UploadFile = File(...)
 ):
     """Generate an AR preview of furniture in the user's room"""

@@ -79,11 +79,16 @@ class Listing(Base):
     condition = Column(String)
     location = Column(String, nullable=True)
     images = Column(Text)  # JSON array of image paths
+    # Furniture-specific fields
+    furniture_type = Column(String, nullable=True)  # sofa, bed, table, chair, etc.
+    material = Column(String, nullable=True)  # wood, metal, fabric, leather, etc.
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     is_approved = Column(Boolean, default=True)
+    is_sold = Column(Boolean, default=False)
+    approval_status = Column(String, default="approved")  # "pending", "approved", "rejected"
     predicted_price = Column(Float, nullable=True)
     confidence_score = Column(Float, nullable=True)
     ar_model_url = Column(String, nullable=True)

@@ -100,10 +100,24 @@ export default function Signup() {
       });
       setStep(2);
     } catch (error: any) {
+      console.error('Send code error:', error);
+      let errorMessage = 'Failed to send verification code';
+      
+      if (error.message?.includes('Email already registered')) {
+        errorMessage = 'This email is already registered. Please login instead.';
+      } else if (error.message?.includes('Failed to send verification email')) {
+        errorMessage = 'Unable to send email. Please check your email address and try again.';
+      } else if (error.message === 'Network Error' || error.message?.includes('fetch')) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Failed to send code',
-        description: error.message || 'Something went wrong',
+        description: errorMessage,
         variant: 'destructive',
+        duration: 7000,
       });
     } finally {
       setLoading(false);

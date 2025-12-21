@@ -37,7 +37,19 @@ export default function Login() {
       
       navigate('/dashboard');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message || 'Invalid username or password';
+      console.error('Login error:', error);
+      let errorMessage = 'Invalid username or password';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Incorrect username or password. Please try again.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'User not found. Please check your username or sign up.';
+      } else if (error.message === 'Network Error' || !error.response) {
+        errorMessage = 'Unable to connect to server. Please check your internet connection.';
+      }
+      
       toast({
         title: 'Login Failed',
         description: errorMessage,

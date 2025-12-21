@@ -141,7 +141,7 @@ class EnhancedMLPipeline:
         return results
 
 def main():
-    parser = argparse.ArgumentParser(description='Enhanced ML Pipeline with 70%+ target accuracy')
+    parser = argparse.ArgumentParser(description='Enhanced ML Pipeline with 80%+ target accuracy')
     parser.add_argument('--category', type=str, required=True,
                        choices=['mobile', 'laptop', 'furniture', 'all'],
                        help='Category to train')
@@ -153,15 +153,16 @@ def main():
     if args.category == 'all':
         categories = ['mobile', 'laptop', 'furniture']
         csv_files = [
-            'scraped_data/mobile_adapted.csv',
-            'scraped_data/laptop_adapted.csv',
-            'scraped_data/furniture_adapted.csv'
+            'scraped_data/mobile_merged_all.csv',
+            'scraped_data/laptop_merged_all.csv',
+            'scraped_data/furniture_merged_all.csv'
         ]
         
         results_summary = {}
         
         for category, csv_file in zip(categories, csv_files):
             if Path(csv_file).exists():
+                logger.info(f"\n🚀 Training {category.upper()} with {csv_file}")
                 pipeline = EnhancedMLPipeline(category)
                 results = pipeline.run(csv_file)
                 results_summary[category] = results
@@ -173,22 +174,25 @@ def main():
         logger.info("OVERALL ENHANCED TRAINING SUMMARY")
         logger.info(f"{'='*80}")
         
-        for category, results in results_summary.items():
-            accuracy = results.get('accuracy_percent', results.get('test_accuracy', 0))
-            logger.info(f"\n{category.upper()}:")
-            logger.info(f"  Accuracy: {accuracy:.2f}%")
-            logger.info(f"  R²: {results['test_r2']:.4f}")
-            logger.info(f"  MAE: Rs. {results['mae']:,.2f}")
-        
-        avg_accuracy = sum(r.get('accuracy_percent', r.get('test_accuracy', 0)) for r in results_summary.values()) / len(results_summary)
-        logger.info(f"\nAverage Accuracy: {avg_accuracy:.2f}%")
-        
-        if avg_accuracy >= 70:
-            logger.info("🎉 OVERALL TARGET ACHIEVED!")
+        if results_summary:
+            for category, results in results_summary.items():
+                accuracy = results.get('accuracy_percent', results.get('test_accuracy', 0))
+                logger.info(f"\n{category.upper()}:")
+                logger.info(f"  Accuracy: {accuracy:.2f}%")
+                logger.info(f"  R²: {results['test_r2']:.4f}")
+                logger.info(f"  MAE: Rs. {results['mae']:,.2f}")
+            
+            avg_accuracy = sum(r.get('accuracy_percent', r.get('test_accuracy', 0)) for r in results_summary.values()) / len(results_summary)
+            logger.info(f"\nAverage Accuracy: {avg_accuracy:.2f}%")
+            
+            if avg_accuracy >= 80:
+                logger.info("🎉 OVERALL TARGET ACHIEVED!")
+        else:
+            logger.error("No models were trained successfully!")
         
     else:
         if not args.csv_file:
-            args.csv_file = f"scraped_data/{args.category}_adapted.csv"
+            args.csv_file = f"scraped_data/{args.category}_merged_all.csv"
         
         if not Path(args.csv_file).exists():
             logger.error(f"CSV file not found: {args.csv_file}")

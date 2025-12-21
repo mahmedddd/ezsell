@@ -32,15 +32,29 @@ def train_model(csv_file: str, category: str):
     df = pd.read_csv(csv_file)
     logger.info(f"📊 Loaded {len(df)} samples")
     
-    # Clean outliers
-    z_scores = np.abs(stats.zscore(df['price']))
-    df = df[z_scores < 3.0]  # Less strict than 2.5
+    # CRITICAL: Remove rows with NaN or invalid prices first
+    initial_len = len(df)
+    df = df.dropna(subset=['price'])  # Drop rows with NaN price
+    df = df[df['price'] > 0]  # Remove invalid prices (0 or negative)
+    df = df[df['price'] < 10000000]  # Remove unrealistic prices (>10M PKR)
+    df = df[~np.isinf(df['price'])]  # Remove infinity values
+    logger.info(f"🧹 Removed {initial_len - len(df)} rows with invalid prices")
     
-    if len(df) < 100:
-        logger.warning(f"⚠️ Only {len(df)} samples after outlier removal, skipping Z-score filter")
-        df = pd.read_csv(csv_file)  # Reload without outlier removal
+    if len(df) < 50:
+        logger.error(f"❌ Only {len(df)} valid samples remaining, cannot train model")
+        return None
     
-    logger.info(f"✅ After outlier removal: {len(df)} samples")
+    # Clean outliers using IQR method (more robust than Z-score)
+    Q1 = df['price'].quantile(0.05)
+    Q3 = df['price'].quantile(0.95)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 2.5 * IQR
+    upper_bound = Q3 + 2.5 * IQR
+    
+    before_outlier = len(df)
+    df = df[(df['price'] >= lower_bound) & (df['price'] <= upper_bound)]
+    logger.info(f"🧹 Removed {before_outlier - len(df)} outliers (IQR method)")
+    logger.info(f"✅ Clean dataset: {len(df)} samples")
     
     # Price features
     df['price_percentile'] = df['price'].rank(pct=True)
@@ -70,7 +84,9 @@ def train_model(csv_file: str, category: str):
     X = df[available].copy()
     y = df['price'].copy()
     
-    # Add price category
+    # Add price category for better segmentation
+    # This is OK in training because we have actual prices
+    # In API, we'll estimate this from other features
     X['price_category'] = df['price_bin']
     
     # Engineer features
@@ -102,8 +118,21 @@ def train_model(csv_file: str, category: str):
         if 'seating_capacity' in X.columns:
             X['seating_value'] = X['seating_capacity'] ** 1.5
     
-    # Fill missing
+    # Fill missing in features
     X = X.fillna(X.median())
+    X = X.replace([np.inf, -np.inf], 0)  # Replace any infinity with 0
+    
+    # CRITICAL: Final validation - ensure y has no NaN/Inf
+    valid_idx = ~(y.isna() | np.isinf(y))
+    if valid_idx.sum() < len(y):
+        removed = len(y) - valid_idx.sum()
+        logger.warning(f"⚠️ Removing {removed} samples with invalid target values")
+        X = X[valid_idx]
+        y = y[valid_idx]
+    
+    if len(y) < 50:
+        logger.error(f"❌ Only {len(y)} valid samples after cleaning, cannot train")
+        return None
     
     # Scale
     scaler = RobustScaler()

@@ -6,7 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 
 from routers import (
-    users, listings, predictions, ar_customization, google_auth, 
+    users, listings, predictions_advanced as predictions, ar_customization, google_auth, 
     messages, favorites, approvals, recommendations, analytics
 )
 from core.config import settings
@@ -29,7 +29,7 @@ app.add_middleware(
 # Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://localhost:8081", "http://localhost:3000", "http://127.0.0.1:8080"],
+    allow_origins=["http://localhost:8080", "http://localhost:8081", "http://localhost:8082", "http://localhost:3000", "http://127.0.0.1:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
