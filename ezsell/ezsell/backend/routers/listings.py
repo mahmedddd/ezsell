@@ -67,10 +67,22 @@ async def create_listing(
     # Validate required fields
     if not title or title.strip() == "":
         raise HTTPException(status_code=400, detail="Title is required")
+    if not description or description.strip() == "":
+        raise HTTPException(status_code=400, detail="Description is required")
     if not condition or condition.strip() == "":
         raise HTTPException(status_code=400, detail="Condition is required")
-    if not model or model.strip() == "":
-        raise HTTPException(status_code=400, detail="Model is required. Please specify the product model/brand.")
+    if not location or location.strip() == "":
+        raise HTTPException(status_code=400, detail="Location is required")
+    if not images or len(images) == 0 or not images[0].filename:
+        raise HTTPException(status_code=400, detail="At least one product image is required")
+    
+    # Category-specific validation
+    if category in ["mobile", "laptop"]:
+        if not brand or brand.strip() == "":
+            raise HTTPException(status_code=400, detail="Brand is required for mobile/laptop listings")
+    elif category == "furniture":
+        if not furniture_type or furniture_type.strip() == "":
+            raise HTTPException(status_code=400, detail="Furniture type is required for furniture listings")
     
     # Check for duplicate listing by the same user
     existing_listing = db.query(Listing).filter(

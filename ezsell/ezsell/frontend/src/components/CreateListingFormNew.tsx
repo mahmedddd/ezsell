@@ -322,6 +322,22 @@ export function CreateListingFormNew() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Basic field validation
+    if (!formData.title || formData.title.trim().length < 5) {
+      alert('❌ Please enter a title (at least 5 characters)');
+      return;
+    }
+
+    if (!formData.description || formData.description.trim().length < 10) {
+      alert('❌ Please enter a description (at least 10 characters)');
+      return;
+    }
+
+    if (!formData.location || formData.location.trim() === '') {
+      alert('❌ Please enter the location');
+      return;
+    }
+
     // Title validation check
     if (!titleValidation || !titleValidation.is_valid) {
       alert('❌ Invalid Title: Please provide a valid title with relevant product information (brand, model, specs)');
@@ -329,12 +345,28 @@ export function CreateListingFormNew() {
     }
 
     if (!imageFile) {
-      alert('Please upload a product image');
+      alert('❌ Please upload a product image');
+      return;
+    }
+
+    // Category-specific validation
+    if ((formData.category === 'mobile' || formData.category === 'laptop') && !formData.brand) {
+      alert('❌ Please select a brand from the dropdown');
+      return;
+    }
+
+    if (formData.category === 'furniture' && !formData.furniture_type) {
+      alert('❌ Please select the furniture type');
       return;
     }
 
     if (formData.category === 'furniture' && !formData.material) {
-      alert('Please select the material for furniture');
+      alert('❌ Please select the material for furniture');
+      return;
+    }
+
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      alert('❌ Please enter a valid price');
       return;
     }
 
@@ -347,7 +379,7 @@ export function CreateListingFormNew() {
         price: parseFloat(formData.price),
         category: formData.category,
         condition: formData.condition,
-        location: formData.location || undefined,
+        location: formData.location,
         images: imageFile ? [imageFile] : undefined,
         predicted_price: prediction?.predicted_price || undefined,
         brand: formData.brand || undefined,
@@ -360,7 +392,8 @@ export function CreateListingFormNew() {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Failed to create listing:', error);
-      alert(error.response?.data?.detail || 'Failed to create listing');
+      const errorMsg = error.response?.data?.detail || error.message || 'Failed to create listing';
+      alert('❌ Error: ' + errorMsg);
     } finally {
       setLoading(false);
     }
@@ -499,17 +532,18 @@ export function CreateListingFormNew() {
 
               {/* Location */}
               <div className="space-y-2">
-                <Label>Location</Label>
+                <Label>Location *</Label>
                 <Input
-                  placeholder="City, Area"
+                  placeholder="City, Area (e.g., Lahore, DHA)"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  required
                 />
               </div>
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <Label>Product Images (Max 5 - JPG or PNG)</Label>
+                <Label>Product Image * (JPG or PNG)</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#143109] transition-colors">
                   {imagePreview ? (
                     <div className="space-y-4">
@@ -1192,7 +1226,7 @@ export function CreateListingFormNew() {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={loading || !titleValidation?.is_valid}
+              disabled={loading}
               className="w-full bg-[#143109] hover:bg-[#AAAE7F]"
               size="lg"
             >
@@ -1202,10 +1236,7 @@ export function CreateListingFormNew() {
                   Creating Listing...
                 </>
               ) : (
-                <>
-                  Create Listing
-                  {!titleValidation?.is_valid && ' (Title must be valid)'}
-                </>
+                'Create Listing'
               )}
             </Button>
           </form>

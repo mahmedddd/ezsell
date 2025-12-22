@@ -195,7 +195,7 @@ export function ARViewer({ listingId, listingTitle, category }: ARViewerProps) {
                 <div className="space-y-4">
                   <div className="relative">
                     <img 
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${arPreviewUrl}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${arPreviewUrl}`}
                       alt="AR Preview" 
                       className="w-full h-64 object-cover rounded-lg border-2 border-[#143109]"
                     />
