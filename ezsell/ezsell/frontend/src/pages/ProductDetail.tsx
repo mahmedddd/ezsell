@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ChatWindow } from '@/components/ChatWindow';
 import { ARViewer } from '@/components/ARViewer';
 import { AR3DViewer } from '@/components/AR3DViewer';
+import { RealisticARViewer } from '@/components/RealisticARViewer';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -236,17 +237,25 @@ export default function ProductDetail() {
                   )}
                   
                   {/* AR Viewers - Only for furniture */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <ARViewer 
+                  <div className="space-y-2">
+                    <RealisticARViewer 
                       listingId={listing.id}
                       listingTitle={listing.title}
                       category={listing.category}
+                      price={listing.price}
                     />
-                    <AR3DViewer 
-                      listingId={listing.id}
-                      listingTitle={listing.title}
-                      category={listing.category}
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <ARViewer 
+                        listingId={listing.id}
+                        listingTitle={listing.title}
+                        category={listing.category}
+                      />
+                      <AR3DViewer 
+                        listingId={listing.id}
+                        listingTitle={listing.title}
+                        category={listing.category}
+                      />
+                    </div>
                   </div>
                   
                   <Button 

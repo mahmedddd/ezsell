@@ -6,7 +6,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 
 from routers import (
-    users, listings, predictions_advanced as predictions, ar_customization, google_auth, 
+    users, listings, predictions_advanced as predictions, ar_customization,
+    ar_customization_enhanced, google_auth, 
     messages, favorites, approvals, recommendations, analytics
 )
 from core.config import settings
@@ -51,6 +52,7 @@ app.include_router(google_auth.router, prefix=settings.API_V1_STR, tags=["Google
 app.include_router(listings.router, prefix=settings.API_V1_STR, tags=["Listings"])
 app.include_router(predictions.router, prefix=settings.API_V1_STR, tags=["Predictions"])
 app.include_router(ar_customization.router, prefix=settings.API_V1_STR, tags=["AR Customization"])
+app.include_router(ar_customization_enhanced.router, prefix=settings.API_V1_STR, tags=["AR Enhanced"])
 app.include_router(messages.router, prefix=settings.API_V1_STR, tags=["Messages"])
 app.include_router(favorites.router, prefix=settings.API_V1_STR, tags=["Favorites"])
 app.include_router(approvals.router, prefix=settings.API_V1_STR, tags=["Approvals"])
