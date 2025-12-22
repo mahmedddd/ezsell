@@ -380,16 +380,19 @@ export function CreateListingFormNew() {
     }
 
     setLoading(true);
-    console.log('Submitting listing...', formData);
+    console.log('=== STARTING LISTING CREATION ===');
+    console.log('Form data:', formData);
+    console.log('Image file:', imageFile?.name, imageFile?.type, imageFile?.size);
+    console.log('Token present:', !!localStorage.getItem('authToken'));
 
     try {
       const listingData: any = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         price: parseFloat(formData.price),
         category: formData.category,
         condition: formData.condition,
-        location: formData.location,
+        location: formData.location.trim(),
         images: imageFile ? [imageFile] : undefined,
         predicted_price: prediction?.predicted_price || undefined,
         brand: formData.brand || undefined,
@@ -397,14 +400,33 @@ export function CreateListingFormNew() {
         furniture_type: formData.furniture_type || undefined,
       };
 
-      console.log('Listing data:', listingData);
+      console.log('Prepared listing data for API:', listingData);
+      console.log('Calling listingService.createListing...');
+      
       const result = await listingService.createListing(listingData);
-      console.log('Listing created:', result);
+      
+      console.log('✅ Listing created successfully:', result);
       alert('✅ Listing created successfully!');
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Failed to create listing:', error);
+      console.error('=== ERROR CREATING LISTING ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
       console.error('Error response:', error.response);
+      console.error('Error request:', error.request);
+      console.error('Error config:', error.config);
+      
+      // Check for network error (no response)
+      if (!error.response && !error.request) {
+        alert('❌ Network Error: Unable to connect to server. Please check if the backend is running on http://localhost:8000');
+        return;
+      }
+      
+      // Check if request was made but no response received
+      if (error.request && !error.response) {
+        alert('❌ Network Error: No response from server. Please check your internet connection and backend server.');
+        return;
+      }
       
       // Check for authentication error
       if (error.response?.status === 401) {
@@ -415,10 +437,23 @@ export function CreateListingFormNew() {
         return;
       }
       
-      const errorMsg = error.response?.data?.detail || error.message || 'Failed to create listing';
+      // Check for validation errors
+      if (error.response?.status === 422) {
+        const details = error.response?.data?.detail;
+        if (Array.isArray(details)) {
+          const fieldErrors = details.map((d: any) => `${d.loc?.join('.')||'field'}: ${d.msg}`).join('\n');
+          alert('❌ Validation Error:\n' + fieldErrors);
+        } else {
+          alert('❌ Validation Error: ' + (details || 'Invalid data'));
+        }
+        return;
+      }
+      
+      const errorMsg = error.response?.data?.detail || error.message || 'Failed to create listing. Please try again.';
       alert('❌ Error: ' + errorMsg);
     } finally {
       setLoading(false);
+      console.log('=== LISTING CREATION ENDED ===');
     }
   };
 
