@@ -13,8 +13,10 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { listingService } from '@/lib/api';
-import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle, Info } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { listingService, getImageUrl } from '@/lib/api';
+import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle, Info, PartyPopper, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function CreateListingFormNew() {
@@ -32,6 +34,8 @@ export function CreateListingFormNew() {
   } | null>(null);
   const [prediction, setPrediction] = useState<any | null>(null);
   const [predictionError, setPredictionError] = useState<string | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [createdListing, setCreatedListing] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -406,8 +410,10 @@ export function CreateListingFormNew() {
       const result = await listingService.createListing(listingData);
       
       console.log('✅ Listing created successfully:', result);
-      alert('✅ Listing created successfully!');
-      navigate('/dashboard');
+      
+      // Show preview dialog instead of alert
+      setCreatedListing(result);
+      setShowPreviewDialog(true);
     } catch (error: any) {
       console.error('=== ERROR CREATING LISTING ===');
       console.error('Error object:', error);
@@ -1300,6 +1306,110 @@ export function CreateListingFormNew() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Success Preview Dialog */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <PartyPopper className="h-6 w-6 text-green-600" />
+              Ad Posted Successfully!
+            </DialogTitle>
+            <DialogDescription>
+              Your listing has been created and is now live. Here's a preview:
+            </DialogDescription>
+          </DialogHeader>
+
+          {createdListing && (
+            <div className="space-y-4 mt-4">
+              {/* Preview Card */}
+              <Card className="border-2 border-green-200">
+                <CardContent className="p-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Image */}
+                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt={createdListing.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-400">No image</span>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className="space-y-3">
+                      <div>
+                        <Badge className="mb-2">{createdListing.category}</Badge>
+                        <h3 className="text-xl font-bold">{createdListing.title}</h3>
+                        <p className="text-2xl font-bold text-green-600 mt-2">
+                          Rs. {createdListing.price?.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Condition:</span>
+                          <span className="font-medium capitalize">{createdListing.condition}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Location:</span>
+                          <span className="font-medium">{createdListing.location}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Status:</span>
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                            {createdListing.status === 'approved' ? 'Live' : 'Pending Approval'}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t">
+                        <p className="text-sm text-gray-700 line-clamp-3">
+                          {createdListing.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Success Message */}
+                  <Alert className="mt-4 bg-green-50 border-green-200">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="text-green-900">Listing Created!</AlertTitle>
+                    <AlertDescription className="text-green-700">
+                      Your ad is now {createdListing.status === 'approved' ? 'live and visible to buyers' : 'pending approval by admin'}. 
+                      You can view it in your dashboard.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => navigate(`/product/${createdListing.id}`)}
+                  className="flex-1 bg-[#143109] hover:bg-[#AAAE7F]"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Listing
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowPreviewDialog(false);
+                    navigate('/dashboard');
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Go to Dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

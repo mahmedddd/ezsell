@@ -188,10 +188,14 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
   };
 
   useEffect(() => {
-    if (roomImagePreview && canvasRef.current) {
-      render3DScene();
+    if (roomImagePreview && canvasRef.current && activeTab === 'customize') {
+      // Small delay to ensure canvas is fully mounted
+      const timer = setTimeout(() => {
+        render3DScene();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [roomImagePreview, placedItems, showShadows, lightingIntensity, viewAngle]);
+  }, [roomImagePreview, placedItems, showShadows, lightingIntensity, viewAngle, activeTab]);
 
   const render3DScene = () => {
     const canvas = canvasRef.current;

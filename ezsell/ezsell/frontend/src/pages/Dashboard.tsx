@@ -75,6 +75,30 @@ export default function Dashboard() {
     }
   };
 
+  // Helper to get first image from listing (supports both old and new format)
+  const getListingImage = (listing: any): string | null => {
+    // Check new 'images' JSON field first
+    if (listing?.images) {
+      try {
+        const parsedImages = typeof listing.images === 'string' 
+          ? JSON.parse(listing.images) 
+          : listing.images;
+        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
+          return parsedImages[0];
+        }
+      } catch (e) {
+        console.error('Failed to parse images field:', e);
+      }
+    }
+    
+    // Fallback to old image_url field
+    if (listing?.image_url) {
+      return listing.image_url;
+    }
+    
+    return null;
+  };
+
 
 
   const handleDelete = async (id: number) => {
@@ -218,8 +242,8 @@ export default function Dashboard() {
               <Card key={listing.id}>
                 <CardHeader>
                   <div className="aspect-video bg-slate-200 rounded-md mb-4 flex items-center justify-center">
-                    {getImageUrl(listing.image_url) ? (
-                      <img src={getImageUrl(listing.image_url)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
+                    {getListingImage(listing) && getImageUrl(getListingImage(listing)!) ? (
+                      <img src={getImageUrl(getListingImage(listing)!)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
                     ) : (
                       <span className="text-slate-500">No image</span>
                     )}
@@ -285,8 +309,8 @@ export default function Dashboard() {
               <Card key={listing.id}>
                 <CardHeader>
                   <div className="aspect-video bg-slate-200 rounded-md mb-4 flex items-center justify-center relative">
-                    {getImageUrl(listing.image_url) ? (
-                      <img src={getImageUrl(listing.image_url)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
+                    {getListingImage(listing) && getImageUrl(getListingImage(listing)!) ? (
+                      <img src={getImageUrl(getListingImage(listing)!)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
                     ) : (
                       <span className="text-slate-500">No image</span>
                     )}

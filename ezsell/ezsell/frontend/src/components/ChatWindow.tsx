@@ -168,6 +168,51 @@ export function ChatWindow({
         )}
       </ScrollArea>
 
+      {/* Quick Suggestions */}
+      {messages.length === 0 && (
+        <div className="px-4 pb-2 border-t pt-2 bg-gray-50">
+          <p className="text-xs text-gray-600 mb-2">Quick messages:</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setNewMessage('Is this still available?')}
+              className="text-xs h-7"
+            >
+              Available?
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setNewMessage('What is your last price?')}
+              className="text-xs h-7"
+            >
+              Last price?
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setNewMessage('What is the condition?')}
+              className="text-xs h-7"
+            >
+              Condition?
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setNewMessage('Can we meet for inspection?')}
+              className="text-xs h-7"
+            >
+              Inspection?
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <form onSubmit={handleSendMessage} className="p-4 border-t bg-white rounded-b-lg">
         <div className="flex gap-2">

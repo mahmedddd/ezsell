@@ -10,6 +10,7 @@ import { ChatWindow } from '@/components/ChatWindow';
 import { ARViewer } from '@/components/ARViewer';
 import { AR3DViewer } from '@/components/AR3DViewer';
 import { RealisticARViewer } from '@/components/RealisticARViewer';
+import { Advanced3DARViewer } from '@/components/Advanced3DARViewer';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -24,20 +25,37 @@ export default function ProductDetail() {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isOwner = currentUser?.id === listing?.owner_id;
   
-  // Get all images (main + additional)
+  // Get all images (main + additional + new images field)
   const getAllImages = () => {
     const images: string[] = [];
-    if (listing?.image_url) {
-      images.push(listing.image_url);
-    }
-    if (listing?.additional_images) {
+    
+    // Check for new 'images' field (JSON array)
+    if (listing?.images) {
       try {
-        const additionalImages = JSON.parse(listing.additional_images);
-        images.push(...additionalImages);
+        const parsedImages = typeof listing.images === 'string' ? JSON.parse(listing.images) : listing.images;
+        if (Array.isArray(parsedImages)) {
+          images.push(...parsedImages);
+        }
       } catch (e) {
-        console.error('Failed to parse additional images');
+        console.error('Failed to parse images field:', e);
       }
     }
+    
+    // Fallback to old fields for backwards compatibility
+    if (images.length === 0) {
+      if (listing?.image_url) {
+        images.push(listing.image_url);
+      }
+      if (listing?.additional_images) {
+        try {
+          const additionalImages = JSON.parse(listing.additional_images);
+          images.push(...additionalImages);
+        } catch (e) {
+          console.error('Failed to parse additional images');
+        }
+      }
+    }
+    
     return images;
   };
 
@@ -238,6 +256,12 @@ export default function ProductDetail() {
                   
                   {/* AR Viewers - Only for furniture */}
                   <div className="space-y-2">
+                    <Advanced3DARViewer 
+                      listingId={listing.id}
+                      listingTitle={listing.title}
+                      category={listing.category}
+                      price={listing.price}
+                    />
                     <RealisticARViewer 
                       listingId={listing.id}
                       listingTitle={listing.title}
