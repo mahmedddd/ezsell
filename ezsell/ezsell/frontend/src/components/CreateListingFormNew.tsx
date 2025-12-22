@@ -321,6 +321,7 @@ export function CreateListingFormNew() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted, starting validation...');
     
     // Basic field validation
     if (!formData.title || formData.title.trim().length < 5) {
@@ -370,7 +371,16 @@ export function CreateListingFormNew() {
       return;
     }
 
+    // Check if user is logged in
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      alert('❌ Please login first to create a listing');
+      navigate('/login');
+      return;
+    }
+
     setLoading(true);
+    console.log('Submitting listing...', formData);
 
     try {
       const listingData: any = {
@@ -387,11 +397,24 @@ export function CreateListingFormNew() {
         furniture_type: formData.furniture_type || undefined,
       };
 
-      await listingService.createListing(listingData);
+      console.log('Listing data:', listingData);
+      const result = await listingService.createListing(listingData);
+      console.log('Listing created:', result);
       alert('✅ Listing created successfully!');
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Failed to create listing:', error);
+      console.error('Error response:', error.response);
+      
+      // Check for authentication error
+      if (error.response?.status === 401) {
+        alert('❌ Session expired. Please login again.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        navigate('/login');
+        return;
+      }
+      
       const errorMsg = error.response?.data?.detail || error.message || 'Failed to create listing';
       alert('❌ Error: ' + errorMsg);
     } finally {
