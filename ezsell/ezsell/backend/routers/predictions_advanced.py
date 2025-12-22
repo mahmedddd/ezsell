@@ -1759,7 +1759,7 @@ def validate_title(category: str, title: str, description: str = "", material: s
 
 
 @router.get("/dropdown-options/{category}")
-def get_dropdown_options(category: str) -> Dict[str, List]:
+def get_dropdown_options(category: str) -> Dict[str, Any]:
     """
     Get dropdown options for a specific category
     Returns encoded label values for UI dropdowns
