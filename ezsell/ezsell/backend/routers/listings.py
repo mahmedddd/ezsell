@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 import json
 
-from models.database import get_db, Listing, User
+from models.database import get_db, Listing, User, MobilePhone, Laptop, Furniture
 from schemas.schemas import ListingCreate, ListingUpdate, ListingResponse
 from core.security import get_current_user
 from routers.users import get_user_by_username
@@ -128,6 +128,13 @@ async def create_listing(
     # Convert additional images list to JSON string
     additional_images_json = json.dumps(additional_images_list) if additional_images_list else None
     
+    # Combine all images into single list for the images field
+    all_images = []
+    if image_url:
+        all_images.append(image_url)
+    all_images.extend(additional_images_list)
+    images_json = json.dumps(all_images) if all_images else None
+    
     # Determine approval status based on predicted price
     approval_status = "approved"
     if predicted_price:
@@ -146,8 +153,7 @@ async def create_listing(
         location=location,
         furniture_type=furniture_type,
         material=material,
-        image_url=image_url,
-        additional_images=additional_images_json,
+        images=images_json,
         owner_id=user.id,
         approval_status=approval_status,
         predicted_price=predicted_price

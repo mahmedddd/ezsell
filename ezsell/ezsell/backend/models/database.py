@@ -92,6 +92,7 @@ class Listing(Base):
     predicted_price = Column(Float, nullable=True)
     confidence_score = Column(Float, nullable=True)
     ar_model_url = Column(String, nullable=True)
+    views = Column(Integer, default=0)  # Track listing views
     
     # Relationships
     owner = relationship("User", back_populates="listings")
@@ -167,6 +168,47 @@ class RecommendationHistory(Base):
     shown_at = Column(DateTime, default=datetime.utcnow)
     clicked = Column(Boolean, default=False)
     clicked_at = Column(DateTime, nullable=True)
+
+class MobilePhone(Base):
+    """Category-specific details for mobile phones"""
+    __tablename__ = "mobile_phones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, ForeignKey("listings.id"), unique=True)
+    Title = Column(String)
+    Brand = Column(String)
+    Price = Column(Float)
+    Condition = Column(String)
+    Description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Laptop(Base):
+    """Category-specific details for laptops"""
+    __tablename__ = "laptops"
+
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, ForeignKey("listings.id"), unique=True)
+    Title = Column(String)
+    Price = Column(Float)
+    Brand = Column(String)
+    Model = Column(String, nullable=True)
+    Condition = Column(String)
+    Description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Furniture(Base):
+    """Category-specific details for furniture"""
+    __tablename__ = "furniture"
+
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, ForeignKey("listings.id"), unique=True)
+    Title = Column(String)
+    Price = Column(Float)
+    Condition = Column(String)
+    Type = Column(String)
+    Material = Column(String, nullable=True)
+    Description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 # Create all tables
 Base.metadata.create_all(bind=engine)

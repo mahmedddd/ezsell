@@ -54,7 +54,7 @@ class ListingBase(BaseModel):
     category: str
     condition: str
     location: Optional[str] = None
-    image_url: Optional[str] = None
+    images: Optional[str] = None  # JSON array of image URLs
     brand: Optional[str] = None
     furniture_type: Optional[str] = None
     material: Optional[str] = None
@@ -71,7 +71,7 @@ class ListingUpdate(BaseModel):
     price: Optional[float] = None
     condition: Optional[str] = None
     location: Optional[str] = None
-    image_url: Optional[str] = None
+    images: Optional[str] = None  # JSON array of image URLs
     is_sold: Optional[bool] = None
 
 class OwnerInfo(BaseModel):
@@ -92,7 +92,6 @@ class ListingResponse(ListingBase):
     owner: Optional[OwnerInfo] = None
     approval_status: Optional[str] = "approved"
     predicted_price: Optional[float] = None
-    additional_images: Optional[str] = None
     rejection_reason: Optional[str] = None
     
     class Config:
