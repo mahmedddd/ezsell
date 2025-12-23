@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
-import { Search, MapPin, Plus, Heart, ChevronRight } from "lucide-react";
-import { listingService, getImageUrl } from "@/lib/api";
+import { Search, MapPin, Plus, Heart, ChevronRight, Loader2 } from "lucide-react";
+import { listingService, getImageUrl, favoritesService } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 
 const Home = () => {
@@ -14,8 +14,14 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [city, setCity] = useState("");
+  const [area, setArea] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
+  const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   const categories = [
     { id: "all", name: "All Categories", icon: "📦" },
@@ -26,17 +32,23 @@ const Home = () => {
 
   useEffect(() => {
     loadListings();
-  }, [selectedCategory]);
+    if (currentUser?.id) {
+      loadFavorites();
+    }
+  }, [selectedCategory, city, area]);
 
   // Reload listings when component is focused (user navigates back to home)
   useEffect(() => {
     const handleFocus = () => {
       loadListings();
+      if (currentUser?.id) {
+        loadFavorites();
+      }
     };
     
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [selectedCategory]);
+  }, [selectedCategory, city, area]);
 
   const loadListings = async () => {
     try {
@@ -58,17 +70,113 @@ const Home = () => {
     }
   };
 
+  const loadFavorites = async () => {
+    try {
+      const favorites = await favoritesService.getFavorites();
+      setFavoriteIds(new Set(favorites.map((f: any) => f.id)));
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+    }
+  };
+
+  // Helper to get first image from listing (supports both old and new format)
+  const getListingImage = (listing: any): string | null => {
+    // Check new 'images' JSON field first
+    if (listing?.images) {
+      try {
+        const parsedImages = typeof listing.images === 'string' 
+          ? JSON.parse(listing.images) 
+          : listing.images;
+        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
+          return parsedImages[0];
+        }
+      } catch (e) {
+        console.error('Failed to parse images field:', e);
+      }
+    }
+    
+    // Fallback to old image_url field
+    if (listing?.image_url) {
+      return listing.image_url;
+    }
+    
+    return null;
+  };
+
+  const toggleFavorite = async (listingId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!currentUser?.id) {
+      toast({
+        title: "Login Required",
+        description: "Please login to save listings",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+    
+    setTogglingFavorite(listingId);
+    try {
+      if (favoriteIds.has(listingId)) {
+        await favoritesService.removeFromFavorites(listingId);
+        setFavoriteIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(listingId);
+          return newSet;
+        });
+        toast({
+          title: "Removed",
+          description: "Removed from your saved listings",
+        });
+      } else {
+        await favoritesService.addToFavorites(listingId);
+        setFavoriteIds(prev => new Set([...prev, listingId]));
+        toast({
+          title: "Saved",
+          description: "Added to your saved listings",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorites",
+        variant: "destructive",
+      });
+    } finally {
+      setTogglingFavorite(null);
+    }
+  };
+
   const handleSearch = () => {
     if (searchQuery.trim()) {
       navigate(`/listings?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
-  const filteredListings = searchQuery
-    ? listings.filter((listing) =>
-        listing.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : listings;
+  const filteredListings = listings.filter((listing) => {
+    // Search filter
+    if (searchQuery && !listing.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
+    // Location filter
+    if (city && city !== 'Pakistan') {
+      const location = listing.location || '';
+      if (!location.includes(city)) {
+        return false;
+      }
+      if (area && area.trim() !== '') {
+        if (!location.includes(area)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] via-[#e8e8dc] to-[#f5f5f0]">
@@ -156,6 +264,84 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Location Filter Bar */}
+      <section className="py-4 px-4 bg-white/60 backdrop-blur-sm border-t">
+        <div className="container mx-auto">
+          <div className="flex flex-wrap gap-3 justify-center items-center">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-[#143109]" />
+              <span className="font-semibold text-[#143109]">Filter by Location:</span>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant={!city || city === 'Pakistan' ? "default" : "outline"}
+                onClick={() => { setCity('Pakistan'); setArea(''); }}
+                className={`h-10 px-6 ${
+                  !city || city === 'Pakistan'
+                    ? "bg-[#143109] hover:bg-[#143109]/90"
+                    : "hover:border-[#143109] hover:text-[#143109]"
+                }`}
+              >
+                🇵🇰 All Pakistan
+              </Button>
+              <Button
+                variant={city === 'Islamabad' ? "default" : "outline"}
+                onClick={() => { setCity('Islamabad'); setArea(''); }}
+                className={`h-10 px-6 ${
+                  city === 'Islamabad'
+                    ? "bg-[#143109] hover:bg-[#143109]/90"
+                    : "hover:border-[#143109] hover:text-[#143109]"
+                }`}
+              >
+                Islamabad
+              </Button>
+              <Button
+                variant={city === 'Rawalpindi' ? "default" : "outline"}
+                onClick={() => { setCity('Rawalpindi'); setArea(''); }}
+                className={`h-10 px-6 ${
+                  city === 'Rawalpindi'
+                    ? "bg-[#143109] hover:bg-[#143109]/90"
+                    : "hover:border-[#143109] hover:text-[#143109]"
+                }`}
+              >
+                Rawalpindi
+              </Button>
+            </div>
+            {city && city !== 'Pakistan' && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Area:</span>
+                <select
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  className="h-10 px-4 rounded-md border border-gray-300 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#143109]"
+                >
+                  <option value="">All {city}</option>
+                  {city === 'Islamabad' && [
+                    'Bahria Town', 'Blue Area', 'DHA Phase 1', 'DHA Phase 2',
+                    'F-6', 'F-7', 'F-8', 'F-10', 'F-11',
+                    'G-6', 'G-7', 'G-8', 'G-9', 'G-10', 'G-11', 'G-13', 'G-14', 'G-15',
+                    'I-8', 'I-9', 'I-10', 'I-11', 'I-14',
+                    'PWD Housing Scheme', 'Sector B-17', 'Sector C-18', 'Sector D-12', 'Sector E-11',
+                    'Zaraj Housing Society'
+                  ].sort().map(a => <option key={a} value={a}>{a}</option>)}
+                  {city === 'Rawalpindi' && [
+                    'Adyala Road', 'Airport Housing Society',
+                    'Bahria Town Phase 1', 'Bahria Town Phase 2', 'Bahria Town Phase 3',
+                    'Bahria Town Phase 4', 'Bahria Town Phase 5', 'Bahria Town Phase 6',
+                    'Bahria Town Phase 7', 'Bahria Town Phase 8',
+                    'Chaklala Scheme 3', 'DHA Phase 1', 'DHA Phase 2',
+                    'Gulraiz Housing Scheme', 'Gulshan-e-Abad',
+                    'National Police Foundation', 'Rehmanabad',
+                    'Saddar', 'Satellite Town', 'Soan Garden', 'Tench Bhatta',
+                    'Westridge'
+                  ].sort().map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Main Content - Listings Grid */}
       <section className="py-8 px-4">
         <div className="container mx-auto">
@@ -199,9 +385,9 @@ const Home = () => {
                 <Link key={listing.id} to={`/product/${listing.id}`}>
                   <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-[#143109]/30 bg-white">
                     <div className="relative aspect-square overflow-hidden bg-muted">
-                      {getImageUrl(listing.image_url) ? (
+                      {getListingImage(listing) && getImageUrl(getListingImage(listing)!) ? (
                         <img
-                          src={getImageUrl(listing.image_url)!}
+                          src={getImageUrl(getListingImage(listing)!)!}
                           alt={listing.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -216,14 +402,25 @@ const Home = () => {
                         </Badge>
                       )}
                       <button 
-                        className="absolute top-2 right-2 p-2 rounded-full bg-white/90 hover:bg-white transition-colors shadow-md hover:shadow-lg z-10"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Navigate to product detail where favorites can be managed
-                          navigate(`/product/${listing.id}`);
-                        }}
+                        className={`absolute top-2 right-2 p-2 rounded-full transition-all shadow-md hover:shadow-lg z-10 ${
+                          favoriteIds.has(listing.id)
+                            ? 'bg-red-50 hover:bg-red-100'
+                            : 'bg-white/90 hover:bg-white'
+                        }`}
+                        onClick={(e) => toggleFavorite(listing.id, e)}
+                        disabled={togglingFavorite === listing.id}
                       >
-                        <Heart className="h-4 w-4 text-gray-600 hover:text-red-500 transition-colors" />
+                        {togglingFavorite === listing.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                        ) : (
+                          <Heart 
+                            className={`h-4 w-4 transition-colors ${
+                              favoriteIds.has(listing.id)
+                                ? 'text-red-500 fill-red-500'
+                                : 'text-gray-600 hover:text-red-500'
+                            }`} 
+                          />
+                        )}
                       </button>
                       {listing.is_featured && (
                         <Badge className="absolute top-2 left-2 bg-yellow-500">

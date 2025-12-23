@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { listingService, getImageUrl } from '@/lib/api';
-import { Search, Filter, Home, X } from 'lucide-react';
+import { listingService, getImageUrl, favoritesService } from '@/lib/api';
+import { Search, Filter, Home, X, Heart, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Listings() {
   const [listings, setListings] = useState<any[]>([]);
@@ -19,14 +20,23 @@ export default function Listings() {
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [city, setCity] = useState('');
+  const [area, setArea] = useState('');
   const [showFilters, setShowFilters] = useState(true);
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
+  const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
+  const { toast } = useToast();
   
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const conditions = ['new', 'like-new', 'good', 'fair'];
   const brands = ['Apple', 'Samsung', 'Huawei', 'Oppo', 'Vivo', 'Xiaomi', 'Realme', 'OnePlus', 'Google', 'HP', 'Dell', 'Lenovo', 'Asus', 'Acer', 'MSI'];
 
   useEffect(() => {
     fetchListings();
-  }, [category, selectedConditions, priceRange, selectedBrands]);
+    if (currentUser?.id) {
+      fetchFavorites();
+    }
+  }, [category, selectedConditions, priceRange, selectedBrands, city, area]);
 
   const fetchListings = async () => {
     try {
@@ -38,19 +48,90 @@ export default function Listings() {
       
       let data = await listingService.getAllListings(params);
       
-      // Client-side filtering for conditions and brands
+      // Client-side filtering for conditions, brands, and location
       if (selectedConditions.length > 0) {
         data = data.filter((listing: any) => selectedConditions.includes(listing.condition));
       }
       if (selectedBrands.length > 0) {
         data = data.filter((listing: any) => listing.brand && selectedBrands.includes(listing.brand));
       }
+      if (city && city !== 'Pakistan') {
+        if (area) {
+          // Filter by city and area
+          data = data.filter((listing: any) => {
+            const location = listing.location || '';
+            return location.includes(city) && location.includes(area);
+          });
+        } else {
+          // Filter by city only
+          data = data.filter((listing: any) => {
+            const location = listing.location || '';
+            return location.includes(city);
+          });
+        }
+      }
+      // If city is 'Pakistan' or empty, show all listings (no location filter)
       
       setListings(data);
     } catch (error) {
       console.error('Failed to fetch listings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    try {
+      const favorites = await favoritesService.getFavorites();
+      setFavoriteIds(new Set(favorites.map((f: any) => f.id)));
+    } catch (error) {
+      console.error('Failed to fetch favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (listingId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!currentUser?.id) {
+      toast({
+        title: "Login Required",
+        description: "Please login to save listings",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setTogglingFavorite(listingId);
+    try {
+      if (favoriteIds.has(listingId)) {
+        await favoritesService.removeFromFavorites(listingId);
+        setFavoriteIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(listingId);
+          return newSet;
+        });
+        toast({
+          title: "Removed",
+          description: "Removed from your saved listings",
+        });
+      } else {
+        await favoritesService.addToFavorites(listingId);
+        setFavoriteIds(prev => new Set([...prev, listingId]));
+        toast({
+          title: "Saved",
+          description: "Added to your saved listings",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorites",
+        variant: "destructive",
+      });
+    } finally {
+      setTogglingFavorite(null);
     }
   };
 
@@ -75,10 +156,12 @@ export default function Listings() {
     setSelectedConditions([]);
     setPriceRange([0, 500000]);
     setSelectedBrands([]);
+    setCity('');
+    setArea('');
     setSearch('');
   };
 
-  const activeFilterCount = selectedConditions.length + selectedBrands.length + (category ? 1 : 0) + (priceRange[0] > 0 || priceRange[1] < 500000 ? 1 : 0);
+  const activeFilterCount = selectedConditions.length + selectedBrands.length + (category ? 1 : 0) + (priceRange[0] > 0 || priceRange[1] < 500000 ? 1 : 0) + (city && city !== 'Pakistan' ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc]">
@@ -144,6 +227,56 @@ export default function Listings() {
                       <SelectItem value="furniture">Furniture</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Location Filter */}
+                <div>
+                  <Label className="text-sm font-semibold mb-3 block">Location</Label>
+                  <div className="space-y-3">
+                    <Select value={city} onValueChange={(value) => {
+                      setCity(value);
+                      setArea('');
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Pakistan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pakistan">🇵🇰 All Pakistan</SelectItem>
+                        <SelectItem value="Islamabad">Islamabad</SelectItem>
+                        <SelectItem value="Rawalpindi">Rawalpindi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {city && city !== 'Pakistan' && (
+                      <Select value={area} onValueChange={setArea}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={`All ${city}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=" ">All {city}</SelectItem>
+                          {city === 'Islamabad' && [
+                            'Bahria Town', 'Blue Area', 'DHA Phase 1', 'DHA Phase 2',
+                            'F-6', 'F-7', 'F-8', 'F-10', 'F-11',
+                            'G-6', 'G-7', 'G-8', 'G-9', 'G-10', 'G-11', 'G-13', 'G-14', 'G-15',
+                            'I-8', 'I-9', 'I-10', 'I-11', 'I-14',
+                            'PWD Housing Scheme', 'Sector B-17', 'Sector C-18', 'Sector D-12', 'Sector E-11',
+                            'Zaraj Housing Society'
+                          ].sort().map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                          {city === 'Rawalpindi' && [
+                            'Adyala Road', 'Airport Housing Society',
+                            'Bahria Town Phase 1', 'Bahria Town Phase 2', 'Bahria Town Phase 3',
+                            'Bahria Town Phase 4', 'Bahria Town Phase 5', 'Bahria Town Phase 6',
+                            'Bahria Town Phase 7', 'Bahria Town Phase 8',
+                            'Chaklala Scheme 3', 'DHA Phase 1', 'DHA Phase 2',
+                            'Gulraiz Housing Scheme', 'Gulshan-e-Abad',
+                            'National Police Foundation', 'Rehmanabad',
+                            'Saddar', 'Satellite Town', 'Soan Garden', 'Tench Bhatta',
+                            'Westridge'
+                          ].sort().map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </div>
 
                 {/* Condition Filter */}
@@ -253,11 +386,36 @@ export default function Listings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {listings.map((listing) => (
                     <Link key={listing.id} to={`/product/${listing.id}`}>
-                      <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                      <Card className="group hover:shadow-lg transition-shadow cursor-pointer h-full relative">
+                        {/* Favorite Button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`absolute top-3 right-3 z-10 rounded-full shadow-md transition-all ${
+                            favoriteIds.has(listing.id) 
+                              ? 'bg-red-50 hover:bg-red-100' 
+                              : 'bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100'
+                          }`}
+                          onClick={(e) => toggleFavorite(listing.id, e)}
+                          disabled={togglingFavorite === listing.id}
+                        >
+                          {togglingFavorite === listing.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Heart 
+                              className={`h-4 w-4 transition-colors ${
+                                favoriteIds.has(listing.id) 
+                                  ? 'text-red-500 fill-red-500' 
+                                  : 'text-gray-500 hover:text-red-500'
+                              }`} 
+                            />
+                          )}
+                        </Button>
+                        
                         <CardHeader>
-                          <div className="aspect-video bg-slate-200 rounded-md mb-4 flex items-center justify-center relative">
+                          <div className="aspect-video bg-slate-200 rounded-md mb-4 flex items-center justify-center relative overflow-hidden">
                             {getImageUrl(listing.image_url) ? (
-                              <img src={getImageUrl(listing.image_url)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
+                              <img src={getImageUrl(listing.image_url)!} alt={listing.title} className="w-full h-full object-cover rounded-md group-hover:scale-105 transition-transform duration-300" />
                             ) : (
                               <span className="text-slate-500">No image</span>
                             )}

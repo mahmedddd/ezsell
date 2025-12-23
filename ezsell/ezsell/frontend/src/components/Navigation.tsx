@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Store, User, LogOut, Plus, Package, MessageCircle, Home, Search, Grid } from "lucide-react";
+import { Store, User, LogOut, Plus, Package, MessageCircle, Home, Search, Grid, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -129,6 +129,20 @@ const Navigation = () => {
                   )}
                 </Button>
               </Link>
+
+              <Link to="/favorites">
+                <Button 
+                  variant={isActive("/favorites") ? "default" : "ghost"} 
+                  className={`flex items-center gap-2 font-medium ${
+                    isActive("/favorites") 
+                      ? "bg-[#143109] hover:bg-[#143109]/90 text-white" 
+                      : "text-gray-700 hover:text-[#143109] hover:bg-gray-100"
+                  }`}
+                >
+                  <Heart className="w-5 h-5" />
+                  <span className="text-sm font-semibold">Saved</span>
+                </Button>
+              </Link>
             </div>
           )}
 
@@ -161,6 +175,10 @@ const Navigation = () => {
                     <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                       <Package className="w-4 h-4 mr-2" />
                       My Listings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/favorites")}>
+                      <Heart className="w-4 h-4 mr-2" />
+                      Saved Listings
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                       <User className="w-4 h-4 mr-2" />

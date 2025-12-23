@@ -19,13 +19,19 @@ import { listingService, getImageUrl } from '@/lib/api';
 import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle, Info, PartyPopper, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export function CreateListingFormNew() {
+interface CreateListingFormNewProps {
+  editMode?: boolean;
+  listingId?: number;
+  existingData?: any;
+}
+
+export function CreateListingFormNew({ editMode = false, listingId, existingData }: CreateListingFormNewProps = {}) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [predicting, setPredicting] = useState(false);
   const [validatingTitle, setValidatingTitle] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [dropdownOptions, setDropdownOptions] = useState<any>({});
   const [titleValidation, setTitleValidation] = useState<{
     is_valid: boolean;
@@ -41,7 +47,9 @@ export function CreateListingFormNew() {
     description: '',
     price: '',
     category: 'mobile',
-    condition: 'used',
+    condition: '5',
+    city: '',
+    area: '',
     location: '',
     // Mobile specs
     brand: '',
@@ -125,6 +133,80 @@ export function CreateListingFormNew() {
     }
   }, [formData.category]);
 
+  // Populate form data in edit mode
+  useEffect(() => {
+    if (editMode && existingData) {
+      // Parse location if it exists
+      let city = '';
+      let area = '';
+      if (existingData.location) {
+        const locationParts = existingData.location.split(',').map((s: string) => s.trim());
+        if (locationParts.length >= 2) {
+          city = locationParts[0];
+          area = locationParts[1];
+        } else {
+          city = locationParts[0] || '';
+        }
+      }
+
+      setFormData({
+        title: existingData.title || '',
+        description: existingData.description || '',
+        price: existingData.price?.toString() || '',
+        category: existingData.category || 'mobile',
+        condition: existingData.condition || '5',
+        city: city,
+        area: area,
+        location: existingData.location || '',
+        brand: existingData.brand || '',
+        ram: existingData.ram || 0,
+        storage: existingData.storage || 0,
+        camera: existingData.camera || 0,
+        battery: existingData.battery || 0,
+        screen_size: existingData.screen_size || 0,
+        has_5g: existingData.has_5g || false,
+        has_pta: existingData.has_pta || false,
+        has_amoled: existingData.has_amoled || false,
+        has_warranty: existingData.has_warranty || false,
+        has_box: existingData.has_box || false,
+        processor: existingData.processor || '',
+        generation: existingData.generation || 10,
+        gpu: existingData.gpu || '',
+        has_ssd: existingData.has_ssd !== undefined ? existingData.has_ssd : true,
+        is_gaming: existingData.is_gaming || false,
+        is_touchscreen: existingData.is_touchscreen || false,
+        has_backlit_keyboard: existingData.has_backlit_keyboard || false,
+        material: existingData.material || '',
+        furniture_type: existingData.furniture_type || '',
+        furniture_subtype: existingData.furniture_subtype || '',
+        seating_capacity: existingData.seating_capacity || 0,
+        is_imported: existingData.is_imported || false,
+        is_handmade: existingData.is_handmade || false,
+        has_storage: existingData.has_storage || false,
+        is_modern: existingData.is_modern || false,
+        is_antique: existingData.is_antique || false,
+        is_foldable: existingData.is_foldable || false,
+        is_custom_made: existingData.is_custom_made || false,
+      });
+
+      // Load existing images as previews
+      if (existingData.images) {
+        try {
+          const parsedImages = typeof existingData.images === 'string' ? JSON.parse(existingData.images) : existingData.images;
+          if (Array.isArray(parsedImages)) {
+            const imageUrls = parsedImages.map((img: string) => getImageUrl(img));
+            setImagePreviews(imageUrls.filter((url: string | null): url is string => url !== null));
+          }
+        } catch (e) {
+          console.error('Failed to parse existing images:', e);
+        }
+      } else if (existingData.image_url) {
+        const url = getImageUrl(existingData.image_url);
+        if (url) setImagePreviews([url]);
+      }
+    }
+  }, [editMode, existingData]);
+
   // Validate title with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -188,26 +270,43 @@ export function CreateListingFormNew() {
   ]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length > 7) {
+      alert('Maximum 7 images allowed');
+      return;
+    }
+    
+    // Validate each file
+    for (const file of files) {
       if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-        alert('Please upload only JPG or PNG images');
+        alert('Please upload only JPG, JPEG or PNG images');
         return;
       }
       
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Each image must be less than 10MB');
         return;
       }
+    }
 
-      setImageFile(file);
-      
+    setImageFiles(files);
+    
+    // Create previews for all images
+    const previews: string[] = [];
+    let loadedCount = 0;
+    
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        previews.push(reader.result as string);
+        loadedCount++;
+        if (loadedCount === files.length) {
+          setImagePreviews(previews);
+        }
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
   const handlePredictPrice = async () => {
@@ -349,9 +448,17 @@ export function CreateListingFormNew() {
       return;
     }
 
-    if (!imageFile) {
-      alert('❌ Please upload a product image');
-      return;
+    // Only require images for new listings, not when editing
+    if (!editMode) {
+      if (imageFiles.length < 5) {
+        alert('❌ Please upload at least 5 product images');
+        return;
+      }
+      
+      if (imageFiles.length > 10) {
+        alert('❌ Maximum 10 images allowed');
+        return;
+      }
     }
 
     // Category-specific validation
@@ -384,9 +491,9 @@ export function CreateListingFormNew() {
     }
 
     setLoading(true);
-    console.log('=== STARTING LISTING CREATION ===');
+    console.log(editMode ? '=== STARTING LISTING UPDATE ===' : '=== STARTING LISTING CREATION ===');
     console.log('Form data:', formData);
-    console.log('Image file:', imageFile?.name, imageFile?.type, imageFile?.size);
+    console.log('Image files:', imageFiles.map(f => f.name));
     console.log('Token present:', !!localStorage.getItem('authToken'));
 
     try {
@@ -397,7 +504,7 @@ export function CreateListingFormNew() {
         category: formData.category,
         condition: formData.condition,
         location: formData.location.trim(),
-        images: imageFile ? [imageFile] : undefined,
+        images: imageFiles.length > 0 ? imageFiles : undefined,
         predicted_price: prediction?.predicted_price || undefined,
         brand: formData.brand || undefined,
         material: formData.material || undefined,
@@ -405,15 +512,22 @@ export function CreateListingFormNew() {
       };
 
       console.log('Prepared listing data for API:', listingData);
-      console.log('Calling listingService.createListing...');
       
-      const result = await listingService.createListing(listingData);
-      
-      console.log('✅ Listing created successfully:', result);
-      
-      // Show preview dialog instead of alert
-      setCreatedListing(result);
-      setShowPreviewDialog(true);
+      let result;
+      if (editMode && listingId) {
+        console.log('Calling listingService.updateListing...');
+        result = await listingService.updateListing(listingId, listingData);
+        console.log('✅ Listing updated successfully:', result);
+        alert('✅ Listing updated successfully!');
+        navigate(`/product/${listingId}`);
+      } else {
+        console.log('Calling listingService.createListing...');
+        result = await listingService.createListing(listingData);
+        console.log('✅ Listing created successfully:', result);
+        // Show preview dialog instead of alert
+        setCreatedListing(result);
+        setShowPreviewDialog(true);
+      }
     } catch (error: any) {
       console.error('=== ERROR CREATING LISTING ===');
       console.error('Error object:', error);
@@ -478,10 +592,10 @@ export function CreateListingFormNew() {
         <CardHeader className="bg-gradient-to-r from-[#143109] to-[#AAAE7F] text-white">
           <CardTitle className="text-2xl flex items-center gap-2">
             <Sparkles className="h-6 w-6" />
-            Create New Listing
+            {editMode ? 'Edit Listing' : 'Create New Listing'}
           </CardTitle>
           <CardDescription className="text-white/90">
-            Add a new product with AI-powered price prediction
+            {editMode ? 'Update your product information' : 'Add a new product with AI-powered price prediction'}
           </CardDescription>
         </CardHeader>
         <CardContent className="mt-6">
@@ -515,9 +629,9 @@ export function CreateListingFormNew() {
                 </Select>
               </div>
 
-              {/* Condition */}
+              {/* Condition - 10 Level Scale */}
               <div className="space-y-2">
-                <Label>Condition *</Label>
+                <Label>Condition * (Affects Price Prediction)</Label>
                 <Select
                   value={formData.condition}
                   onValueChange={(value) => setFormData({ ...formData, condition: value })}
@@ -526,11 +640,21 @@ export function CreateListingFormNew() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="used">Used</SelectItem>
-                    <SelectItem value="refurbished">Refurbished</SelectItem>
+                    <SelectItem value="10">10 - Brand New/Sealed (~100% value)</SelectItem>
+                    <SelectItem value="9">9 - Excellent/Mint (~95% value)</SelectItem>
+                    <SelectItem value="8">8 - Like New (~88% value)</SelectItem>
+                    <SelectItem value="7">7 - Very Good (~80% value)</SelectItem>
+                    <SelectItem value="6">6 - Good (~70% value)</SelectItem>
+                    <SelectItem value="5">5 - Average/Used (~60% value)</SelectItem>
+                    <SelectItem value="4">4 - Fair (~48% value)</SelectItem>
+                    <SelectItem value="3">3 - Acceptable (~35% value)</SelectItem>
+                    <SelectItem value="2">2 - Poor/Damaged (~25% value)</SelectItem>
+                    <SelectItem value="1">1 - For Parts/Broken (~15% value)</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select the condition level that best matches your product. Higher numbers = better condition = higher predicted price.
+                </p>
               </div>
 
               {/* Title with Validation */}
@@ -594,37 +718,96 @@ export function CreateListingFormNew() {
                 />
               </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <Label>Location *</Label>
-                <Input
-                  placeholder="City, Area (e.g., Lahore, DHA)"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
-                />
+              {/* Location - City and Area */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>City *</Label>
+                  <Select
+                    value={formData.city}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, city: value, area: '', location: value });
+                    }}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select city" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Islamabad">Islamabad</SelectItem>
+                      <SelectItem value="Rawalpindi">Rawalpindi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Area/Sector *</Label>
+                  <Select
+                    value={formData.area}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, area: value, location: `${formData.city}, ${value}` });
+                    }}
+                    disabled={!formData.city}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={formData.city ? "Select area" : "Select city first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formData.city === 'Islamabad' && [
+                        'Bahria Town', 'Blue Area', 'DHA Phase 1', 'DHA Phase 2', 'F-6', 'F-7', 'F-8', 'F-10', 'F-11',
+                        'G-6', 'G-7', 'G-8', 'G-9', 'G-10', 'G-11', 'G-13', 'G-14', 'G-15',
+                        'I-8', 'I-9', 'I-10', 'I-11', 'I-14',
+                        'PWD Housing Scheme', 'Sector B-17', 'Sector C-18', 'Sector D-12', 'Sector D-17', 'Sector E-7', 'Sector E-11'
+                      ].sort().map(area => (
+                        <SelectItem key={area} value={area}>{area}</SelectItem>
+                      ))}
+                      {formData.city === 'Rawalpindi' && [
+                        'Adyala Road', 'Airport Housing Society', 'Allama Iqbal Town', 'Bahria Town Phase 1', 'Bahria Town Phase 2',
+                        'Bahria Town Phase 3', 'Bahria Town Phase 4', 'Bahria Town Phase 5', 'Bahria Town Phase 6',
+                        'Bahria Town Phase 7', 'Bahria Town Phase 8', 'Chaklala Scheme 3', 'Commercial Market',
+                        'Committee Chowk', 'DHA Phase 1', 'DHA Phase 2', 'Gulistan Colony', 'Gulzar-e-Quaid',
+                        'Jinnah Garden', 'Korang Town', 'Main Murree Road', 'Misrial Road', 'Model Town',
+                        'Peoples Colony', 'PWD Housing Scheme', 'Saddar', 'Satellite Town', 'Shamshabad', 'Shamsabad',
+                        'Tench Bhatta', 'Westridge', 'Wah Cantt'
+                      ].sort().map(area => (
+                        <SelectItem key={area} value={area}>{area}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <Label>Product Image * (JPG or PNG)</Label>
+                <Label>Product Images (Up to 7 images)</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#143109] transition-colors">
-                  {imagePreview ? (
+                  {imagePreviews.length > 0 ? (
                     <div className="space-y-4">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="max-h-64 mx-auto rounded-lg object-contain"
-                      />
+                      <div className="grid grid-cols-3 gap-4">
+                        {imagePreviews.map((preview, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className="h-32 w-full rounded-lg object-cover"
+                            />
+                            <span className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                              {index + 1}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-sm text-green-600 font-medium">
+                        ✅ {imagePreviews.length} images uploaded
+                      </p>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          setImageFile(null);
-                          setImagePreview(null);
+                          setImageFiles([]);
+                          setImagePreviews([]);
                         }}
                       >
-                        Remove Image
+                        Remove All Images
                       </Button>
                     </div>
                   ) : (
@@ -634,14 +817,17 @@ export function CreateListingFormNew() {
                         accept=".jpg,.jpeg,.png"
                         onChange={handleImageChange}
                         className="hidden"
-                        required
+                        multiple
                       />
                       <Upload className="h-12 w-12 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600">
-                        Click to upload up to 5 images
+                      <p className="text-sm text-gray-600 font-medium">
+                        Click to upload images (optional)
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        JPG, PNG - Max 5MB each
+                        JPG, JPEG, PNG - Max 10MB each - Up to 7 images
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        📸 Maximum 7 images allowed
                       </p>
                     </label>
                   )}
@@ -669,6 +855,7 @@ export function CreateListingFormNew() {
                           <SelectItem value="Apple">Apple</SelectItem>
                           <SelectItem value="Samsung">Samsung</SelectItem>
                           <SelectItem value="Xiaomi">Xiaomi</SelectItem>
+                          <SelectItem value="Redmi">Redmi</SelectItem>
                           <SelectItem value="Oppo">Oppo</SelectItem>
                           <SelectItem value="Vivo">Vivo</SelectItem>
                           <SelectItem value="Realme">Realme</SelectItem>
@@ -1173,12 +1360,19 @@ export function CreateListingFormNew() {
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-sm text-green-800">
-                        <TrendingUp className="h-4 w-4" />
-                        <span>
-                          Range: {formatCurrency(prediction.confidence_lower)} - 
-                          {formatCurrency(prediction.confidence_upper)}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm text-green-800">
+                          <TrendingUp className="h-4 w-4" />
+                          <span>
+                            Range: {formatCurrency(prediction.confidence_lower)} - 
+                            {formatCurrency(prediction.confidence_upper)}
+                          </span>
+                        </div>
+                        {prediction.confidence_score && (
+                          <span className="text-sm font-medium text-green-700 bg-green-100 px-2 py-1 rounded">
+                            {Math.round(prediction.confidence_score * 100)}% Confidence
+                          </span>
+                        )}
                       </div>
 
                       <div className="text-xs text-green-700">
@@ -1279,10 +1473,26 @@ export function CreateListingFormNew() {
                   required
                 />
                 {prediction && (
-                  <p className="text-sm text-muted-foreground">
-                    💡 Recommended: {formatCurrency(prediction.predicted_price)} 
-                    (±{formatCurrency(prediction.predicted_price - prediction.confidence_lower)})
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                      💡 Recommended: {formatCurrency(prediction.predicted_price)} 
+                      (±{formatCurrency(prediction.predicted_price - prediction.confidence_lower)})
+                    </p>
+                    {prediction.allowed_price_min && prediction.allowed_price_max && (
+                      <>
+                        <p className="text-sm font-medium text-green-700">
+                          ✅ Auto-Approval Range: {formatCurrency(prediction.allowed_price_min)} - {formatCurrency(prediction.allowed_price_max)}
+                        </p>
+                        {formData.price && (
+                          Number(formData.price) < prediction.allowed_price_min || Number(formData.price) > prediction.allowed_price_max
+                        ) && (
+                          <p className="text-sm font-medium text-orange-600 bg-orange-50 p-2 rounded">
+                            ⚠️ Price outside auto-approval range. Your listing will be sent for admin review.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -1297,10 +1507,10 @@ export function CreateListingFormNew() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Creating Listing...
+                  {editMode ? 'Updating Listing...' : 'Creating Listing...'}
                 </>
               ) : (
-                'Create Listing'
+                editMode ? 'Update Listing' : 'Create Listing'
               )}
             </Button>
           </form>

@@ -242,6 +242,17 @@ export default function ProductDetail() {
                 </div>
 
                 <div className="pt-4 space-y-2">
+                  {isOwner && (
+                    <Button 
+                      className="w-full bg-[#143109] hover:bg-[#AAAE7F]" 
+                      size="lg"
+                      onClick={() => navigate(`/edit-listing/${listing.id}`)}
+                    >
+                      <MessageCircle className="mr-2 h-5 w-5" />
+                      Edit Listing
+                    </Button>
+                  )}
+                  
                   {!isOwner && (
                     <Button 
                       className="w-full bg-[#143109] hover:bg-[#AAAE7F]" 
@@ -261,6 +272,7 @@ export default function ProductDetail() {
                       listingTitle={listing.title}
                       category={listing.category}
                       price={listing.price}
+                      furnitureImageUrl={getAllImages()[0] ? getImageUrl(getAllImages()[0]) : undefined}
                     />
                     <RealisticARViewer 
                       listingId={listing.id}
