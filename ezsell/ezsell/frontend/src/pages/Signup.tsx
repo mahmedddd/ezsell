@@ -190,7 +190,23 @@ export default function Signup() {
       
       navigate('/dashboard');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || error.message || 'Registration failed. Please try again.';
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.response?.data?.detail) {
+        // Handle FastAPI validation errors (array of objects)
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail
+            .map((err: any) => err.msg || JSON.stringify(err))
+            .join(', ');
+        } else if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else {
+          errorMessage = JSON.stringify(error.response.data.detail);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Registration Failed',
         description: errorMessage,

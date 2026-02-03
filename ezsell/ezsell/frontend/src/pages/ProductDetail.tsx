@@ -67,7 +67,7 @@ export default function ProductDetail() {
 
   const fetchListing = async (listingId: number) => {
     try {
-      const data = await listingService.getListingById(listingId);
+      const data = await listingService.getListing(listingId);
       setListing(data);
       // Check if listing is favorited
       if (currentUser?.id) {

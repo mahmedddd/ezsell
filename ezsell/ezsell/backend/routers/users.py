@@ -55,44 +55,62 @@ async def send_verification_code(request: dict, db: Session = Depends(get_db)):
     - Sends email with code
     - Stores code in database (expires in 2 minutes)
     """
-    email = request.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
-    
-    # Check if email already registered
-    existing_user = get_user_by_email(db, email=email)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Generate verification code
-    code = email_service.generate_verification_code()
-    
-    # Send email
     try:
-        email_sent = await email_service.send_verification_email(email, code)
-        if not email_sent:
+        print(f"[VERIFICATION] Received request: {request}")
+        email = request.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Email is required")
+        
+        print(f"[VERIFICATION] Checking if email exists: {email}")
+        # Check if email already registered
+        existing_user = get_user_by_email(db, email=email)
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        print(f"[VERIFICATION] Generating verification code")
+        # Generate verification code
+        code = email_service.generate_verification_code()
+        print(f"[VERIFICATION] Generated code: {code}")
+        
+        # Send email
+        try:
+            print(f"[VERIFICATION] Attempting to send email")
+            email_sent = await email_service.send_verification_email(email, code)
+            print(f"[VERIFICATION] Email sent result: {email_sent}")
+            if not email_sent:
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Failed to send verification email. Please check your email address or try again later."
+                )
+        except Exception as e:
+            print(f"Email sending error: {e}")
+            import traceback
+            traceback.print_exc()
             raise HTTPException(
-                status_code=500, 
-                detail="Failed to send verification email. Please check your email address or try again later."
+                status_code=500,
+                detail="Email service is temporarily unavailable. Please try again later or contact support."
             )
-    except Exception as e:
-        print(f"Email sending error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Email service is temporarily unavailable. Please try again later or contact support."
+        
+        print(f"[VERIFICATION] Storing code in database")
+        # Store verification code in database (expires in 2 minutes)
+        verification = EmailVerification(
+            email=email,
+            code=code,
+            expires_at=datetime.utcnow() + timedelta(minutes=2),
+            is_used=False
         )
-    
-    # Store verification code in database (expires in 2 minutes)
-    verification = EmailVerification(
-        email=email,
-        code=code,
-        expires_at=datetime.utcnow() + timedelta(minutes=2),
-        is_used=False
-    )
-    db.add(verification)
-    db.commit()
-    
-    return {"message": "Verification code sent to email", "email": email}
+        db.add(verification)
+        db.commit()
+        print(f"[VERIFICATION] Success!")
+        
+        return {"message": "Verification code sent to email", "email": email}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[VERIFICATION] Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/verify-code")
 def verify_email_code(request: dict, db: Session = Depends(get_db)):

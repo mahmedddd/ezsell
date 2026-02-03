@@ -54,7 +54,7 @@ const Home = () => {
     try {
       setLoading(true);
       const params = selectedCategory !== "all" ? { category: selectedCategory } : {};
-      const data = await listingService.getAllListings(params);
+      const data = await listingService.getListings(params);
       console.log('Loaded listings:', data);
       setListings(Array.isArray(data) ? data : []);
     } catch (error: any) {
@@ -120,7 +120,7 @@ const Home = () => {
     setTogglingFavorite(listingId);
     try {
       if (favoriteIds.has(listingId)) {
-        await favoritesService.removeFromFavorites(listingId);
+        await favoritesService.removeFavorite(listingId);
         setFavoriteIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(listingId);

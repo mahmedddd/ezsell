@@ -1,9 +1,11 @@
 # Environment variables and settings
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, ConfigDict
 from pydantic_settings import BaseSettings
 from typing import List, Union
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(extra='allow', case_sensitive=True, env_file=".env")
+    
     PROJECT_NAME: str = "EZSell FastAPI"
     PROJECT_VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
@@ -30,9 +32,5 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = ""
-
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
 
 settings = Settings()

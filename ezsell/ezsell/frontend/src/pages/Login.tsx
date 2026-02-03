@@ -41,11 +41,22 @@ export default function Login() {
       let errorMessage = 'Invalid username or password';
       
       if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
+        // Handle FastAPI validation errors (array of objects)
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail
+            .map((err: any) => err.msg || JSON.stringify(err))
+            .join(', ');
+        } else if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else {
+          errorMessage = JSON.stringify(error.response.data.detail);
+        }
       } else if (error.response?.status === 401) {
         errorMessage = 'Incorrect username or password. Please try again.';
       } else if (error.response?.status === 404) {
         errorMessage = 'User not found. Please check your username or sign up.';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Please check your username and password format.';
       } else if (error.message === 'Network Error' || !error.response) {
         errorMessage = 'Unable to connect to server. Please check your internet connection.';
       }

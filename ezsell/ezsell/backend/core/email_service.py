@@ -22,6 +22,11 @@ class EmailService:
         Returns True if sent successfully, False otherwise
         """
         try:
+            print(f"[EMAIL] Attempting to send verification email to: {to_email}")
+            print(f"[EMAIL] SMTP Config - Host: {settings.SMTP_HOST}, Port: {settings.SMTP_PORT}")
+            print(f"[EMAIL] SMTP Username: {settings.SMTP_USERNAME}")
+            print(f"[EMAIL] From Email: {settings.SMTP_FROM_EMAIL}")
+            
             # Create message
             message = MIMEMultipart("alternative")
             message["Subject"] = "EZSell - Email Verification Code"

@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { listingService } from '@/lib/api';
-import CreateListingFormNew from '@/components/CreateListingFormNew';
+import { CreateListingFormNew } from '@/components/CreateListingFormNew';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
 

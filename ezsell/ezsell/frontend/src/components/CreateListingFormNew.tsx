@@ -450,8 +450,8 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
 
     // Only require images for new listings, not when editing
     if (!editMode) {
-      if (imageFiles.length < 5) {
-        alert('❌ Please upload at least 5 product images');
+      if (imageFiles.length < 2) {
+        alert('❌ Please upload at least 2 product images');
         return;
       }
       
@@ -799,16 +799,40 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                       <p className="text-sm text-green-600 font-medium">
                         ✅ {imagePreviews.length} images uploaded
                       </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setImageFiles([]);
-                          setImagePreviews([]);
-                        }}
-                      >
-                        Remove All Images
-                      </Button>
+                      <div className="flex gap-2">
+                        {imagePreviews.length < 7 && (
+                          <label className="flex-1">
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,.png"
+                              onChange={handleImageChange}
+                              className="hidden"
+                              multiple
+                            />
+                            <Button
+                              type="button"
+                              variant="default"
+                              className="w-full"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                (e.currentTarget.previousElementSibling as HTMLInputElement)?.click();
+                              }}
+                            >
+                              ➕ Add More Images
+                            </Button>
+                          </label>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setImageFiles([]);
+                            setImagePreviews([]);
+                          }}
+                        >
+                          Remove All Images
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <label className="cursor-pointer block">
@@ -821,13 +845,13 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                       />
                       <Upload className="h-12 w-12 mx-auto text-gray-400 mb-2" />
                       <p className="text-sm text-gray-600 font-medium">
-                        Click to upload images (optional)
+                        Click to upload images
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         JPG, JPEG, PNG - Max 10MB each - Up to 7 images
                       </p>
                       <p className="text-xs text-gray-500 mt-2">
-                        📸 Maximum 7 images allowed
+                        📸 Minimum 2 images required - Maximum 7 images allowed
                       </p>
                     </label>
                   )}
@@ -1538,9 +1562,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Image */}
                     <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                      {imagePreview ? (
+                      {imagePreviews.length > 0 ? (
                         <img
-                          src={imagePreview}
+                          src={imagePreviews[0]}
                           alt={createdListing.title}
                           className="w-full h-full object-cover"
                         />
