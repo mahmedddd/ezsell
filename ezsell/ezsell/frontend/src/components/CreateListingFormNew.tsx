@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { listingService, getImageUrl } from '@/lib/api';
+import { listingService, getImageUrl, API_BASE_URL } from '@/lib/api';
 import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle, Info, PartyPopper, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -88,7 +88,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
   // Load dropdown options for selected category
   const loadDropdownOptions = async (category: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/dropdown-options/${category}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/dropdown-options/${category}`);
       if (response.ok) {
         const data = await response.json();
         setDropdownOptions(data);
@@ -114,7 +114,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         material
       });
 
-      const response = await fetch(`http://localhost:8000/api/v1/validate-title?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/validate-title?${params}`);
       if (response.ok) {
         const result = await response.json();
         setTitleValidation(result);
@@ -368,7 +368,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         });
       }
 
-      const response = await fetch('http://localhost:8000/api/v1/predict-price', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/predict-price`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
@@ -538,7 +538,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       
       // Check for network error (no response)
       if (!error.response && !error.request) {
-        alert('❌ Network Error: Unable to connect to server. Please check if the backend is running on http://localhost:8000');
+        alert(`❌ Network Error: Unable to connect to server. Please check if the backend is running on ${API_BASE_URL}`);
         return;
       }
       

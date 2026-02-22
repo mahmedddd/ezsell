@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { listingService, predictionService } from '@/lib/api';
+import { listingService, predictionService, API_BASE_URL } from '@/lib/api';
 import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,7 +81,7 @@ export function CreateListingForm() {
   // Load dropdown options for selected category
   const loadDropdownOptions = async (category: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/dropdown-options/${category}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/dropdown-options/${category}`);
       if (response.ok) {
         const data = await response.json();
         setDropdownOptions(data);
@@ -107,7 +107,7 @@ export function CreateListingForm() {
         material
       });
 
-      const response = await fetch(`http://localhost:8000/api/v1/validate-title?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/validate-title?${params}`);
       if (response.ok) {
         const result = await response.json();
         setTitleValidation(result);
@@ -235,7 +235,7 @@ export function CreateListingForm() {
         requestData.is_antique = formData.is_antique;
       }
 
-      const response = await fetch('http://localhost:8000/api/v1/predict-price', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/predict-price`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),

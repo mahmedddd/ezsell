@@ -58,6 +58,7 @@ class ListingBase(BaseModel):
     brand: Optional[str] = None
     furniture_type: Optional[str] = None
     material: Optional[str] = None
+    furniture_subtype: Optional[str] = None  # e.g. "3_door", "4_door", "sliding"
 
 class ListingCreate(ListingBase):
     # Category-specific details

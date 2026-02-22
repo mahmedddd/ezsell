@@ -82,6 +82,7 @@ class Listing(Base):
     # Furniture-specific fields
     furniture_type = Column(String, nullable=True)  # sofa, bed, table, chair, etc.
     material = Column(String, nullable=True)  # wood, metal, fabric, leather, etc.
+    furniture_subtype = Column(String, nullable=True)  # e.g. "3_door", "4_door", "sliding", "L_shape"
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -93,6 +94,11 @@ class Listing(Base):
     confidence_score = Column(Float, nullable=True)
     ar_model_url = Column(String, nullable=True)
     views = Column(Integer, default=0)  # Track listing views
+    # ── AR 3-D Asset fields ──────────────────────────────────────────────────
+    model_glb_url   = Column(String, nullable=True)   # Optimised GLB (Android/WebXR)
+    model_usdz_url  = Column(String, nullable=True)   # USDZ (iOS AR QuickLook)
+    dimensions_cm   = Column(Text, nullable=True)     # JSON: {"l":int,"w":int,"h":int}
+    polygon_count   = Column(Integer, nullable=True)  # For LOD / perf gating
     
     # Relationships
     owner = relationship("User", back_populates="listings")

@@ -7,10 +7,118 @@ from pathlib import Path
 import uuid
 from datetime import datetime
 import json
+import re
+
+
+# ─── Generic furniture_subtype inference ──────────────────────────────────────
+def _infer_furniture_subtype(furniture_type: str, text: str) -> Optional[str]:
+    """
+    Infer furniture_subtype from listing title + description when the user
+    hasn't explicitly provided one.  Mirrors the frontend resolveSmartDimensions
+    / parseDoorCount rules so both sides stay in sync.
+    """
+    t = text.lower()
+    ft = (furniture_type or '').lower().strip()
+
+    if ft == 'wardrobe':
+        if re.search(r'6[\s-]*door|six[\s-]*door', t):    return '6_door'
+        if re.search(r'5[\s-]*door|five[\s-]*door', t):    return '5_door'
+        if re.search(r'4[\s-]*door|four[\s-]*door', t):    return '4_door'
+        if re.search(r'3[\s-]*door|three[\s-]*door', t):   return '3_door'
+        if re.search(r'2[\s-]*door|two[\s-]*door', t):     return '2_door'
+        if re.search(r'sliding', t):                        return 'sliding'
+        if re.search(r'walk[\s-]*in', t):                   return 'walk_in'
+        return '2_door'
+
+    if ft in ('sofa', 'couch'):
+        if re.search(r'7[\s-]*seater|seven[\s-]*seater', t): return '7_seater'
+        if re.search(r'6[\s-]*seater|six[\s-]*seater', t):   return '6_seater'
+        if re.search(r'5[\s-]*seater|five[\s-]*seater', t):  return '5_seater'
+        if re.search(r'4[\s-]*seater|four[\s-]*seater', t):  return '4_seater'
+        if re.search(r'3[\s-]*seater|three[\s-]*seater', t): return '3_seater'
+        if re.search(r'2[\s-]*seater|two[\s-]*seater|loveseat', t): return '2_seater'
+        if re.search(r'1[\s-]*seater|single[\s-]*seater', t): return '1_seater'
+        if re.search(r'l[\s-]*shaped|sectional', t):          return 'l_shaped'
+        if re.search(r'sofa.{0,10}bed|sofa.{0,10}cum|cum.{0,10}bed', t): return 'sofa_cum_bed'
+        if re.search(r'recliner', t):                          return 'recliner'
+        return '3_seater'
+
+    if ft == 'bed':
+        if re.search(r'king[\s-]*size|king[\s-]*bed|\bking\b', t):     return 'king'
+        if re.search(r'queen[\s-]*size|queen[\s-]*bed|\bqueen\b', t):  return 'queen'
+        if re.search(r'double[\s-]*bed|full[\s-]*size|\bdouble\b', t): return 'double'
+        if re.search(r'bunk[\s-]*bed|\bbunk\b', t):                    return 'bunk'
+        if re.search(r'single[\s-]*bed|twin[\s-]*bed|\bsingle\b|\btwin\b', t): return 'single'
+        return 'double'
+
+    if ft in ('table', 'dining_table'):
+        if re.search(r'10[\s-]*seater|ten[\s-]*person', t):  return 'dining_8'
+        if re.search(r'8[\s-]*seater|eight[\s-]*person', t): return 'dining_8'
+        if re.search(r'6[\s-]*seater|six[\s-]*person', t):   return 'dining_6'
+        if re.search(r'4[\s-]*seater|four[\s-]*person', t):  return 'dining_4'
+        if re.search(r'2[\s-]*seater|two[\s-]*person', t):   return 'dining_4'
+        if re.search(r'coffee', t):                           return 'coffee'
+        if re.search(r'side[\s-]*table|end[\s-]*table', t):  return 'side'
+        if re.search(r'console', t):                          return 'console'
+        if re.search(r'study|writing', t):                    return 'study'
+        return 'dining_4'
+
+    if ft == 'coffee_table':
+        return 'coffee'
+
+    if ft in ('chair', 'armchair'):
+        if re.search(r'gaming[\s-]*chair', t):                return 'gaming'
+        if re.search(r'office[\s-]*chair|revolving|executive[\s-]*chair', t): return 'office'
+        if re.search(r'rocking[\s-]*chair|\brocking\b', t):   return 'rocking'
+        if re.search(r'dining[\s-]*chair|\bdining\b', t):     return 'dining'
+        if re.search(r'accent', t):                            return 'accent'
+        if re.search(r'bean[\s-]*bag', t):                     return 'bean_bag'
+        return 'dining'
+
+    if ft == 'office_chair':
+        return 'office'
+
+    if ft == 'dining_chair':
+        return 'dining'
+
+    if ft == 'desk':
+        if re.search(r'l[\s-]*shaped', t):                    return 'l_shaped'
+        if re.search(r'standing[\s-]*desk|stand[\s-]*up', t): return 'standing'
+        if re.search(r'executive', t):                         return 'executive'
+        if re.search(r'computer[\s-]*desk|pc[\s-]*desk', t):  return 'computer'
+        if re.search(r'writing[\s-]*desk|\bwriting\b', t):    return 'writing'
+        if re.search(r'study', t):                             return 'writing'
+        return 'computer'
+
+    if ft == 'cabinet':
+        if re.search(r'kitchen[\s-]*cabinet', t):             return 'kitchen'
+        if re.search(r'bathroom|washroom', t):                 return 'bathroom'
+        if re.search(r'display[\s-]*cabinet|showcase', t):    return 'display'
+        if re.search(r'filing[\s-]*cabinet|file[\s-]*cabinet', t): return 'filing'
+        return 'storage'
+
+    if ft in ('bookshelf', 'shelf'):
+        if re.search(r'wall[\s-]*shelf|floating[\s-]*shelf', t): return 'wall_shelf'
+        if re.search(r'corner[\s-]*shelf', t):                   return 'corner'
+        if re.search(r'shoe[\s-]*rack|shoes?\s+rack', t):        return 'shoe_rack'
+        return 'bookshelf'
+
+    if ft in ('dresser', 'dressing_table'):
+        if re.search(r'vanity', t):                return 'vanity'
+        if re.search(r'mirror', t):                return 'with_mirror'
+        if re.search(r'storage|drawer', t):        return 'with_storage'
+        return 'simple'
+
+    if ft == 'ottoman':
+        if re.search(r'round|circular|pouf', t):  return 'round'
+        if re.search(r'storage', t):               return 'storage'
+        return 'rectangular'
+
+    return None  # Unknown type — leave NULL
 
 from models.database import get_db, Listing, User, MobilePhone, Laptop, Furniture
 from schemas.schemas import ListingCreate, ListingUpdate, ListingResponse
-from core.security import get_current_user
+from core.security import get_current_user, get_current_user_optional
 from routers.users import get_user_by_username
 
 router = APIRouter()
@@ -55,6 +163,7 @@ async def create_listing(
     model: Optional[str] = Form(None),
     furniture_type: Optional[str] = Form(None),
     material: Optional[str] = Form(None),
+    furniture_subtype: Optional[str] = Form(None),
     predicted_price: Optional[float] = Form(None),
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -135,6 +244,11 @@ async def create_listing(
     all_images.extend(additional_images_list)
     images_json = json.dumps(all_images) if all_images else None
     
+    # Auto-infer furniture_subtype from title+description when not provided
+    if category == 'furniture' and furniture_type and not furniture_subtype:
+        combined_text = f"{title} {description or ''}"
+        furniture_subtype = _infer_furniture_subtype(furniture_type, combined_text)
+
     # Determine approval status based on predicted price
     approval_status = "approved"
     if predicted_price:
@@ -153,6 +267,7 @@ async def create_listing(
         location=location,
         furniture_type=furniture_type,
         material=material,
+        furniture_subtype=furniture_subtype,
         images=images_json,
         owner_id=user.id,
         approval_status=approval_status,
@@ -236,9 +351,9 @@ def get_listings(
 def get_listing(
     listing_id: int, 
     db: Session = Depends(get_db),
-    current_user: Optional[str] = Depends(get_current_user)
+    current_user = Depends(get_current_user_optional)
 ):
-    """Get a specific listing by ID (only approved listings visible to public)"""
+    """Get a specific listing by ID (approved listings are public; pending/rejected require ownership)"""
     listing = db.query(Listing).filter(Listing.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
