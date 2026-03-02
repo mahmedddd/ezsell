@@ -39,7 +39,12 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     google_id = Column(String, nullable=True)
-    profile_picture = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
+    location = Column(String, nullable=True)
+    last_login = Column(DateTime, nullable=True)
+    last_seen = Column(DateTime, nullable=True)
+    auth_provider = Column(String, default="local")
 
     # Relationships
     listings = relationship("Listing", back_populates="owner")
@@ -62,7 +67,7 @@ class PasswordReset(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, index=True)
-    token = Column(String, unique=True, index=True)
+    code = Column(String, unique=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime)
     is_used = Column(Boolean, default=False)
@@ -83,6 +88,11 @@ class Listing(Base):
     furniture_type = Column(String, nullable=True)  # sofa, bed, table, chair, etc.
     material = Column(String, nullable=True)  # wood, metal, fabric, leather, etc.
     furniture_subtype = Column(String, nullable=True)  # e.g. "3_door", "4_door", "sliding", "L_shape"
+    # Furniture enhancements
+    furniture_brand = Column(String, nullable=True)
+    is_sliding_door = Column(Boolean, default=False)
+    has_mattress = Column(Boolean, default=False)
+    mattress_type = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -99,6 +109,15 @@ class Listing(Base):
     model_usdz_url  = Column(String, nullable=True)   # USDZ (iOS AR QuickLook)
     dimensions_cm   = Column(Text, nullable=True)     # JSON: {"l":int,"w":int,"h":int}
     polygon_count   = Column(Integer, nullable=True)  # For LOD / perf gating
+    
+    # ── Fraud Prevention fields ──────────────────────────────────────────────
+    listing_hash    = Column(String, index=True, nullable=True) # Hash of title+desc+price+owner
+    image_hash      = Column(String, index=True, nullable=True) # Perceptual hash of primary image
+    fraud_flags     = Column(Text, nullable=True)     # JSON array: ["image_mismatch", "price_anomaly"]
+    rejection_reason = Column(Text, nullable=True)
+    
+    # ── Semantic Recommendation fields ───────────────────────────────────────
+    semantic_embedding = Column(Text, nullable=True)  # JSON array of float representing SentenceTransformer embedding
     
     # Relationships
     owner = relationship("User", back_populates="listings")
@@ -133,6 +152,21 @@ class Favorite(Base):
     user = relationship("User", back_populates="favorites")
     listing = relationship("Listing", back_populates="favorites")
 
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    ticket_type = Column(String)  # 'support' or 'bug'
+    subject = Column(String)
+    description = Column(Text)
+    status = Column(String, default="open")  # 'open', 'in_progress', 'closed'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    attachment_url = Column(String, nullable=True)  # For screenshots
+
+    # Relationships
+    user = relationship("User", backref="tickets")
+
 class UserActivity(Base):
     """Track user interactions for recommendations"""
     __tablename__ = "user_activities"
@@ -145,6 +179,7 @@ class UserActivity(Base):
     search_query = Column(String, nullable=True)
     category = Column(String, nullable=True)
     keywords = Column(Text, nullable=True)  # JSON array of extracted keywords
+    semantic_embedding = Column(Text, nullable=True)  # JSON array of embedding vector
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     duration_seconds = Column(Integer, nullable=True)  # Time spent on listing
     
@@ -157,6 +192,7 @@ class UserInterest(Base):
     categories = Column(Text)  # JSON object with category counts
     keywords = Column(Text)  # JSON object with keyword frequencies
     brands = Column(Text, nullable=True)  # JSON object with brand preferences
+    semantic_embedding = Column(Text, nullable=True)  # Aggregated averaged embedding vector
     price_range_min = Column(Float, nullable=True)
     price_range_max = Column(Float, nullable=True)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -213,8 +249,26 @@ class Furniture(Base):
     Condition = Column(String)
     Type = Column(String)
     Material = Column(String, nullable=True)
+    furniture_brand = Column(String, nullable=True)
+    is_sliding_door = Column(Boolean, default=False)
+    has_mattress = Column(Boolean, default=False)
+    mattress_type = Column(String, nullable=True)
     Description = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String)
+    message = Column(Text)
+    link = Column(String, nullable=True)  # Optional link to redirect user
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="notifications")
 
 # Create all tables
 Base.metadata.create_all(bind=engine)

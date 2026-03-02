@@ -2,14 +2,46 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Navigation from "@/components/Navigation";
-import { Search, MapPin, Plus, Heart, ChevronRight, Loader2 } from "lucide-react";
-import { listingService, getImageUrl, favoritesService } from "@/lib/api";
+import { Search, MapPin, Plus, Heart, ChevronRight, Loader2, TrendingUp, Shield, Zap } from "lucide-react";
+import { listingService, getImageUrl, favoritesService, recommendationService, analyticsService } from "@/lib/api";
+import { listingMatchesSearch } from "@/lib/nlp";
 import { useToast } from "@/components/ui/use-toast";
 
-const Home = () => {
+const CATEGORIES = [
+  { id: "all", name: "All", icon: "📦" },
+  { id: "mobiles", name: "Mobiles", icon: "📱" },
+  { id: "laptops", name: "Laptops", icon: "💻" },
+  { id: "furniture", name: "Furniture", icon: "🛋️" },
+];
+
+const CITIES = [
+  { label: "🇵🇰 All Pakistan", value: "Pakistan" },
+  { label: "Islamabad", value: "Islamabad" },
+  { label: "Rawalpindi", value: "Rawalpindi" },
+];
+
+const ISB_AREAS = ["Bahria Town", "Blue Area", "DHA Phase 1", "DHA Phase 2", "F-6", "F-7", "F-8", "F-10", "F-11", "G-6", "G-7", "G-8", "G-9", "G-10", "G-11", "G-13", "G-14", "G-15", "I-8", "I-9", "I-10", "I-11", "I-14", "PWD Housing Scheme", "Sector B-17", "Sector C-18", "Sector D-12", "Sector E-11", "Zaraj Housing Society"].sort();
+const RWP_AREAS = ["Adyala Road", "Airport Housing Society", "Bahria Town Phase 1", "Bahria Town Phase 2", "Bahria Town Phase 3", "Bahria Town Phase 4", "Bahria Town Phase 5", "Bahria Town Phase 6", "Bahria Town Phase 7", "Bahria Town Phase 8", "Chaklala Scheme 3", "DHA Phase 1", "DHA Phase 2", "Gulraiz Housing Scheme", "Gulshan-e-Abad", "National Police Foundation", "Rehmanabad", "Saddar", "Satellite Town", "Soan Garden", "Tench Bhatta", "Westridge"].sort();
+
+const getConditionLabel = (condition: string | number) => {
+  const c = typeof condition === "string" ? parseInt(condition) : condition;
+  if (c >= 10) return "Brand New";
+  if (c >= 9) return "Like New";
+  if (c >= 7) return "Excellent";
+  if (c >= 5) return "Good";
+  if (c >= 3) return "Fair";
+  return "Poor";
+};
+
+const getConditionColor = (c: number) => {
+  if (c >= 9) return "bg-emerald-500";
+  if (c >= 7) return "bg-green-500";
+  if (c >= 5) return "bg-amber-500";
+  return "bg-red-500";
+};
+
+export default function Home() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,51 +52,29 @@ const Home = () => {
   const [togglingFavorite, setTogglingFavorite] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const categories = [
-    { id: "all", name: "All Categories", icon: "📦" },
-    { id: "mobiles", name: "Mobile Phones", icon: "📱" },
-    { id: "laptops", name: "Laptops", icon: "💻" },
-    { id: "furniture", name: "Furniture", icon: "🛋️" },
-  ];
+  useEffect(() => { loadListings(); if (currentUser?.id) loadFavorites(); }, [selectedCategory, city, area]);
 
   useEffect(() => {
-    loadListings();
-    if (currentUser?.id) {
-      loadFavorites();
-    }
-  }, [selectedCategory, city, area]);
-
-  // Reload listings when component is focused (user navigates back to home)
-  useEffect(() => {
-    const handleFocus = () => {
-      loadListings();
-      if (currentUser?.id) {
-        loadFavorites();
-      }
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    const onFocus = () => { loadListings(); if (currentUser?.id) loadFavorites(); };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [selectedCategory, city, area]);
 
   const loadListings = async () => {
     try {
       setLoading(true);
-      const params = selectedCategory !== "all" ? { category: selectedCategory } : {};
-      const data = await listingService.getListings(params);
-      console.log('Loaded listings:', data);
-      setListings(Array.isArray(data) ? data : []);
+      if (searchQuery || selectedCategory !== "all" || city || area) {
+        const params = selectedCategory !== "all" ? { category: selectedCategory } : {};
+        setListings(Array.isArray(await listingService.getListings(params)) ? await listingService.getListings(params) : []);
+      } else {
+        const data = await recommendationService.getForYou({ limit: 20 });
+        setListings(data.items.map((item: any) => ({ ...item, id: item.listing_id })));
+      }
     } catch (error: any) {
-      console.error('Error loading listings:', error);
       setListings([]);
-      toast({
-        title: "Error loading listings",
-        description: error.response?.data?.detail || "Failed to load listings",
-        variant: "destructive",
-      });
+      toast({ title: "Error loading listings", description: error.response?.data?.detail || "Failed to load listings", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -72,408 +82,353 @@ const Home = () => {
 
   const loadFavorites = async () => {
     try {
-      const favorites = await favoritesService.getFavorites();
-      setFavoriteIds(new Set(favorites.map((f: any) => f.id)));
-    } catch (error) {
-      console.error('Failed to load favorites:', error);
-    }
+      const favs = await favoritesService.getFavorites();
+      setFavoriteIds(new Set(favs.map((f: any) => f.id)));
+    } catch { /* silent */ }
   };
 
-  // Helper to get first image from listing (supports both old and new format)
   const getListingImage = (listing: any): string | null => {
-    // Check new 'images' JSON field first
     if (listing?.images) {
       try {
-        const parsedImages = typeof listing.images === 'string' 
-          ? JSON.parse(listing.images) 
-          : listing.images;
-        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
-          return parsedImages[0];
-        }
-      } catch (e) {
-        console.error('Failed to parse images field:', e);
-      }
+        const imgs = typeof listing.images === "string" ? JSON.parse(listing.images) : listing.images;
+        if (Array.isArray(imgs) && imgs.length > 0) return imgs[0];
+      } catch { /* ignore */ }
     }
-    
-    // Fallback to old image_url field
-    if (listing?.image_url) {
-      return listing.image_url;
-    }
-    
-    return null;
+    return listing?.image_url || null;
   };
 
   const toggleFavorite = async (listingId: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+    e.preventDefault(); e.stopPropagation();
     if (!currentUser?.id) {
-      toast({
-        title: "Login Required",
-        description: "Please login to save listings",
-        variant: "destructive",
-      });
-      navigate('/login');
+      toast({ title: "Login Required", description: "Please login to save listings", variant: "destructive" });
+      navigate("/login");
       return;
     }
-    
     setTogglingFavorite(listingId);
     try {
       if (favoriteIds.has(listingId)) {
         await favoritesService.removeFavorite(listingId);
-        setFavoriteIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(listingId);
-          return newSet;
-        });
-        toast({
-          title: "Removed",
-          description: "Removed from your saved listings",
-        });
+        setFavoriteIds(prev => { const s = new Set(prev); s.delete(listingId); return s; });
+        toast({ title: "Removed", description: "Removed from your saved listings" });
       } else {
-        await favoritesService.addToFavorites(listingId);
+        await favoritesService.addFavorite(listingId);
         setFavoriteIds(prev => new Set([...prev, listingId]));
-        toast({
-          title: "Saved",
-          description: "Added to your saved listings",
-        });
+        const listing = listings.find(l => l.id === listingId);
+        if (listing) analyticsService.trackActivity({ activity_type: "favorite", listing_id: listingId, category: listing.category }).catch(() => { });
+        toast({ title: "Saved!", description: "Added to your saved listings" });
       }
-    } catch (error) {
-      console.error('Failed to toggle favorite:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update favorites",
-        variant: "destructive",
-      });
-    } finally {
-      setTogglingFavorite(null);
-    }
+    } catch { toast({ title: "Error", description: "Failed to update favorites", variant: "destructive" }); }
+    finally { setTogglingFavorite(null); }
   };
 
   const handleSearch = () => {
-    if (searchQuery.trim()) {
+    const q = searchQuery.trim();
+    if (q) {
+      analyticsService.trackActivity({ activity_type: "search", search_query: q, category: selectedCategory === "all" ? undefined : selectedCategory }).catch(() => { });
       navigate(`/listings?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
-  const filteredListings = listings.filter((listing) => {
-    // Search filter
-    if (searchQuery && !listing.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
+  const filteredListings = listings.filter(listing => {
+    if (searchQuery.trim() && !listingMatchesSearch(listing, searchQuery)) return false;
+    if (city && city !== "Pakistan") {
+      const loc = listing.location || "";
+      if (!loc.includes(city)) return false;
+      if (area?.trim() && !loc.includes(area)) return false;
     }
-    
-    // Location filter
-    if (city && city !== 'Pakistan') {
-      const location = listing.location || '';
-      if (!location.includes(city)) {
-        return false;
-      }
-      if (area && area.trim() !== '') {
-        if (!location.includes(area)) {
-          return false;
-        }
-      }
-    }
-    
     return true;
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] via-[#e8e8dc] to-[#f5f5f0]">
-      <Navigation />
-      
-      {/* Hero Section */}
-      <section className="relative pt-16 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#143109]/5 via-transparent to-[#AAAE7F]/5" />
-        <div className="container mx-auto max-w-6xl relative">
-          <div className="text-center mb-10">
-            <div className="flex flex-col items-center justify-center mb-6">
-              <img src="/images/ezsell-logo.png" alt="EZSELL Logo" className="h-32 w-auto" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
-              <div className="hidden flex-col items-center">
-                <h1 className="text-6xl font-bold text-[#143109]">EZ SELL</h1>
-                <p className="text-2xl text-[#5B9BD5] font-semibold mt-2">BAICH DIAAA !!!</p>
-              </div>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-[#143109] mb-4 animate-fade-in">
-              Buy & Sell With <span className="text-[#AAAE7F]">Confidence</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Discover amazing deals on mobile phones, laptops, furniture and more
-            </p>
-            
-            {/* Enhanced Search Bar */}
-            <div className="max-w-3xl mx-auto">
-              <div className="flex gap-3 bg-white rounded-2xl shadow-2xl p-3 border-2 border-[#143109]/20">
-                <div className="flex-1 flex gap-3">
-                  <Input
-                    type="text"
-                    placeholder="What are you looking for today?"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    className="h-14 text-lg border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+    <div className="min-h-screen page-content">
+
+      {/* ── Hero Section ── */}
+      <section className="relative overflow-hidden">
+        <div className="hero-mesh min-h-[340px] md:min-h-[420px] flex items-center">
+          {/* Decorative circles */}
+          <div className="absolute top-8 right-8 w-64 h-64 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-12 w-80 h-80 rounded-full bg-black/10 blur-3xl pointer-events-none" />
+
+          <div className="container mx-auto px-4 py-14 md:py-20 relative z-10">
+            <div className="text-center max-w-3xl mx-auto">
+              {/* Logo */}
+              <div className="flex justify-center mb-6">
+                <div className="relative animate-fade-in-up">
+                  <img
+                    src="/images/logo.jpg"
+                    alt="EzSell"
+                    className="h-20 md:h-28 w-auto rounded-2xl shadow-2xl ring-4 ring-white/20"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
-                  <Button onClick={handleSearch} size="lg" className="px-8 h-14 text-lg bg-[#143109] hover:bg-[#143109]/90">
-                    <Search className="h-6 w-6 mr-2" />
+                </div>
+              </div>
+
+              <h1 className="animate-fade-in-up delay-100 text-4xl md:text-6xl font-black text-white leading-[1.1] mb-4 tracking-tight drop-shadow-md">
+                Buy &amp; Sell{" "}
+                <span className="gradient-text-hero">With Confidence</span>
+              </h1>
+              <p className="animate-fade-in-up delay-200 text-white/70 text-base md:text-xl mb-8 max-w-xl mx-auto">
+                Pakistan's smartest marketplace for mobiles, laptops, furniture &amp; more
+              </p>
+
+              {/* Search bar */}
+              <div className="animate-fade-in-up delay-300 max-w-2xl mx-auto">
+                <div className="flex gap-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-2 border border-white/60">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="What are you looking for today?"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && handleSearch()}
+                      className="pl-11 h-12 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 font-medium"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSearch}
+                    className="px-6 h-12 rounded-xl text-base font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all"
+                  >
+                    <Search className="h-5 w-5 mr-2" />
                     Search
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto mt-8">
-            <div className="text-center p-4 bg-white/60 backdrop-blur rounded-xl shadow-md hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-[#143109]">{listings.length}</div>
-              <div className="text-sm text-gray-600 font-medium">Products Available</div>
-            </div>
-            <div className="text-center p-4 bg-white/60 backdrop-blur rounded-xl shadow-md hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-[#143109]">100%</div>
-              <div className="text-sm text-gray-600 font-medium">Verified Sellers</div>
-            </div>
-            <div className="text-center p-4 bg-white/60 backdrop-blur rounded-xl shadow-md hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-[#143109]">24/7</div>
-              <div className="text-sm text-gray-600 font-medium">Support Available</div>
+
+              {/* Stats row */}
+              <div className="animate-fade-in-up delay-400 flex items-center justify-center gap-6 mt-8">
+                {[
+                  { icon: TrendingUp, label: `${listings.length} Active Listings` },
+                  { icon: Shield, label: "Verified Sellers" },
+                  { icon: Zap, label: "Instant Messaging" },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="flex items-center gap-1.5 text-white/80 text-sm font-medium">
+                    <Icon className="w-4 h-4 text-white/60" />
+                    {label}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories Bar */}
-      <section className="py-6 px-4 bg-white/80 backdrop-blur-sm shadow-sm">
-        <div className="container mx-auto">
-          <h3 className="text-xl font-bold text-[#143109] mb-4 text-center">Browse by Category</h3>
-          <div className="flex gap-3 justify-center overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex-shrink-0 whitespace-nowrap h-12 px-6 text-base font-semibold transition-all ${
-                  selectedCategory === category.id
-                    ? "bg-[#143109] hover:bg-[#143109]/90 shadow-lg scale-105"
-                    : "hover:border-[#143109] hover:text-[#143109]"
-                }`}
+      {/* ── Category Pills ── */}
+      <section className="bg-white/80 backdrop-blur-md border-b border-border/50 shadow-sm sticky top-16 z-40">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-hide -mx-1 px-1">
+            {CATEGORIES.map((cat, i) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                style={{ animationDelay: `${i * 60}ms` }}
+                className={`animate-fade-in-up flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${selectedCategory === cat.id
+                  ? "bg-primary text-white border-primary shadow-md shadow-primary/25 scale-105"
+                  : "bg-white border-border text-foreground/70 hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+                  }`}
               >
-                <span className="mr-2 text-xl">{category.icon}</span>
-                {category.name}
-              </Button>
+                <span className="text-base">{cat.icon}</span>
+                {cat.name}
+              </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Location Filter Bar */}
-      <section className="py-4 px-4 bg-white/60 backdrop-blur-sm border-t">
+      {/* ── Location Filter ── */}
+      <section className="bg-white/60 backdrop-blur-sm border-b border-border/30 py-3 px-4">
         <div className="container mx-auto">
-          <div className="flex flex-wrap gap-3 justify-center items-center">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-[#143109]" />
-              <span className="font-semibold text-[#143109]">Filter by Location:</span>
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground/70">
+              <MapPin className="h-4 w-4 text-primary" />
+              Location:
             </div>
-            <div className="flex gap-3">
-              <Button
-                variant={!city || city === 'Pakistan' ? "default" : "outline"}
-                onClick={() => { setCity('Pakistan'); setArea(''); }}
-                className={`h-10 px-6 ${
-                  !city || city === 'Pakistan'
-                    ? "bg-[#143109] hover:bg-[#143109]/90"
-                    : "hover:border-[#143109] hover:text-[#143109]"
-                }`}
-              >
-                🇵🇰 All Pakistan
-              </Button>
-              <Button
-                variant={city === 'Islamabad' ? "default" : "outline"}
-                onClick={() => { setCity('Islamabad'); setArea(''); }}
-                className={`h-10 px-6 ${
-                  city === 'Islamabad'
-                    ? "bg-[#143109] hover:bg-[#143109]/90"
-                    : "hover:border-[#143109] hover:text-[#143109]"
-                }`}
-              >
-                Islamabad
-              </Button>
-              <Button
-                variant={city === 'Rawalpindi' ? "default" : "outline"}
-                onClick={() => { setCity('Rawalpindi'); setArea(''); }}
-                className={`h-10 px-6 ${
-                  city === 'Rawalpindi'
-                    ? "bg-[#143109] hover:bg-[#143109]/90"
-                    : "hover:border-[#143109] hover:text-[#143109]"
-                }`}
-              >
-                Rawalpindi
-              </Button>
-            </div>
-            {city && city !== 'Pakistan' && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Area:</span>
+            <div className="flex gap-2 flex-wrap">
+              {CITIES.map(({ label, value }) => (
+                <button
+                  key={value}
+                  onClick={() => { setCity(value); setArea(""); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${(!city && value === "Pakistan") || city === value
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-white border-border text-foreground/60 hover:border-primary/40 hover:text-primary"
+                    }`}
+                >
+                  {label}
+                </button>
+              ))}
+              {city && city !== "Pakistan" && (
                 <select
                   value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  className="h-10 px-4 rounded-md border border-gray-300 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#143109]"
+                  onChange={e => setArea(e.target.value)}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-white text-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
                 >
                   <option value="">All {city}</option>
-                  {city === 'Islamabad' && [
-                    'Bahria Town', 'Blue Area', 'DHA Phase 1', 'DHA Phase 2',
-                    'F-6', 'F-7', 'F-8', 'F-10', 'F-11',
-                    'G-6', 'G-7', 'G-8', 'G-9', 'G-10', 'G-11', 'G-13', 'G-14', 'G-15',
-                    'I-8', 'I-9', 'I-10', 'I-11', 'I-14',
-                    'PWD Housing Scheme', 'Sector B-17', 'Sector C-18', 'Sector D-12', 'Sector E-11',
-                    'Zaraj Housing Society'
-                  ].sort().map(a => <option key={a} value={a}>{a}</option>)}
-                  {city === 'Rawalpindi' && [
-                    'Adyala Road', 'Airport Housing Society',
-                    'Bahria Town Phase 1', 'Bahria Town Phase 2', 'Bahria Town Phase 3',
-                    'Bahria Town Phase 4', 'Bahria Town Phase 5', 'Bahria Town Phase 6',
-                    'Bahria Town Phase 7', 'Bahria Town Phase 8',
-                    'Chaklala Scheme 3', 'DHA Phase 1', 'DHA Phase 2',
-                    'Gulraiz Housing Scheme', 'Gulshan-e-Abad',
-                    'National Police Foundation', 'Rehmanabad',
-                    'Saddar', 'Satellite Town', 'Soan Garden', 'Tench Bhatta',
-                    'Westridge'
-                  ].sort().map(a => <option key={a} value={a}>{a}</option>)}
+                  {(city === "Islamabad" ? ISB_AREAS : RWP_AREAS).map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content - Listings Grid */}
+      {/* ── Listings Grid ── */}
       <section className="py-8 px-4">
         <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-3xl font-bold text-[#143109] mb-1">Fresh Recommendations</h2>
-              <p className="text-gray-600">Handpicked deals just for you</p>
+              <h2 className="text-2xl md:text-3xl font-black text-foreground">
+                {searchQuery ? `Results for "${searchQuery}"` : "Fresh Recommendations"}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {loading ? "Finding the best deals..." : `${filteredListings.length} listings found`}
+              </p>
             </div>
             <Link to="/listings">
-              <Button variant="outline" className="flex items-center gap-2 hover:bg-[#143109] hover:text-white">
-                View all <ChevronRight className="h-5 w-5" />
+              <Button variant="outline" className="hidden sm:flex items-center gap-1.5 rounded-xl font-semibold hover:bg-primary hover:text-white hover:border-primary transition-all">
+                View All <ChevronRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <div className="aspect-square bg-muted animate-pulse" />
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-muted rounded animate-pulse mb-2" />
-                    <div className="h-6 bg-muted rounded animate-pulse w-1/2" />
-                  </CardContent>
-                </Card>
+          {/* Loading skeleton */}
+          {loading && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="rounded-2xl overflow-hidden bg-white shadow-sm border border-border/50 animate-pulse">
+                  <div className="aspect-square bg-muted shimmer" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3.5 bg-muted rounded-full shimmer w-4/5" />
+                    <div className="h-4 bg-muted rounded-full shimmer w-3/5" />
+                    <div className="h-3 bg-muted rounded-full shimmer w-2/5" />
+                  </div>
+                </div>
               ))}
             </div>
-          ) : filteredListings.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg">No listings found</p>
-              <Link to="/dashboard">
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Post Your Ad
+          )}
+
+          {/* Empty state */}
+          {!loading && filteredListings.length === 0 && (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-xl font-bold text-foreground mb-2">No listings found</h3>
+              <p className="text-muted-foreground mb-6">Try a different search or browse all categories</p>
+              <Link to="/create-listing">
+                <Button className="rounded-xl bg-primary hover:bg-primary/90 shadow-md shadow-primary/25">
+                  <Plus className="h-4 w-4 mr-2" /> Post Your Ad
                 </Button>
               </Link>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredListings.slice(0, 20).map((listing) => (
-                <Link key={listing.id} to={`/product/${listing.id}`}>
-                  <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group border-2 border-transparent hover:border-[#143109]/30 bg-white">
-                    <div className="relative aspect-square overflow-hidden bg-muted">
-                      {getListingImage(listing) && getImageUrl(getListingImage(listing)!) ? (
-                        <img
-                          src={getImageUrl(getListingImage(listing)!)!}
-                          alt={listing.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl">
-                          📦
-                        </div>
-                      )}
-                      {listing.additional_images && JSON.parse(listing.additional_images).length > 0 && (
-                        <Badge className="absolute bottom-2 left-2 bg-black/70 text-white text-xs">
-                          📷 {JSON.parse(listing.additional_images).length + 1}
-                        </Badge>
-                      )}
-                      <button 
-                        className={`absolute top-2 right-2 p-2 rounded-full transition-all shadow-md hover:shadow-lg z-10 ${
-                          favoriteIds.has(listing.id)
-                            ? 'bg-red-50 hover:bg-red-100'
-                            : 'bg-white/90 hover:bg-white'
-                        }`}
-                        onClick={(e) => toggleFavorite(listing.id, e)}
-                        disabled={togglingFavorite === listing.id}
-                      >
-                        {togglingFavorite === listing.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-                        ) : (
-                          <Heart 
-                            className={`h-4 w-4 transition-colors ${
-                              favoriteIds.has(listing.id)
-                                ? 'text-red-500 fill-red-500'
-                                : 'text-gray-600 hover:text-red-500'
-                            }`} 
+          )}
+
+          {/* Listings grid */}
+          {!loading && filteredListings.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {filteredListings.slice(0, 20).map((listing, i) => {
+                const imgRaw = getListingImage(listing);
+                const imgUrl = imgRaw ? getImageUrl(imgRaw) : null;
+                const isFav = favoriteIds.has(listing.id);
+                const cond = typeof listing.condition === "string" ? parseInt(listing.condition) : listing.condition;
+                const condOk = !isNaN(cond);
+
+                return (
+                  <Link
+                    key={listing.id}
+                    to={`/product/${listing.id}`}
+                    className="group"
+                    style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
+                  >
+                    <div className="relative bg-white rounded-2xl overflow-hidden border border-border/50 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 hover:border-primary/20 transition-all duration-300 ease-out h-full flex flex-col">
+                      {/* Image */}
+                      <div className="relative aspect-square overflow-hidden bg-muted flex-shrink-0">
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={listing.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                           />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-muted to-muted/50">📦</div>
                         )}
-                      </button>
-                      {listing.is_featured && (
-                        <Badge className="absolute top-2 left-2 bg-yellow-500">
-                          Featured
-                        </Badge>
-                      )}
+
+                        {/* Overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                        {/* Badges top-left */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          {listing.is_featured && (
+                            <span className="badge-pill bg-yellow-400 text-yellow-900 shadow-sm">⭐ Featured</span>
+                          )}
+                          {listing.location && (
+                            <span className="badge-pill bg-white/90 text-foreground shadow-sm backdrop-blur-sm text-[10px]">
+                              📍 {listing.location.split(",")[0]}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Condition badge */}
+                        {condOk && (
+                          <div className={`absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm ${getConditionColor(cond)}`}>
+                            {cond}/10 · {getConditionLabel(cond)}
+                          </div>
+                        )}
+
+                        {/* Favourite button */}
+                        <button
+                          className={`absolute top-2 right-2 h-8 w-8 flex items-center justify-center rounded-full shadow-md border border-white/60 backdrop-blur-sm transition-all duration-200 z-10 ${isFav ? "bg-red-50 scale-110" : "bg-white/90 opacity-0 group-hover:opacity-100 hover:scale-110"
+                            }`}
+                          onClick={e => toggleFavorite(listing.id, e)}
+                          disabled={togglingFavorite === listing.id}
+                        >
+                          {togglingFavorite === listing.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
+                          ) : (
+                            <Heart className={`h-3.5 w-3.5 transition-colors ${isFav ? "text-red-500 fill-red-500" : "text-foreground/60 hover:text-red-500"}`} />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-3 flex flex-col gap-1 flex-1">
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                          {listing.title}
+                        </h3>
+                        <p className="text-base font-black text-primary mt-0.5">
+                          PKR {listing.price?.toLocaleString()}
+                        </p>
+                        <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/30">
+                          <span className="text-[10px] text-muted-foreground/60 ml-auto">
+                            {new Date(listing.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                        {listing.title}
-                      </h3>
-                      <p className="text-2xl font-bold text-primary mb-2">
-                        PKR {listing.price.toLocaleString()}
-                      </p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        <span className="line-clamp-1">
-                          {listing.location || "Pakistan"}
-                        </span>
-                      </div>
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs text-gray-600 font-medium">
-                          Posted by {listing.owner?.username || 'User'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(listing.created_at).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {/* View all CTA */}
+          {!loading && filteredListings.length > 0 && (
+            <div className="text-center mt-10">
+              <Link to="/listings">
+                <Button variant="outline" className="rounded-xl px-8 h-11 font-bold border-2 hover:bg-primary hover:text-white hover:border-primary transition-all">
+                  View All Listings <ChevronRight className="ml-1.5 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           )}
         </div>
       </section>
 
-      {/* Floating Sell Button - OLX Style */}
-      <Link to="/dashboard">
-        <Button
-          size="lg"
-          className="fixed bottom-8 right-8 rounded-full h-14 px-6 shadow-xl hover:shadow-2xl transition-shadow z-50"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          SELL
-        </Button>
+      {/* ── Floating Sell Button (mobile) ── */}
+      <Link to="/create-listing" className="md:hidden">
+        <div className="fixed bottom-20 right-4 z-40 h-14 w-14 flex items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/40 hover:scale-110 active:scale-95 transition-all duration-200 ring-4 ring-white">
+          <Plus className="h-6 w-6 stroke-[2.5]" />
+        </div>
       </Link>
     </div>
   );
-};
-
-export default Home;
+}

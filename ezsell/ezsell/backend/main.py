@@ -1,14 +1,16 @@
-# Main application entry point
+# Main application entry point (RELOAD TRIGGER: manual restart)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
+from datetime import datetime
 
 from routers import (
     users, listings, predictions_advanced as predictions, ar_customization,
     ar_customization_enhanced, google_auth, 
-    messages, favorites, approvals, recommendations, analytics, ar_assets
+    messages, favorites, approvals, recommendations, analytics, ar_assets,
+    support, notifications
 )
 from core.config import settings
 
@@ -17,6 +19,20 @@ app = FastAPI(
     version=settings.PROJECT_VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+# Exception logging middleware
+@app.middleware("http")
+async def log_exceptions_middleware(request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        import traceback
+        with open("backend_error.log", "a") as f:
+            f.write(f"\n--- {datetime.utcnow()} ---\n")
+            f.write(f"Path: {request.url.path}\n")
+            f.write(traceback.format_exc())
+            f.write("\n")
+        raise e from None
 
 # Add session middleware for OAuth (must be before CORS)
 app.add_middleware(
@@ -56,34 +72,36 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Explicit CORS headers for static-file paths (/uploads/, /static/).
-# FastAPI's CORSMiddleware covers API routes but StaticFiles responses may be
-# served from the mount before the middleware injects headers in some Starlette
-# versions.  This middleware guarantees CORS on every image response so that
-# the frontend fetch()-based canvas loader (loadImageSafe) always succeeds.
-@app.middleware("http")
-async def add_cors_for_static_files(request, call_next):
-    response = await call_next(request)
-    path = request.url.path
-    if path.startswith("/uploads/") or path.startswith("/static/"):
-        origin = request.headers.get("origin", "")
-        if origin:
-            response.headers["access-control-allow-origin"] = origin
-            response.headers["access-control-allow-credentials"] = "true"
-        else:
-            response.headers["access-control-allow-origin"] = "*"
-        response.headers["cross-origin-resource-policy"] = "cross-origin"
-    return response
+# The original static_path was 'data', but the new routes will use a 'static' directory.
+# We keep the 'data' directory creation for backward compatibility or other uses if any.
+(Path(__file__).parent / "data").mkdir(exist_ok=True)
 
-# Mount static files directory for AR previews
-static_path = Path(__file__).parent / "data"
-static_path.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
-
-# Mount uploads directory for user-uploaded images
+# Create directories if they don't exist
 uploads_path = Path(__file__).parent / "uploads"
 uploads_path.mkdir(exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+static_path = Path(__file__).parent / "static"
+static_path.mkdir(exist_ok=True)
+
+from fastapi.responses import FileResponse
+from fastapi import HTTPException
+
+@app.get("/uploads/{file_path:path}")
+async def serve_uploads(file_path: str):
+    full_path = uploads_path / file_path
+    if not full_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    # Setting media_type based on extension
+    media_type = None
+    if full_path.suffix.lower() == ".glb":
+        media_type = "model/gltf-binary"
+    return FileResponse(full_path, media_type=media_type, headers={"Cross-Origin-Resource-Policy": "cross-origin"})
+
+@app.get("/static/{file_path:path}")
+async def serve_static(file_path: str):
+    full_path = static_path / file_path
+    if not full_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(full_path, headers={"Cross-Origin-Resource-Policy": "cross-origin"})
 
 # Ensure the AR models sub-directory exists
 ar_models_path = uploads_path / "ar_models"
@@ -96,11 +114,13 @@ app.include_router(listings.router, prefix=settings.API_V1_STR, tags=["Listings"
 app.include_router(predictions.router, prefix=settings.API_V1_STR, tags=["Predictions"])
 app.include_router(ar_customization.router, prefix=settings.API_V1_STR, tags=["AR Customization"])
 app.include_router(ar_customization_enhanced.router, prefix=settings.API_V1_STR, tags=["AR Enhanced"])
+app.include_router(support.router, prefix=settings.API_V1_STR + "/support", tags=["Support"])
 app.include_router(messages.router, prefix=settings.API_V1_STR, tags=["Messages"])
 app.include_router(favorites.router, prefix=settings.API_V1_STR, tags=["Favorites"])
 app.include_router(approvals.router, prefix=settings.API_V1_STR, tags=["Approvals"])
-app.include_router(recommendations.router, tags=["Recommendations"])
-app.include_router(analytics.router, tags=["Analytics"])
+app.include_router(recommendations.router, prefix=settings.API_V1_STR, tags=["Recommendations"])
+app.include_router(analytics.router, prefix=settings.API_V1_STR, tags=["Analytics"])
+app.include_router(notifications.router, prefix=settings.API_V1_STR, tags=["Notifications"])
 app.include_router(ar_assets.router, prefix=settings.API_V1_STR, tags=["AR Assets"])
 
 @app.get("/")

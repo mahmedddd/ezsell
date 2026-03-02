@@ -195,6 +195,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         full_name=user.full_name,
+        phone=user.phone,
         hashed_password=hashed_password,
         is_verified=True  # Mark as verified since they completed email verification
     )
@@ -249,6 +250,22 @@ def get_current_user_info(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+@router.get("/user-profile/{user_id_or_username}", response_model=UserResponse)
+def get_public_profile(user_id_or_username: str, db: Session = Depends(get_db)):
+    """Get any user's public profile by ID or username"""
+    # Try as ID first
+    user = None
+    if user_id_or_username.isdigit():
+        user = db.query(User).filter(User.id == int(user_id_or_username)).first()
+    
+    # Try as username if not found or not digit
+    if not user:
+        user = db.query(User).filter(User.username == user_id_or_username).first()
+        
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 @router.post("/login", response_model=Token)
 def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Login user and return access token"""
@@ -291,36 +308,27 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     print(f"Login successful for {user.username}")
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=UserResponse)
-def get_current_user_info(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get current logged-in user information"""
-    user = get_user_by_username(db, username=current_user.username)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-@router.get("/users", response_model=List[UserResponse])
-def get_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all users (admin only endpoint)"""
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
-
 @router.patch("/me", response_model=UserResponse)
 def update_user_profile(
-    full_name: str = None,
-    avatar_url: str = None,
-    current_user: str = Depends(get_current_user),
+    profile_data: dict,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update current user's profile"""
+    """Update current user's profile info (bio, location, phone, full_name, etc)"""
     user = get_user_by_username(db, username=current_user.username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    if full_name:
-        user.full_name = full_name
-    if avatar_url:
-        user.avatar_url = avatar_url
+    if "full_name" in profile_data:
+        user.full_name = profile_data["full_name"]
+    if "avatar_url" in profile_data:
+        user.avatar_url = profile_data["avatar_url"]
+    if "bio" in profile_data:
+        user.bio = profile_data["bio"]
+    if "location" in profile_data:
+        user.location = profile_data["location"]
+    if "phone" in profile_data:
+        user.phone = profile_data["phone"]
     
     db.commit()
     db.refresh(user)

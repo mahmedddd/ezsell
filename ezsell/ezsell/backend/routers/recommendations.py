@@ -17,7 +17,7 @@ from schemas.recommendation_schemas import (
     UserActivityCreate
 )
 
-router = APIRouter(prefix="/api/recommendations", tags=["Recommendations"])
+router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
 
 @router.post("/track-activity")
@@ -107,6 +107,7 @@ async def get_personalized_recommendations(
                 'brand': listing.brand,
                 'condition': listing.condition,
                 'images': listing.images,
+                'location': listing.location,
                 'created_at': listing.created_at.isoformat()
             }
         ))
@@ -169,6 +170,7 @@ async def get_similar_listings(
                 'brand': similar_listing.brand,
                 'condition': similar_listing.condition,
                 'images': similar_listing.images,
+                'location': similar_listing.location,
                 'created_at': similar_listing.created_at.isoformat()
             }
         ))
@@ -220,6 +222,7 @@ async def get_trending_listings(
                 'brand': listing.brand,
                 'condition': listing.condition,
                 'images': listing.images,
+                'location': listing.location,
                 'created_at': listing.created_at.isoformat()
             }
         ))
@@ -329,6 +332,8 @@ async def get_for_you_feed(
                 combined.append((listing, score, rec_type))
                 seen_ids.add(listing.id)
         
+        # Sort by created_at desc primarily
+        combined.sort(key=lambda x: x[0].created_at, reverse=True)
         recommendations = combined[skip:skip + limit]
     else:
         # Show trending for anonymous users
@@ -346,6 +351,7 @@ async def get_for_you_feed(
             'brand': listing.brand,
             'condition': listing.condition,
             'images': listing.images,
+            'location': listing.location,
             'score': round(score, 3),
             'recommendation_type': rec_type,
             'created_at': listing.created_at.isoformat()

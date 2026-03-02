@@ -4,8 +4,9 @@ Chat/Messaging routes for negotiations on listings
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
-from typing import List
+from typing import List, Optional
 from datetime import datetime
+import json
 
 from models.database import get_db, Message, User, Listing
 from schemas.schemas import MessageCreate, MessageResponse, ConversationResponse
@@ -46,6 +47,15 @@ def send_message(
         listing_id=message.listing_id
     )
     db.add(db_message)
+    
+    # Mark all previous messages from this receiver to the sender as read
+    # because sending a reply implies seeking the previous messages
+    db.query(Message).filter(
+        Message.sender_id == message.receiver_id,
+        Message.receiver_id == current_user.id,
+        Message.is_read == False
+    ).update({"is_read": True})
+    
     db.commit()
     db.refresh(db_message)
     
@@ -78,6 +88,13 @@ def get_conversations(
         raise HTTPException(status_code=404, detail="Current user not found")
     
     # Get all unique users the current user has chatted with
+    # For SQLite compatibility, use CASE instead of least/greatest
+    from sqlalchemy import case
+    other_user_id = case(
+        (Message.sender_id == current_user.id, Message.receiver_id),
+        else_=Message.sender_id
+    )
+    
     subquery = db.query(
         func.max(Message.id).label('last_message_id')
     ).filter(
@@ -86,9 +103,7 @@ def get_conversations(
             Message.receiver_id == current_user.id
         )
     ).group_by(
-        func.least(Message.sender_id, Message.receiver_id),
-        func.greatest(Message.sender_id, Message.receiver_id),
-        Message.listing_id
+        other_user_id
     ).subquery()
     
     # Get last messages
@@ -103,28 +118,67 @@ def get_conversations(
         other_user_id = msg.receiver_id if msg.sender_id == current_user.id else msg.sender_id
         other_user = db.query(User).filter(User.id == other_user_id).first()
         
-        # Count unread messages
+        if not other_user:
+            continue
+            
+        # Count unread messages (user-wide, not just for this listing)
         unread_count = db.query(Message).filter(
             Message.sender_id == other_user_id,
             Message.receiver_id == current_user.id,
-            Message.listing_id == msg.listing_id,
             Message.is_read == False
         ).count()
         
-        # Get listing info
-        listing = None
-        if msg.listing_id:
-            listing = db.query(Listing).filter(Listing.id == msg.listing_id).first()
+        # Determine online status (last seen within 5 minutes)
+        is_online = False
+        if other_user.last_seen:
+            diff = datetime.utcnow() - other_user.last_seen
+            if diff.total_seconds() < 300:  # 5 minutes
+                is_online = True
         
+        # Get listing info (if available)
+        listing = None
+        listing_image = None
+        listing_price = None
+        listing = None
+        
+        # Get the listing_id from the message, or find the most recent non-null listing_id in this conversation
+        listing_id = msg.listing_id
+        if not listing_id:
+            # Look for any previous message in this conversation that has a listing_id
+            first_listing_msg = db.query(Message).filter(
+                or_(
+                    and_(Message.sender_id == current_user.id, Message.receiver_id == other_user.id),
+                    and_(Message.sender_id == other_user.id, Message.receiver_id == current_user.id)
+                ),
+                Message.listing_id.isnot(None)
+            ).order_by(Message.id.desc()).first()
+            if first_listing_msg:
+                listing_id = first_listing_msg.listing_id
+
+        if listing_id:
+            listing = db.query(Listing).filter(Listing.id == listing_id).first()
+            if listing and listing.images:
+                try:
+                    images = json.loads(listing.images)
+                    if images and len(images) > 0:
+                        listing_image = images[0]
+                    listing_price = listing.price
+                except:
+                    pass
+
         conversations.append(ConversationResponse(
             user_id=other_user.id,
             username=other_user.username,
-            avatar_url=other_user.avatar_url,
-            listing_id=msg.listing_id,
+            avatar_url=getattr(other_user, 'avatar_url', None),
+            listing_id=listing_id,
             listing_title=listing.title if listing else None,
+            listing_image=listing_image,
+            listing_price=listing_price,
             last_message=msg.content,
             last_message_time=msg.created_at,
-            unread_count=unread_count
+            unread_count=unread_count,
+            last_seen=other_user.last_seen,
+            is_online=is_online
         ))
     
     # Sort by last message time
@@ -146,18 +200,30 @@ def get_conversation_messages(
     if not current_user:
         raise HTTPException(status_code=404, detail="Current user not found")
     
-    # Get messages between current user and specified user about this listing
+    # Get messages between current user and specified user across all listings
     messages = db.query(Message).filter(
-        Message.listing_id == listing_id,
         or_(
             and_(Message.sender_id == current_user.id, Message.receiver_id == user_id),
             and_(Message.sender_id == user_id, Message.receiver_id == current_user.id)
         )
     ).order_by(Message.created_at.asc()).all()
     
-    # Mark received messages as read
+    # Populate listing images in responses
+    response_messages = []
+    for m in messages:
+        msg_resp = MessageResponse.from_orm(m)
+        if m.listing:
+            try:
+                images = json.loads(m.listing.images)
+                if images and len(images) > 0:
+                    msg_resp.listing_image = images[0]
+            except:
+                pass
+        response_messages.append(msg_resp)
+
+    # Mark all received messages from this user as read
+    # (Regardless of listing, to keep unread counts consistent with UI)
     db.query(Message).filter(
-        Message.listing_id == listing_id,
         Message.sender_id == user_id,
         Message.receiver_id == current_user.id,
         Message.is_read == False
@@ -280,3 +346,27 @@ def mark_message_read(
     db.commit()
     
     return {"message": "Message marked as read"}
+
+@router.delete("/conversation/{user_id}")
+def delete_conversation(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user_token = Depends(get_current_user)
+):
+    """Delete entire conversation with a specific user"""
+    # Get current user from database
+    current_user = db.query(User).filter(User.username == current_user_token.username).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="Current user not found")
+    
+    # Delete all messages between current user and specified user
+    deleted_count = db.query(Message).filter(
+        or_(
+            and_(Message.sender_id == current_user.id, Message.receiver_id == user_id),
+            and_(Message.sender_id == user_id, Message.receiver_id == current_user.id)
+        )
+    ).delete(synchronize_session=False)
+    
+    db.commit()
+    
+    return {"message": f"Successfully deleted {deleted_count} messages in conversation"}

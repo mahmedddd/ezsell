@@ -5,7 +5,11 @@ Prevents irrelevant predictions by ensuring meaningful product information
 """
 
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, Any, List, Optional, Tuple
+from pathlib import Path
+
+# Important: Initialize the async service to call it synchronously or handle it in the routers
+from services.llm_pricing_service import llm_pricing_service
 
 class TitleValidator:
     """Validates product titles based on category-specific requirements"""
@@ -91,6 +95,8 @@ class TitleValidator:
         'velvet', 'linen', 'cotton', 'plastic', 'glass', 'marble', 'granite',
         'rattan', 'wicker', 'bamboo', 'mdf', 'plywood', 'veneer', 'laminate'
     }
+
+    MIN_TITLE_LENGTH = 10
     
     @classmethod
     def validate_mobile_title(cls, title: str, description: str = "") -> Tuple[bool, str, Dict]:
@@ -393,35 +399,8 @@ class TitleValidator:
         return True, "", extracted
     
     @classmethod
-    def validate_title(cls, category: str, title: str, description: str = "", **kwargs) -> Tuple[bool, str, Dict]:
-        """
-        Main validation method that routes to category-specific validators
-        
-        Args:
-            category: 'mobile', 'laptop', or 'furniture'
-            title: Product title
-            description: Product description (optional)
-            **kwargs: Additional category-specific fields (e.g., material for furniture)
-        
-        Returns:
-            (is_valid, error_message, extracted_info)
-        """
-        category = category.lower().strip()
-        
-        if category == 'mobile':
-            return cls.validate_mobile_title(title, description)
-        elif category == 'laptop':
-            return cls.validate_laptop_title(title, description)
-        elif category == 'furniture':
-            material = kwargs.get('material', '')
-            return cls.validate_furniture_title(title, description, material)
-        else:
-            return False, f"Invalid category: {category}. Must be 'mobile', 'laptop', or 'furniture'.", {}
-    
-    @classmethod
-    def get_validation_hints(cls, category: str) -> Dict[str, List[str]]:
+    def get_validation_hints(cls, category: str) -> Dict[str, Any]:
         """Get helpful hints for creating valid titles"""
-        
         if category == 'mobile':
             return {
                 'required': ['Brand name (e.g., Samsung, iPhone, Xiaomi)'],

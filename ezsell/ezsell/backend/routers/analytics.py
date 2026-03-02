@@ -15,13 +15,83 @@ from models.database import (
     Favorite, Message, RecommendationHistory
 )
 from core.security import get_current_user
+from core.recommendation_engine import RecommendationEngine
 from schemas.recommendation_schemas import (
     UserDashboard, CategoryInsight, KeywordInsight,
     ActivityTimeline, UserActivityResponse, UserInterestResponse,
-    SearchInsight, PopularSearches
+    SearchInsight, PopularSearches, UserActivityCreate
 )
 
-router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
+router = APIRouter(prefix="/analytics", tags=["Analytics"])
+
+
+def _resolve_user(token_data, db: Session) -> User:
+    """Resolve TokenData → full User ORM object (raises 401 if not found)"""
+    user = db.query(User).filter(User.username == token_data.username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+
+@router.post("/track")
+async def track_activity(
+    activity: UserActivityCreate,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Track a user activity (search, view, click, favorite).
+    Called by the frontend whenever a user performs an action.
+    """
+    user = _resolve_user(current_user, db)
+
+    # Category synonym map — mirrors the one in listings.py
+    CATEGORY_SYNONYMS = {
+        'mobile': 'mobile', 'mobiles': 'mobile', 'phone': 'mobile', 'phones': 'mobile', 
+        'smartphone': 'mobile', 'smartphones': 'mobile', 'cellphone': 'mobile', 
+        'handset': 'mobile', 'iphone': 'mobile', 'android': 'mobile',
+        'laptop': 'laptop', 'laptops': 'laptop', 'notebook': 'laptop',
+        'notebooks': 'laptop', 'macbook': 'laptop', 'computer': 'laptop', 'pc': 'laptop',
+        'sofa': 'furniture', 'sofas': 'furniture', 'couch': 'furniture', 'furniture': 'furniture',
+        'couches': 'furniture', 'bed': 'furniture', 'beds': 'furniture',
+        'wardrobe': 'furniture', 'wardrobes': 'furniture', 'table': 'furniture',
+        'tables': 'furniture', 'chair': 'furniture', 'chairs': 'furniture',
+        'desk': 'furniture', 'desks': 'furniture', 'cabinet': 'furniture',
+        'shelf': 'furniture', 'shelves': 'furniture', 'dresser': 'furniture',
+    }
+
+    activity_type = activity.activity_type
+    search_query = activity.search_query
+    listing_id = activity.listing_id
+    category = activity.category
+    session_id = activity.session_id or "web"
+    duration_seconds = activity.duration_seconds
+
+    # Normalize category strings (Plural -> Singular, handle "all")
+    if category:
+        category = category.lower().strip()
+        if category in ['all', '']:
+            category = None
+        elif category == 'mobiles':
+            category = 'mobile'
+        elif category == 'laptops':
+            category = 'laptop'
+
+    # Use RecommendationEngine for robust tracking + interest updates
+    engine = RecommendationEngine(db)
+    engine.track_activity(
+        user_id=user.id,
+        session_id=session_id,
+        activity_type=activity_type,
+        listing_id=listing_id,
+        search_query=search_query,
+        category=category,
+        duration_seconds=duration_seconds
+    )
+
+    print(f"DEBUG ALPHA-Z: Tracked {activity_type} for user {user.id} via RecommendationEngine")
+
+    return {"status": "tracked", "activity_type": activity_type}
 
 
 @router.get("/dashboard", response_model=UserDashboard)
@@ -33,6 +103,7 @@ async def get_user_dashboard(
     """
     Get comprehensive user dashboard with insights
     """
+    current_user = _resolve_user(current_user, db)
     start_date = datetime.utcnow() - timedelta(days=days)
     
     # Get all activities in date range
@@ -116,10 +187,30 @@ async def get_user_dashboard(
             timeline_data[date_key]['click_count'] += 1
         elif activity.activity_type == 'favorite':
             timeline_data[date_key]['favorite_count'] += 1
+
+    # Pad timeline with last 7 days to ensure a continuous line in charts
+    today = datetime.utcnow().date()
+    padded_timeline = {}
+    for i in range(6, -1, -1):
+        date_str = (today - timedelta(days=i)).isoformat()
+        padded_timeline[date_str] = {
+            'search_count': 0,
+            'view_count': 0,
+            'click_count': 0,
+            'favorite_count': 0
+        }
     
+    # Fill in actual data
+    for date, counts in timeline_data.items():
+        if date in padded_timeline:
+            padded_timeline[date] = counts
+        elif datetime.fromisoformat(date).date() >= (today - timedelta(days=days)):
+            # Also include data outside the 7-day window if it exists within the requested range
+            padded_timeline[date] = counts
+
     activity_timeline = [
         ActivityTimeline(date=date, **counts)
-        for date, counts in sorted(timeline_data.items())
+        for date, counts in sorted(padded_timeline.items())
     ]
     
     # Get user interests for price range
@@ -148,11 +239,11 @@ async def get_user_dashboard(
     
     # Calculate engagement score (0-100)
     engagement_factors = [
-        min(total_searches / 10, 1) * 20,  # Up to 20 points
-        min(total_views / 50, 1) * 30,     # Up to 30 points
-        min(total_favorites / 10, 1) * 25,  # Up to 25 points
-        min(total_messages / 5, 1) * 15,    # Up to 15 points
-        min(len(activities) / 100, 1) * 10  # Up to 10 points
+        min(total_searches / 5, 1) * 20,   # Up to 20 points (5 searches)
+        min(total_views / 20, 1) * 30,    # Up to 30 points (20 views)
+        min(total_favorites / 5, 1) * 25,  # Up to 25 points (5 favorites)
+        min(total_messages / 3, 1) * 15,   # Up to 15 points (3 messages)
+        min(len(activities) / 50, 1) * 10  # Up to 10 points (50 total activities)
     ]
     engagement_score = round(sum(engagement_factors), 1)
     
@@ -181,6 +272,7 @@ async def get_user_activities(
     """
     Get user's activity history
     """
+    current_user = _resolve_user(current_user, db)
     query = db.query(UserActivity).filter(
         UserActivity.user_id == current_user.id
     )
@@ -226,6 +318,7 @@ async def get_user_interests(
     """
     Get aggregated user interests
     """
+    current_user = _resolve_user(current_user, db)
     user_interest = db.query(UserInterest).filter(
         UserInterest.user_id == current_user.id
     ).first()
@@ -266,6 +359,7 @@ async def get_search_insights(
     """
     Get insights about user's search patterns
     """
+    current_user = _resolve_user(current_user, db)
     start_date = datetime.utcnow() - timedelta(days=days)
     
     # Get search activities
@@ -329,6 +423,7 @@ async def get_recommendation_performance(
     """
     Get performance metrics of recommendations
     """
+    current_user = _resolve_user(current_user, db)
     start_date = datetime.utcnow() - timedelta(days=days)
     
     # Get recommendation history
@@ -383,6 +478,7 @@ async def clear_activity_history(
     """
     Clear user's activity history and reset interests
     """
+    current_user = _resolve_user(current_user, db)
     # Delete activities
     db.query(UserActivity).filter(
         UserActivity.user_id == current_user.id

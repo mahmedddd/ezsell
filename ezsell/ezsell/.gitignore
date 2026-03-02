@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+*.log
+
+# Node
+node_modules/
+dist/
+.next/
+.nuxt/
+*.local
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp / Office lock files
+~$*
+*.tmp
+~WRL*.tmp
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Quality / debug outputs
+quality_results.txt
+diag_output.txt
+validation_traceback.txt
+verify_support_backend.py
+
+# Unnecessary markdown
+COMPLETE_SETUP_AND_RUN.md

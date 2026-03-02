@@ -16,7 +16,7 @@ import logging
 
 from schemas.schemas import PricePredictionRequest, PricePredictionResponse
 from advanced_laptop_preprocessor import AdvancedLaptopPreprocessor
-from utils.title_validator import TitleValidator
+from services.llm_pricing_service import llm_pricing_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -1323,66 +1323,228 @@ def apply_furniture_price_adjustments(base_price: float, data: Dict[str, Any]) -
         final_price -= fair_penalty
         adjustments.append(f"-Rs.{int(fair_penalty):,} (Fair condition)")
     
-    # Material premium adjustments
-    material = data.get('material', '').lower()
-    if material in ['sheesham', 'teak', 'walnut', 'oak', 'mahogany']:
-        premium_bonus = base_price * 0.20
-        final_price += premium_bonus
-        adjustments.append(f"+Rs.{int(premium_bonus):,} (Premium {material.title()} Wood)")
-    elif material in ['leather']:
-        leather_bonus = base_price * 0.15
-        final_price += leather_bonus
-        adjustments.append(f"+Rs.{int(leather_bonus):,} (Leather)")
-    elif material in ['marble', 'granite']:
-        stone_bonus = base_price * 0.25
-        final_price += stone_bonus
-        adjustments.append(f"+Rs.{int(stone_bonus):,} ({material.title()})")
-    elif material in ['glass']:
-        glass_bonus = base_price * 0.05
-        final_price += glass_bonus
-        adjustments.append(f"+Rs.{int(glass_bonus):,} (Glass)")
-    elif material in ['plastic', 'mdf']:
-        budget_penalty = base_price * 0.15
-        final_price -= budget_penalty
-        adjustments.append(f"-Rs.{int(budget_penalty):,} (Budget Material)")
-    
-    # Antique bonus
-    is_antique = data.get('is_antique', False)
-    if is_antique:
-        antique_bonus = base_price * 0.30
-        final_price += antique_bonus
-        adjustments.append(f"+Rs.{int(antique_bonus):,} (Antique)")
-    
-    # Handmade/Custom bonus
-    is_handmade = data.get('is_handmade', False)
-    if is_handmade:
-        handmade_bonus = base_price * 0.15
-        final_price += handmade_bonus
-        adjustments.append(f"+Rs.{int(handmade_bonus):,} (Handmade)")
-    
-    # Imported bonus
-    is_imported = data.get('is_imported', False)
-    if is_imported:
-        import_bonus = base_price * 0.20
-        final_price += import_bonus
-        adjustments.append(f"+Rs.{int(import_bonus):,} (Imported)")
-    
-    # Storage feature bonus
-    has_storage = data.get('has_storage', False)
-    if has_storage:
-        storage_bonus = base_price * 0.08
-        final_price += storage_bonus
-        adjustments.append(f"+Rs.{int(storage_bonus):,} (With Storage)")
-    
-    # Seating capacity bonus (for sofas/chairs mainly)
-    seating_capacity = data.get('seating_capacity', 0)
+    # ── Sub-material tiered pricing ──────────────────────────────────────────
+    # Scan both the dropdown value AND free-text title/description so users
+    # who write "teak double bed" get a more accurate price automatically.
+    material   = data.get('material', '').lower()
+    title_text = data.get('title', '').lower()
+    desc_text  = data.get('description', '').lower()
+    full_text  = f"{material} {title_text} {desc_text}"
+
+    # Pre-define all signal lists so we can reference them in a clean chain
+    _WOOD_NAMES = ['sheesham', 'teak', 'walnut', 'oak', 'mahogany', 'pine', 'mdf',
+                   'plywood', 'particle board', 'laminate', 'rosewood', 'rubberwood',
+                   'engineered wood', 'acacia', 'beech', 'wenge']
+    _WOOD_WORDS = ['wood', 'wooden', 'timber', 'hardwood']
+    _LEATHER_KW = ['leather', 'leatherette', 'faux leather', 'pu leather',
+                   'bonded leather', 'genuine leather', 'full grain', 'top grain']
+    _FABRIC_KW  = ['fabric', 'cloth', 'velvet', 'chenille', 'suede', 'linen',
+                   'cotton', 'canvas', 'microfiber', 'polyester', 'upholstered']
+    _METAL_KW   = ['metal', 'steel', 'iron', 'aluminum', 'aluminium',
+                   'wrought iron', 'stainless steel', 'mild steel', 'cast iron']
+    _STONE_KW   = ['marble', 'granite']
+    _RATTAN_KW  = ['rattan', 'bamboo', 'wicker', 'cane']
+    _PLASTIC_KW = ['plastic', 'polypropylene', 'acrylic']
+
+    is_wood   = any(w in full_text for w in _WOOD_WORDS) or any(n in full_text for n in _WOOD_NAMES)
+    is_leath  = any(k in full_text for k in _LEATHER_KW)
+    is_fabric = any(k in full_text for k in _FABRIC_KW)
+    is_metal  = any(k in full_text for k in _METAL_KW)
+    is_stone  = any(k in full_text for k in _STONE_KW)
+    is_glass  = 'glass' in full_text
+    is_rattan = any(k in full_text for k in _RATTAN_KW)
+    is_plst   = any(k in full_text for k in _PLASTIC_KW)
+
+    mat_mult  = 0.0
+    mat_label = None
+
+    if is_wood:
+        # Tier 1 – ultra-premium tropical hardwoods
+        if any(k in full_text for k in ['teak', 'burma teak', 'burmese teak']):
+            mat_mult = 0.40; mat_label = 'Teak Wood'
+        # Tier 2 – premium South-Asian hardwoods
+        elif any(k in full_text for k in ['sheesham', 'shisham', 'rosewood', 'rose wood']):
+            mat_mult = 0.30; mat_label = 'Sheesham/Rosewood'
+        # Tier 3 – quality imported hardwoods
+        elif any(k in full_text for k in ['walnut', 'oak', 'mahogany', 'wenge', 'acacia', 'beech']):
+            _found = next((k for k in ['walnut','oak','mahogany','wenge','acacia','beech'] if k in full_text), 'hardwood')
+            mat_mult = 0.25; mat_label = f'{_found.title()} Wood'
+        # Tier 4 – solid/pure wood (unspecified species but quality claimed)
+        elif any(k in full_text for k in ['solid wood', 'hardwood', 'pure wood']):
+            mat_mult = 0.15; mat_label = 'Solid Wood'
+        # Tier 5 – mid softwoods (pine, rubberwood)
+        elif any(k in full_text for k in ['pine', 'rubberwood', 'rubber wood', 'fir']):
+            mat_mult = 0.05; mat_label = 'Pine/Rubberwood'
+        # Tier 6 – budget engineered/composite wood
+        elif any(k in full_text for k in ['mdf', 'plywood', 'particle board', 'particleboard',
+                                           'laminate', 'chipboard', 'engineered wood', 'pressed wood']):
+            mat_mult = -0.15; mat_label = 'MDF/Plywood'
+        # Tier 7 – plain "wood" with no sub-type detected
+        else:
+            mat_mult = 0.08; mat_label = 'Wood'
+
+    elif is_leath:
+        if any(k in full_text for k in ['genuine leather', 'full grain', 'top grain', 'real leather', 'pure leather']):
+            mat_mult = 0.25; mat_label = 'Genuine Leather'
+        elif any(k in full_text for k in ['bonded leather', 'pu leather', 'faux leather',
+                                           'leatherette', 'synthetic leather', 'artificial leather']):
+            mat_mult = 0.05; mat_label = 'Faux/PU Leather'
+        else:
+            mat_mult = 0.15; mat_label = 'Leather'
+
+    elif is_fabric:
+        if any(k in full_text for k in ['velvet', 'chenille', 'suede', 'silk']):
+            mat_mult = 0.12; mat_label = 'Velvet/Chenille'
+        elif any(k in full_text for k in ['linen', 'cotton', 'canvas']):
+            mat_mult = 0.03; mat_label = 'Linen/Cotton'
+        # else: generic fabric, no adjustment
+
+    elif is_metal:
+        if any(k in full_text for k in ['stainless steel', 'wrought iron', 'cast iron']):
+            mat_mult = 0.10; mat_label = 'Stainless/Wrought Iron'
+        elif any(k in full_text for k in ['aluminum', 'aluminium']):
+            mat_mult = -0.05; mat_label = 'Aluminum'
+        else:
+            mat_mult = 0.03; mat_label = 'Steel/Iron'
+
+    elif is_stone:
+        mat_mult = 0.25
+        mat_label = 'Marble Top' if 'marble' in full_text else 'Granite Top'
+
+    elif is_glass:
+        mat_mult = 0.08; mat_label = 'Glass'
+
+    elif is_plst:
+        mat_mult = -0.15; mat_label = 'Plastic'
+
+    elif is_rattan:
+        mat_mult = -0.05; mat_label = 'Rattan/Bamboo'
+
+    if mat_label is not None:
+        delta = base_price * mat_mult
+        final_price += delta
+        sign = '+' if delta >= 0 else '-'
+        adjustments.append(f"{sign}Rs.{int(abs(delta)):,} ({mat_label})")
+
+
+    # Extract type and capacity for specialized adjustments
     furniture_type = data.get('furniture_type', '').lower()
-    if seating_capacity > 0 and furniture_type not in ['sofa']:  # Sofa already has seating in subtype
-        if seating_capacity >= 6:
-            seating_bonus = base_price * 0.15
-            final_price += seating_bonus
-            adjustments.append(f"+Rs.{int(seating_bonus):,} ({seating_capacity}+ Seater)")
+    seating_capacity = data.get('seating_capacity', 0)
+
+    # ── Type-specific Physical Attributes ────────────────────────────────────
+    # These adjustments target features unique to specific furniture categories
     
+    # Wardrobe specific
+    if furniture_type == 'wardrobe':
+        if data.get('is_sliding_door') or any(k in full_text for k in ['sliding door', 'sliding mechanism']):
+            sliding_bonus = base_price * 0.15
+            final_price += sliding_bonus
+            adjustments.append(f"+Rs.{int(sliding_bonus):,} (Sliding Doors)")
+        
+        if 'mirror' in full_text:
+            mirror_bonus = base_price * 0.08
+            final_price += mirror_bonus
+            adjustments.append(f"+Rs.{int(mirror_bonus):,} (Integrated Mirror)")
+            
+        if any(k in full_text for k in ['4 door', '5 door', '6 door', 'four door', 'five door', 'six door']):
+            door_bonus = base_price * 0.15
+            final_price += door_bonus
+            adjustments.append(f"+Rs.{int(door_bonus):,} (Large Door Capacity)")
+            
+        if any(k in full_text for k in ['walk-in', 'walk in']):
+            walkin_bonus = base_price * 0.25
+            final_price += walkin_bonus
+            adjustments.append(f"+Rs.{int(walkin_bonus):,} (Walk-in Design)")
+
+    # Bed specific
+    elif furniture_type == 'bed':
+        if data.get('has_mattress') or 'mattress' in full_text:
+            m_type = data.get('mattress_type', '').lower()
+            if any(k in m_type or k in full_text for k in ['orthopedic', 'orthopaedic', 'memory foam', 'pocket spring', 'luxury', 'expensive']):
+                mattress_bonus = base_price * 0.35
+                final_price += mattress_bonus
+                adjustments.append(f"+Rs.{int(mattress_bonus):,} (Premium Mattress Included)")
+            else:
+                mattress_bonus = base_price * 0.20
+                final_price += mattress_bonus
+                adjustments.append(f"+Rs.{int(mattress_bonus):,} (Standard Mattress Included)")
+                
+        if any(k in full_text for k in ['hydraulic', 'gas-lift', 'gas lift']):
+            lift_bonus = base_price * 0.15
+            final_price += lift_bonus
+            adjustments.append(f"+Rs.{int(lift_bonus):,} (Hydraulic Storage)")
+            
+        if any(k in full_text for k in ['upholstered', 'tufted', 'padded headboard']):
+            headboard_bonus = base_price * 0.10
+            final_price += headboard_bonus
+            adjustments.append(f"+Rs.{int(headboard_bonus):,} (Premium Headboard)")
+
+    # Sofa specific
+    elif furniture_type == 'sofa':
+        if any(k in full_text for k in ['sectional', 'l-shaped', 'l shaped', 'corner sofa']):
+            sectional_bonus = base_price * 0.20
+            final_price += sectional_bonus
+            adjustments.append(f"+Rs.{int(sectional_bonus):,} (Sectional/L-Shaped)")
+            
+        if 'chesterfield' in full_text:
+            chesterfield_bonus = base_price * 0.25
+            final_price += chesterfield_bonus
+            adjustments.append(f"+Rs.{int(chesterfield_bonus):,} (Chesterfield Style)")
+            
+        if any(k in full_text for k in ['recliner', 'power recliner', 'electric recliner']):
+            recliner_bonus = base_price * 0.15
+            final_price += recliner_bonus
+            adjustments.append(f"+Rs.{int(recliner_bonus):,} (Recliner Feature)")
+
+    # Desk / Office specific
+    elif furniture_type in ['desk', 'chair']:
+        if any(k in full_text for k in ['standing desk', 'motorized', 'height adjustable']):
+            standing_bonus = base_price * 0.40
+            final_price += standing_bonus
+            adjustments.append(f"+Rs.{int(standing_bonus):,} (Standing Desk/Motorized)")
+            
+        if any(k in full_text for k in ['ergonomic', 'executive chair', 'high back']):
+            ergo_bonus = base_price * 0.25
+            final_price += ergo_bonus
+            adjustments.append(f"+Rs.{int(ergo_bonus):,} (Ergonomic/Executive)")
+
+    # Dining Table specific
+    elif furniture_type == 'table' and 'dining' in full_text:
+        if any(k in full_text for k in ['extendable', 'butterfly leaf']):
+            extend_bonus = base_price * 0.15
+            final_price += extend_bonus
+            adjustments.append(f"+Rs.{int(extend_bonus):,} (Extendable)")
+
+    # General seating capacity bonus (if not already covered in subtype)
+    if seating_capacity >= 6 and furniture_type not in ['sofa']:
+        seating_bonus = base_price * 0.15
+        final_price += seating_bonus
+        adjustments.append(f"+Rs.{int(seating_bonus):,} ({seating_capacity}+ Seater)")
+
+    # ── Brand Premiums ───────────────────────────────────────────────────────
+    # Many users search for specific reputable brands which command higher resale value
+    f_brand = data.get('furniture_brand', '').lower()
+    if 'interwood' in f_brand or 'interwood' in full_text:
+        brand_bonus = base_price * 0.30
+        final_price += brand_bonus
+        adjustments.append(f"+Rs.{int(brand_bonus):,} (Interwood Brand)")
+    elif 'habitt' in f_brand or 'habitt' in full_text:
+        brand_bonus = base_price * 0.25
+        final_price += brand_bonus
+        adjustments.append(f"+Rs.{int(brand_bonus):,} (Habitt Brand)")
+    elif 'ikea' in f_brand or 'ikea' in full_text:
+        brand_bonus = base_price * 0.20
+        final_price += brand_bonus
+        adjustments.append(f"+Rs.{int(brand_bonus):,} (Ikea Brand)")
+    elif any(k in full_text for k in ['chiniot', 'chinioti']):
+        brand_bonus = base_price * 0.20
+        final_price += brand_bonus
+        adjustments.append(f"+Rs.{int(brand_bonus):,} (Chiniot Craftsmanship)")
+    elif any(k in full_text for k in ['urban solo', 'designer']):
+        brand_bonus = base_price * 0.10
+        final_price += brand_bonus
+        adjustments.append(f"+Rs.{int(brand_bonus):,} (Designer Collection)")
+
     return final_price, adjustments
 
 
@@ -1403,10 +1565,17 @@ def prepare_furniture_features(data: Dict[str, Any]) -> pd.DataFrame:
     return X
 
 
+@router.get("/dynamic-dropdowns", response_model=Dict[str, Any])
+async def get_dynamic_dropdowns(category: str, title: str):
+    """Get context-aware dropdown options for a listing title based on Pakistani market"""
+    dropdowns = await llm_pricing_service.generate_relevant_dropdowns(category, title)
+    return {"dropdowns": dropdowns}
+
+
 @router.post("/predict-price", response_model=PricePredictionResponse)
-def predict_price(request: PricePredictionRequest):
+async def predict_price(request: PricePredictionRequest):
     """
-    Predict optimal price using advanced ML models with strict title validation
+    Predict optimal price using advanced ML models blended with Real-Time LLM Market awareness
     
     Models:
     - Laptop: XGBoost (92.29% R², MAE Rs.1,702)
@@ -1437,28 +1606,34 @@ def predict_price(request: PricePredictionRequest):
                 detail=f"Invalid category: {category}. Must be 'laptop', 'mobile', or 'furniture'"
             )
         
-        # Strict title validation before prediction
+        # Fast LLM title validation before prediction
         title = request.dict().get('title', '')
         description = request.dict().get('description', '')
         material = request.dict().get('material', '')
         
-        is_valid, error_msg, extracted_info = TitleValidator.validate_title(
-            category, title, description, material=material
+        full_title = f"{title} {material}".strip()
+        validation_result = await llm_pricing_service.validate_listing_content(
+            category, full_title, description
         )
+        is_valid = validation_result.get("is_valid", True)
         
         if not is_valid:
-            hints = TitleValidator.get_validation_hints(category)
+            _hints = {
+                "mobile":    {"example": "Samsung Galaxy S23 256GB", "required": ["Brand + Model"]},
+                "laptop":    {"example": "Dell XPS 15 i7 12th Gen", "required": ["Brand + Model/Series"]},
+                "furniture": {"example": "5-Seater L-Shape Fabric Sofa", "required": ["Furniture type"]},
+            }
             raise HTTPException(
                 status_code=422,
                 detail={
                     "error": "Title validation failed",
-                    "message": error_msg,
-                    "hints": hints,
-                    "extracted_info": extracted_info
+                    "message": validation_result.get("message", "Title is invalid"),
+                    "hints": _hints.get(category, {}),
+                    "missing_fields": validation_result.get("missing_fields", []),
+                    "suggested_title": validation_result.get("suggested_title", ""),
                 }
             )
         
-        # Load model
         model_data = load_advanced_model(category)
         if not model_data:
             raise HTTPException(
@@ -1468,6 +1643,25 @@ def predict_price(request: PricePredictionRequest):
         
         model = model_data['model']
         scaler = model_data.get('scaler')
+        
+        # Async call to LLM Pricing Service wrapper
+        extracted_specs = {"brand": request.brand, "processor": getattr(request, 'processor', '')}
+        dynamic_specs = getattr(request, 'dynamic_specs', None) or {}
+
+        # We await the LLM price estimate
+        llm_result = await llm_pricing_service.estimate_market_price(
+            category=category,
+            extracted_specs=extracted_specs,
+            user_selections=request.dict(exclude_unset=True),
+            condition=str(request.condition),
+            title=title,
+            dynamic_specs=dynamic_specs,
+        )
+        
+        llm_price = float(llm_result.get("estimated_price", 0))
+        llm_conf = float(llm_result.get("confidence", 0.0))
+        reasoning = llm_result.get("reasoning", "Historical data utilized")
+        data_source = "ML Model"
         
         # Prepare features based on category
         if category == 'laptop':
@@ -1500,6 +1694,24 @@ def predict_price(request: PricePredictionRequest):
                 recommendation = f"Predicted price. Adjustments: {' | '.join(adjustments) if adjustments else 'None'}"
             
             predicted_price = max(25000, predicted_price)  # Minimum Rs.25,000 for laptops
+            ml_price_final = predicted_price
+            
+            if llm_price > 0:
+                if llm_conf > 0.6:
+                    predicted_price = (llm_price * 0.7) + (ml_price_final * 0.3)
+                    data_source = "LLM Market Aware + ML Blend"
+                else:
+                    predicted_price = (llm_price * 0.3) + (ml_price_final * 0.7)
+                    data_source = "ML Model + LLM Blend"
+            
+            # Apply condition multiplier (condition 1-10)
+            try:
+                cond_val = int(request.condition) if str(request.condition).isdigit() else 5
+                cond_val = max(1, min(10, cond_val))
+            except (ValueError, TypeError):
+                cond_val = 5
+            condition_multiplier = 0.10 + (cond_val / 10) * 0.90
+            predicted_price = predicted_price * condition_multiplier
             
             # Calculate price gap based on predicted amount (Rs. 5,000 - 7,000 total range)
             # Higher prices get larger gaps
@@ -1548,6 +1760,26 @@ def predict_price(request: PricePredictionRequest):
                 recommendation = f"Predicted price. Adjustments: {' | '.join(adjustments) if adjustments else 'None'}"
             
             predicted_price = max(5000, predicted_price)  # Minimum Rs.5,000 for mobiles
+            ml_price_final = predicted_price
+            
+            if llm_price > 0:
+                if llm_conf > 0.6:
+                    predicted_price = (llm_price * 0.7) + (ml_price_final * 0.3)
+                    data_source = "LLM Market Aware + ML Blend"
+                else:
+                    predicted_price = (llm_price * 0.3) + (ml_price_final * 0.7)
+                    data_source = "ML Model + LLM Blend"
+            
+            # Apply condition multiplier (condition 1-10, where 10=brand new)
+            # Maps: 10->1.0, 7->0.65, 5->0.50, 3->0.35, 1->0.15
+            try:
+                cond_val = int(request.condition) if str(request.condition).isdigit() else 5
+                cond_val = max(1, min(10, cond_val))
+            except (ValueError, TypeError):
+                cond_val = 5
+            # Non-linear curve: gives more weight to high-condition items
+            condition_multiplier = 0.10 + (cond_val / 10) * 0.90
+            predicted_price = predicted_price * condition_multiplier
             
             # Calculate price gap based on predicted amount (Rs. 5,000 - 7,000 total range)
             # Higher prices get larger gaps
@@ -1597,6 +1829,24 @@ def predict_price(request: PricePredictionRequest):
                 recommendation = f"Predicted price. Adjustments: {' | '.join(adjustments) if adjustments else 'None'}"
             
             predicted_price = max(2000, predicted_price)  # Minimum Rs.2,000 for furniture
+            ml_price_final = predicted_price
+            
+            if llm_price > 0:
+                if llm_conf > 0.6:
+                    predicted_price = (llm_price * 0.7) + (ml_price_final * 0.3)
+                    data_source = "LLM Market Aware + ML Blend"
+                else:
+                    predicted_price = (llm_price * 0.3) + (ml_price_final * 0.7)
+                    data_source = "ML Model + LLM Blend"
+            
+            # Apply condition multiplier (condition 1-10)
+            try:
+                cond_val = int(request.condition) if str(request.condition).isdigit() else 5
+                cond_val = max(1, min(10, cond_val))
+            except (ValueError, TypeError):
+                cond_val = 5
+            condition_multiplier = 0.10 + (cond_val / 10) * 0.90
+            predicted_price = predicted_price * condition_multiplier
             
             # Calculate price gap based on predicted amount (Rs. 5,000 - 7,000 total range)
             # Higher prices get larger gaps
@@ -1623,8 +1873,13 @@ def predict_price(request: PricePredictionRequest):
             predicted_price=round(predicted_price, 2),
             confidence_lower=round(confidence_lower, 2),
             confidence_upper=round(confidence_upper, 2),
-            confidence_score=round(model_accuracy, 2),
-            recommendation=recommendation
+            confidence_score=round(max(model_accuracy, llm_conf), 2),
+            recommendation=recommendation,
+            llm_price=llm_price if llm_price > 0 else None,
+            ml_price=round(ml_price_final, 2),
+            data_source=data_source,
+            reasoning=reasoning,
+            simulated_market_data=llm_result.get("simulated_market_data", [])
         )
     
     except HTTPException:
@@ -1710,7 +1965,7 @@ def predict_price_with_dropdowns(request: PricePredictionRequest):
 
 @router.get("/validate-title")
 @router.post("/validate-title")
-def validate_title(category: str, title: str, description: str = "", material: str = ""):
+async def validate_title(category: str, title: str, description: str = "", material: str = ""):
     """
     Validate that title contains relevant information for the category
     Returns validation status and helpful error messages
@@ -1725,31 +1980,26 @@ def validate_title(category: str, title: str, description: str = "", material: s
         {
             "is_valid": bool,
             "message": str,
-            "extracted_info": dict,
+            "missing_fields": list,
+            "suggested_title": str,
+            "extracted_specs": dict,
             "hints": dict
         }
     """
     try:
-        is_valid, error_msg, extracted_info = TitleValidator.validate_title(
-            category, title, description, material=material
+        full_title = f"{title} {material}".strip()
+        result = await llm_pricing_service.validate_listing_content(
+            category, full_title, description
         )
         
-        hints = TitleValidator.get_validation_hints(category)
+        _hints = {
+            "mobile":    {"example": "Samsung Galaxy S23 256GB", "required": ["Brand + Model"]},
+            "laptop":    {"example": "Dell XPS 15 i7 12th Gen", "required": ["Brand + Model/Series"]},
+            "furniture": {"example": "5-Seater L-Shape Fabric Sofa", "required": ["Furniture type"]},
+        }
+        result["hints"] = _hints.get(category, {})
         
-        if is_valid:
-            return {
-                "is_valid": True,
-                "message": "Title is valid and contains relevant information",
-                "extracted_info": extracted_info,
-                "hints": hints
-            }
-        else:
-            return {
-                "is_valid": False,
-                "message": error_msg,
-                "extracted_info": extracted_info,
-                "hints": hints
-            }
+        return result
     
     except Exception as e:
         raise HTTPException(
@@ -1868,7 +2118,12 @@ def get_validation_hints(category: str) -> Dict:
     Returns:
         Dictionary with required fields, recommended fields, and example
     """
-    hints = TitleValidator.get_validation_hints(category)
+    _hints = {
+        "mobile":    {"example": "Samsung Galaxy S23 256GB", "required": ["Brand + Model"]},
+        "laptop":    {"example": "Dell XPS 15 i7 12th Gen", "required": ["Brand + Model/Series"]},
+        "furniture": {"example": "5-Seater L-Shape Fabric Sofa", "required": ["Furniture type"]},
+    }
+    hints = _hints.get(category)
     if not hints:
         raise HTTPException(
             status_code=400,

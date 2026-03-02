@@ -4,6 +4,8 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorization
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy.orm import Session
+from models.database import get_db, User
 
 from core.config import settings
 
@@ -31,20 +33,33 @@ def verify_token(token: str, credentials_exception):
         raise credentials_exception
     return token_data
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    return verify_token(token, credentials_exception)
+    token_data = verify_token(token, credentials_exception)
+    user = db.query(User).filter(User.username == token_data.username).first()
+    if user is None:
+        raise credentials_exception
+    
+    # Update last_seen
+    from datetime import datetime
+    user.last_seen = datetime.utcnow()
+    db.commit()
+    
+    return user
 
 def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_oauth2_scheme)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_oauth2_scheme),
+    db: Session = Depends(get_db)
 ):
     """
-    Optional authentication - returns user if authenticated, None otherwise
-    Useful for endpoints that work for both logged-in and anonymous users
+    Optional authentication - returns User if authenticated, None otherwise
     """
     if credentials is None:
         return None
@@ -56,8 +71,7 @@ def get_current_user_optional(
         if username is None:
             return None
         
-        # In a real implementation, you'd fetch the user from DB here
-        # For now, returning TokenData
-        return TokenData(username=username)
+        user = db.query(User).filter(User.username == username).first()
+        return user
     except JWTError:
         return None

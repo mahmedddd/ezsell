@@ -117,6 +117,10 @@ export default function PricePredictionNew() {
     has_storage: false,
     is_modern: false,
     is_antique: false,
+    is_sliding_door: false,
+    has_mattress: false,
+    mattress_type: 'standard',
+    furniture_brand: 'none',
   });
 
   // Load dropdown options for a category
@@ -288,8 +292,8 @@ export default function PricePredictionNew() {
                           activeTab === 'mobile'
                             ? 'e.g., Samsung Galaxy S23 Ultra 12GB RAM 256GB'
                             : activeTab === 'laptop'
-                            ? 'e.g., Dell XPS 15 Intel Core i7 12th Gen 16GB RAM'
-                            : 'e.g., Modern 5 Seater L-Shape Sofa - Premium Fabric'
+                              ? 'e.g., Dell XPS 15 Intel Core i7 12th Gen 16GB RAM'
+                              : 'e.g., Modern 5 Seater L-Shape Sofa - Premium Fabric'
                         }
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -305,9 +309,8 @@ export default function PricePredictionNew() {
                         <p className="text-sm text-muted-foreground mt-1">Validating...</p>
                       )}
                       {titleValidation && !validatingTitle && (
-                        <div className={`flex items-start gap-2 mt-2 p-2 rounded ${
-                          titleValidation.is_valid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                        }`}>
+                        <div className={`flex items-start gap-2 mt-2 p-2 rounded ${titleValidation.is_valid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                          }`}>
                           {titleValidation.is_valid ? (
                             <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
                           ) : (
@@ -590,18 +593,74 @@ export default function PricePredictionNew() {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div>
+                        <Label>Brand (Optional)</Label>
+                        <Select value={furnitureData.furniture_brand} onValueChange={(v) => setFurnitureData({ ...furnitureData, furniture_brand: v })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Unknown/Local</SelectItem>
+                            <SelectItem value="interwood">Interwood</SelectItem>
+                            <SelectItem value="habitt">Habitt</SelectItem>
+                            <SelectItem value="ikea">IKEA</SelectItem>
+                            <SelectItem value="chiniot">Chiniot Craft</SelectItem>
+                            <SelectItem value="urban_solo">Urban Solo</SelectItem>
+                            <SelectItem value="other">Other Designer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4 mt-4 border-t pt-4">
+                      <h4 className="col-span-2 text-sm font-semibold text-gray-700">Premium Features</h4>
                       {Object.entries(options.boolean_features || {}).map(([key, label]) => (
                         <div key={key} className="flex items-center space-x-2">
                           <Checkbox
                             checked={(furnitureData as any)[key] || false}
                             onCheckedChange={(checked) => setFurnitureData({ ...furnitureData, [key]: checked as boolean })}
                           />
-                          <Label>{label}</Label>
+                          <Label className="font-normal cursor-pointer text-sm">{label}</Label>
                         </div>
                       ))}
+
+                      {furnitureData.furniture_type === 'wardrobe' && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={furnitureData.is_sliding_door}
+                            onCheckedChange={(checked) => setFurnitureData({ ...furnitureData, is_sliding_door: checked as boolean })}
+                          />
+                          <Label className="font-normal cursor-pointer text-sm">Sliding Doors</Label>
+                        </div>
+                      )}
+
+                      {furnitureData.furniture_type === 'bed' && (
+                        <div className="col-span-2 space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={furnitureData.has_mattress}
+                              onCheckedChange={(checked) => setFurnitureData({ ...furnitureData, has_mattress: checked as boolean })}
+                            />
+                            <Label className="font-normal cursor-pointer text-sm">Includes Mattress</Label>
+                          </div>
+                          {furnitureData.has_mattress && (
+                            <div className="pl-6 pt-1 grid grid-cols-2 items-center gap-2">
+                              <Label className="text-xs">Mattress Type</Label>
+                              <Select value={furnitureData.mattress_type} onValueChange={(v) => setFurnitureData({ ...furnitureData, mattress_type: v })}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="standard">Standard Foam</SelectItem>
+                                  <SelectItem value="orthopedic">Orthopedic</SelectItem>
+                                  <SelectItem value="memory_foam">Memory Foam</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <Button

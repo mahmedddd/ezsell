@@ -1,0 +1,44 @@
+Testing LLM Validation Overhaul...
+
+--- Testing: dccklcsldkcs ---
+Result: {
+  "is_valid": false,
+  "message": "Please provide a descriptive title that includes the brand and model of the mobile phone, along with relevant technical specifications such as RAM and Storage.",
+  "missing_fields": [
+    "Brand",
+    "Model",
+    "RAM",
+    "Storage"
+  ],
+  "suggested_title": "",
+  "extracted_specs": {}
+}
+
+--- Testing: iphone ---
+Result: {
+  "is_valid": true,
+  "message": "Title is too vague. Please include the brand and model name.",
+  "missing_fields": [
+    "RAM",
+    "Storage"
+  ],
+  "suggested_title": "Apple iPhone",
+  "extracted_specs": {}
+}
+
+--- Testing: iPhone 14 Pro Max 256GB - 10/10 Condition ---
+Result: {
+  "is_valid": true,
+  "message": "Good job! However, consider adding the condition in more detail (e.g., 'Mint', 'Good', 'Fair') and the operating system.",
+  "missing_fields": [
+    "Condition",
+    "Operating System"
+  ],
+  "suggested_title": "Apple iPhone 14 Pro Max 256GB - Excellent Condition, iOS",
+  "extracted_specs": {
+    "Brand": "Apple",
+    "Model": "iPhone 14 Pro Max",
+    "Storage": "256GB",
+    "Generation": "14"
+  }
+}

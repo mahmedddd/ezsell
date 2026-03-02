@@ -24,18 +24,9 @@ from models.database import get_db, Listing
 from core.security import get_current_user
 from routers.users import get_user_by_username
 
-# Image-to-3D AI service (Tripo3D) — imported lazily so missing key doesn't break startup
-try:
-    from services.image_to_3d import (
-        start_image_to_3d_task,
-        start_multiview_to_3d_task,
-        get_task_status as meshy_get_status,
-        download_and_cache_glb,
-        is_configured as meshy_is_configured,
-    )
-    _IMAGE_TO_3D_AVAILABLE = True
-except ImportError:
-    _IMAGE_TO_3D_AVAILABLE = False
+# 3D Assets only (Manual/Procedural)
+_IMAGE_TO_3D_AVAILABLE = False
+print("✅ [AR_ASSETS] AR Assets router initialized.")
 
 router = APIRouter()
 
@@ -224,152 +215,86 @@ async def upload_glb(
         **_serialize_assets(listing),
     }
 
+# ─── AI 3D Generation (Tripo AI) ──────────────────────────────────────────────
 
-# ─── AI Image-to-3D Endpoints (Tripo3D) ─────────────────────────────────────
-
-@router.post("/products/{listing_id}/generate-3d", status_code=status.HTTP_202_ACCEPTED)
-async def start_generate_3d(
+@router.post("/products/{listing_id}/assets/generate-3d")
+async def generate_3d_ai(
     listing_id: int,
-    image_url: str = Query(..., description="Primary product image URL"),
-    # Optional: comma-separated list of additional angle image URLs
-    extra_image_urls: Optional[str] = Query(
-        None,
-        description="Comma-separated additional angle image URLs (side, back, top) for higher-accuracy multi-view generation"
-    ),
+    image_url: Optional[str] = Query(None),
+    all_images: bool = Query(False),
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """
-    **Public** endpoint — starts an AI image-to-3D task via Tripo3D.
-
-    • Accepts an optional `extra_image_urls` comma-separated list so the caller
-      can pass side / back / top photos for a much higher-fidelity 3-D model.
-    • Reads listing title/description/furniture_type/material and injects them
-      as a text prompt so Tripo3D understands the shape and material of the item.
-
-    The frontend polls `/products/{id}/generate-3d/{task_id}` every 3 s until
-    status is `complete` or `failed`.
-
-    Requires `TRIPO_API_KEY` in the backend `.env` file.
-    Sign up at https://www.tripo3d.ai — free credits on every new account.
+    Experimental endpoint: Generate a 3-D mesh from product images via Tripo AI.
+    If all_images=True and the listing has multiple images, uses multiview_to_model.
     """
-    if not _IMAGE_TO_3D_AVAILABLE:
-        raise HTTPException(status_code=503, detail="image_to_3d service not available (import error)")
-
-    if not meshy_is_configured():
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "AI 3D generation is not configured. "
-                "Add TRIPO_API_KEY=<your_key> to backend/.env — "
-                "sign up free at https://www.tripo3d.ai"
-            ),
-        )
-
-    _ensure_ar_columns(db)
+    from services.image_to_3d import start_image_to_3d_task, start_multiview_to_3d_task
+    
     listing = _get_listing_or_404(listing_id, db)
-
-    if listing.category.lower() != "furniture":
-        raise HTTPException(status_code=400, detail="AI 3D generation is only for furniture listings")
-
-    # Build list of all angles (primary first, then extra)
-    all_urls = [image_url]
-    if extra_image_urls:
-        extras = [u.strip() for u in extra_image_urls.split(",") if u.strip()]
-        all_urls.extend(extras)
-
-    # Gather listing metadata for Tripo3D style prompt
-    furniture_type = getattr(listing, "furniture_type", None)
-    title         = getattr(listing, "title", None)
-    description   = getattr(listing, "description", None)
-    material      = getattr(listing, "material", None)
+    user = get_user_by_username(db, current_user.username)
+    if not user or (listing.owner_id != user.id and not user.is_admin):
+        raise HTTPException(status_code=403, detail="Not authorised")
 
     try:
-        if len(all_urls) > 1:
-            task_id = await start_multiview_to_3d_task(
-                all_urls,
-                furniture_type=furniture_type,
-                title=title,
-                description=description,
-                material=material,
-            )
-            mode = "multiview"
+        if all_images:
+            img_list = json.loads(listing.images) if listing.images else []
+            if len(img_list) > 1:
+                # Resolve full URLs for Tripo
+                base = "http://localhost:8000" # fallback if needed
+                full_urls = [img if img.startswith("http") else f"{base}{img}" for img in img_list]
+                task_id = await start_multiview_to_3d_task(full_urls)
+            else:
+                target = image_url or (img_list[0] if img_list else None)
+                if not target: raise ValueError("No image found")
+                full_url = target if target.startswith("http") else f"http://localhost:8000{target}"
+                task_id = await start_image_to_3d_task(full_url)
         else:
-            task_id = await start_image_to_3d_task(
-                image_url,
-                furniture_type=furniture_type,
-                title=title,
-                description=description,
-                material=material,
-            )
-            mode = "single"
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Tripo API error: {exc}") from exc
-
-    return {
-        "task_id":    task_id,
-        "status":     "pending",
-        "listing_id": listing_id,
-        "mode":       mode,
-        "image_count": len(all_urls),
-    }
+            if not image_url: raise ValueError("image_url required for single-image gen")
+            full_url = image_url if image_url.startswith("http") else f"http://localhost:8000{image_url}"
+            task_id = await start_image_to_3d_task(full_url)
+            
+        return {"task_id": task_id, "status": "queued"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/products/{listing_id}/generate-3d/{task_id}")
-async def poll_generate_3d(
+@router.get("/products/{listing_id}/assets/generate-3d/{task_id}")
+async def poll_3d_ai_status(
     listing_id: int,
     task_id: str,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """
-    **Public** endpoint — polls the AI image-to-3D task.
-
-    When `status == "complete"` the GLB is downloaded, cached, and the listing's
-    `model_glb_url` is updated so subsequent viewers get the AI model instantly.
-
-    Response shape:
-        {status: "pending"|"processing"|"complete"|"failed",
-         progress: 0-100, glb_url?: string, error?: string}
+    Polls Tripo AI status. If SUCCEEDED, downloads the GLB and updates listing metadata.
     """
-    if not _IMAGE_TO_3D_AVAILABLE:
-        raise HTTPException(status_code=503, detail="image_to_3d service not available")
-
-    _ensure_ar_columns(db)
+    from services.image_to_3d import get_task_status, download_and_save_glb
+    
     listing = _get_listing_or_404(listing_id, db)
+    user = get_user_by_username(db, current_user.username)
+    if not user or (listing.owner_id != user.id and not user.is_admin):
+        raise HTTPException(status_code=403, detail="Not authorised")
 
     try:
-        result = await meshy_get_status(task_id)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Tripo API error: {exc}") from exc
-
-    meshy_status: str = result.get("status", "PENDING")
-    progress: int = int(result.get("progress", 0))
-
-    if meshy_status == "SUCCEEDED":
-        glb_cdn_url = (result.get("model_urls") or {}).get("glb", "")
-        if not glb_cdn_url:
-            return {"status": "failed", "progress": 0, "error": "Tripo returned no GLB URL"}
-
-        # Download & cache locally (so the GLB survives CDN expiry)
-        try:
-            local_url = await download_and_cache_glb(glb_cdn_url, listing_id)
-        except Exception:
-            local_url = glb_cdn_url
-
-        # Persist to DB so next page-load skips generation entirely
-        listing.model_glb_url = local_url
-        db.commit()
-        db.refresh(listing)
-
-        return {
-            "status":   "complete",
-            "progress": 100,
-            "glb_url":  local_url,
-            **_serialize_assets(listing),
-        }
-
-    if meshy_status == "FAILED":
-        err_msg = (result.get("task_error") or {}).get("message", "Unknown Tripo error")
-        return {"status": "failed", "progress": 0, "error": err_msg}
-
-    # PENDING or IN_PROGRESS
-    return {"status": "processing", "progress": progress}
+        status_data = await get_task_status(task_id)
+        
+        if status_data["status"] == "SUCCEEDED":
+            glb_remote_url = status_data["model_urls"].get("glb")
+            if glb_remote_url:
+                # Download and save locally
+                unique_name = f"listing_{listing_id}_ai_{uuid.uuid4().hex[:8]}.glb"
+                dest_path = AR_MODELS_DIR / unique_name
+                success = await download_and_save_glb(glb_remote_url, str(dest_path))
+                
+                if success:
+                    relative_url = f"/uploads/ar_models/{unique_name}"
+                    listing.model_glb_url = relative_url
+                    # Set a default polygon count for AI models if not provided
+                    listing.polygon_count = status_data.get("polygon_count", 50000)
+                    db.commit()
+                    status_data["local_url"] = relative_url
+        
+        return status_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

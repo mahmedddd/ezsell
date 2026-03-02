@@ -10,7 +10,7 @@ export default function EditListing() {
   const navigate = useNavigate();
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
@@ -21,15 +21,15 @@ export default function EditListing() {
       }
 
       try {
-        const data = await listingService.getListingById(parseInt(id));
-        
+        const data = await listingService.getListing(parseInt(id));
+
         // Check if user is the owner
         if (data.owner_id !== currentUser?.id) {
           alert('You can only edit your own listings');
           navigate('/');
           return;
         }
-        
+
         setListing(data);
       } catch (error) {
         console.error('Failed to fetch listing:', error);
@@ -66,16 +66,16 @@ export default function EditListing() {
           <Home className="mr-2 h-4 w-4" />
           Back to Listing
         </Button>
-        
+
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-slate-900 mb-2">Edit Listing</h1>
           <p className="text-slate-600">Update your listing information</p>
         </div>
 
-        <CreateListingFormNew 
-          editMode={true} 
-          listingId={parseInt(id!)} 
-          existingData={listing} 
+        <CreateListingFormNew
+          editMode={true}
+          listingId={parseInt(id!)}
+          existingData={listing}
         />
       </div>
     </div>

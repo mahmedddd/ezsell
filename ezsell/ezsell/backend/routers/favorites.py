@@ -110,7 +110,9 @@ def get_favorites(
     listing_ids = [fav.listing_id for fav in favorites]
     listings = db.query(Listing).filter(
         Listing.id.in_(listing_ids),
-        Listing.approval_status == "approved"
+        Listing.approval_status == "approved",
+        Listing.is_active == True,
+        Listing.is_sold == False
     ).all()
     
     return listings

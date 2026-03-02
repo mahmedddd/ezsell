@@ -1,6 +1,6 @@
 # Pydantic schemas for request/response validation
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Union
+from typing import Optional, Union, Dict, List, Any
 from datetime import datetime
 
 # User Schemas
@@ -8,9 +8,11 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
     full_name: Optional[str] = None
+    phone: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
+    phone: str  # Mandatory for creation
 
 class UserLogin(BaseModel):
     username: str
@@ -19,10 +21,15 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
     is_active: bool
     is_verified: bool
     is_admin: bool
     created_at: datetime
+    last_seen: Optional[datetime] = None
+    is_online: Optional[bool] = False
+    phone: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -59,6 +66,11 @@ class ListingBase(BaseModel):
     furniture_type: Optional[str] = None
     material: Optional[str] = None
     furniture_subtype: Optional[str] = None  # e.g. "3_door", "4_door", "sliding"
+    # Furniture enhancements
+    furniture_brand: Optional[str] = None
+    is_sliding_door: Optional[bool] = False
+    has_mattress: Optional[bool] = False
+    mattress_type: Optional[str] = None
 
 class ListingCreate(ListingBase):
     # Category-specific details
@@ -74,11 +86,21 @@ class ListingUpdate(BaseModel):
     location: Optional[str] = None
     images: Optional[str] = None  # JSON array of image URLs
     is_sold: Optional[bool] = None
+    is_active: Optional[bool] = None
+    # Furniture enhancements
+    furniture_type: Optional[str] = None
+    material: Optional[str] = None
+    furniture_subtype: Optional[str] = None
+    furniture_brand: Optional[str] = None
+    is_sliding_door: Optional[bool] = None
+    has_mattress: Optional[bool] = None
+    mattress_type: Optional[str] = None
 
 class OwnerInfo(BaseModel):
     id: int
     username: str
     full_name: Optional[str] = None
+    phone: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -86,6 +108,7 @@ class OwnerInfo(BaseModel):
 class ListingResponse(ListingBase):
     id: int
     is_sold: bool
+    is_active: bool
     views: int
     created_at: datetime
     updated_at: datetime
@@ -93,6 +116,7 @@ class ListingResponse(ListingBase):
     owner: Optional[OwnerInfo] = None
     approval_status: Optional[str] = "approved"
     predicted_price: Optional[float] = None
+    fraud_flags: Optional[str] = None
     rejection_reason: Optional[str] = None
     
     class Config:
@@ -133,6 +157,12 @@ class PricePredictionRequest(BaseModel):
     has_storage: Optional[bool] = False
     is_modern: Optional[bool] = False
     is_antique: Optional[bool] = False
+    is_sliding_door: Optional[bool] = False
+    has_mattress: Optional[bool] = False
+    mattress_type: Optional[str] = ""
+    furniture_brand: Optional[str] = ""
+    # Dynamic LLM generated specs from frontend
+    dynamic_specs: Optional[Dict[str, str]] = None
 
 class PricePredictionResponse(BaseModel):
     predicted_price: float
@@ -143,6 +173,14 @@ class PricePredictionResponse(BaseModel):
     price_range_max: Optional[float] = None
     recommendation: Optional[str] = None
     extracted_features: Optional[dict] = None
+    llm_price: Optional[float] = None
+    ml_price: Optional[float] = None
+    data_source: Optional[str] = None
+    reasoning: Optional[str] = None
+    simulated_market_data: Optional[List[Dict[str, Any]]] = None
+
+class DynamicDropdownResponse(BaseModel):
+    dropdowns: dict
 
 # AR Customization Schemas
 class ARRequest(BaseModel):
@@ -170,6 +208,7 @@ class MessageResponse(BaseModel):
     sender_username: Optional[str] = None
     receiver_username: Optional[str] = None
     listing_title: Optional[str] = None
+    listing_image: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -180,6 +219,61 @@ class ConversationResponse(BaseModel):
     avatar_url: Optional[str] = None
     listing_id: Optional[int] = None
     listing_title: Optional[str] = None
+    listing_image: Optional[str] = None
+    listing_price: Optional[float] = None
     last_message: str
     last_message_time: datetime
     unread_count: int
+    last_seen: Optional[datetime] = None
+    is_online: bool = False
+
+class ImageValidationResponse(BaseModel):
+    is_match: bool
+    confidence: float
+    best_label: str
+
+# Support Ticket Schemas
+class SupportTicketBase(BaseModel):
+    ticket_type: str  # 'support' or 'bug'
+    subject: str
+    description: str
+    attachment_url: Optional[str] = None
+
+class SupportTicketCreate(SupportTicketBase):
+    pass
+
+class TicketOwnerInfo(BaseModel):
+    id: int
+    username: str
+    full_name: Optional[str] = None
+    email: str
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class SupportTicketResponse(SupportTicketBase):
+    id: int
+    user_id: int
+    user: Optional[TicketOwnerInfo] = None
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class TicketStatusUpdate(BaseModel):
+    status: str
+
+class NotificationResponse(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    message: str
+    link: Optional[str] = None
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

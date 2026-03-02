@@ -14,24 +14,26 @@ from core.security import create_access_token
 router = APIRouter()
 
 # Configure OAuth
-config = StarletteConfig(environ={
-    "GOOGLE_CLIENT_ID": settings.GOOGLE_CLIENT_ID,
-    "GOOGLE_CLIENT_SECRET": settings.GOOGLE_CLIENT_SECRET,
-})
-
-oauth = OAuth(config)
+oauth = OAuth()
 oauth.register(
     name='google',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_id=settings.GOOGLE_CLIENT_ID.strip(),
+    client_secret=settings.GOOGLE_CLIENT_SECRET.strip(),
     client_kwargs={'scope': 'openid email profile'}
 )
 
 @router.get("/auth/google/test")
 async def test_google_config():
     """Test endpoint to verify Google OAuth configuration"""
+    cid = settings.GOOGLE_CLIENT_ID
+    sec = settings.GOOGLE_CLIENT_SECRET
     return {
-        "client_id_configured": bool(settings.GOOGLE_CLIENT_ID),
-        "client_secret_configured": bool(settings.GOOGLE_CLIENT_SECRET),
+        "client_id_configured": bool(cid),
+        "client_id_preview": f"{cid[:5]}...{cid[-5:]}" if cid else None,
+        "client_id_len": len(cid) if cid else 0,
+        "client_secret_configured": bool(sec),
+        "client_secret_len": len(sec) if sec else 0,
         "redirect_uri": settings.GOOGLE_REDIRECT_URI,
         "oauth_registered": oauth.google is not None
     }
@@ -42,6 +44,8 @@ async def google_login(request: Request):
     Redirect to Google OAuth login page
     """
     print(f"=== Google OAuth Login Started ===")
+    print(f"GOOGLE_CLIENT_ID from settings: '{settings.GOOGLE_CLIENT_ID}'")
+    print(f"GOOGLE_CLIENT_ID length: {len(settings.GOOGLE_CLIENT_ID)}")
     print(f"Redirect URI: {settings.GOOGLE_REDIRECT_URI}")
     redirect_uri = settings.GOOGLE_REDIRECT_URI
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -87,6 +91,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Email not provided by Google")
         
         # Check if user exists by Google ID first (prevents duplicates)
+        is_new_user = False
         user = db.query(User).filter(User.google_id == google_id).first()
         
         if not user:
@@ -121,6 +126,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
                     hashed_password=None  # No password for Google OAuth users
                 )
                 db.add(user)
+                is_new_user = True
         
         # Update last login
         user.last_login = datetime.utcnow()
@@ -130,19 +136,39 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         # Create JWT token
         access_token = create_access_token(data={"sub": user.username})
         
-        print(f"User authenticated successfully: {user.username}")
-        print(f"Redirecting to frontend with token")
+        print(f"User authenticated successfully: {user.username}, is_new={is_new_user}")
         
-        # Redirect to frontend callback with token
-        frontend_callback_url = f"http://localhost:8080/auth/google/callback?token={access_token}"
+        # Detect frontend origin from the request (supports any port)
+        origin = request.headers.get("origin", "")
+        referer = request.headers.get("referer", "")
+        if "8080" in (origin + referer):
+            frontend_base = "http://localhost:8080"
+        elif "5173" in (origin + referer):
+            frontend_base = "http://localhost:5173"
+        elif "3000" in (origin + referer):
+            frontend_base = "http://localhost:3000"
+        else:
+            frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:8080')
+        
+        # Pass is_new_user so frontend can route to profile completion
+        new_flag = "1" if is_new_user else "0"
+        frontend_callback_url = f"{frontend_base}/auth/google/callback?token={access_token}&is_new={new_flag}&name={full_name or ''}"
         return RedirectResponse(url=frontend_callback_url, status_code=302)
         
     except Exception as e:
         print(f"Google OAuth Error: {str(e)}")
         traceback.print_exc()
-        # Redirect to frontend with error
-        error_message = str(e).replace(' ', '+')  # URL encode spaces
-        frontend_callback_url = f"http://localhost:8080/auth/google/callback?error={error_message}"
+        # Detect frontend base for error redirect
+        origin = request.headers.get("origin", "")
+        referer = request.headers.get("referer", "")
+        if "8080" in (origin + referer):
+            frontend_base = "http://localhost:8080"
+        elif "5173" in (origin + referer):
+            frontend_base = "http://localhost:5173"
+        else:
+            frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:8080')
+        error_message = str(e).replace(' ', '+')
+        frontend_callback_url = f"{frontend_base}/auth/google/callback?error={error_message}"
         return RedirectResponse(url=frontend_callback_url, status_code=302)
 
 @router.get("/auth/user")

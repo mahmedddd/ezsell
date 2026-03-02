@@ -1,0 +1,7 @@
+Testing for user: test47 (ID: 2)
+Test 1: case(*whens)
+Test 1 OK
+Test 2: case([(condition, result)])
+Test 2 Failed: The "whens" argument to case(), when referring to a sequence of items, is now passed as a series of positional elements, rather than as a list. 
+Test 3: func.case()
+Test 3 Failed: Function.__init__() got an unexpected keyword argument 'else_'

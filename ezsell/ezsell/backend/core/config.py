@@ -2,6 +2,11 @@
 from pydantic import AnyHttpUrl, ConfigDict
 from pydantic_settings import BaseSettings
 from typing import List, Union
+from dotenv import load_dotenv
+import os
+
+# Load .env file explicitly
+load_dotenv()
 
 class Settings(BaseSettings):
     model_config = ConfigDict(extra='allow', case_sensitive=True, env_file=".env")
@@ -33,4 +38,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = ""
 
+    # AI 3D Generation
+    TRIPO_API_KEY: str = ""
+
 settings = Settings()
+
+# Debug: Print loaded 3D settings
+print(f"🛠️ [CONFIG] TRIPO_API_KEY length: {len(settings.TRIPO_API_KEY) if settings.TRIPO_API_KEY else 0}")

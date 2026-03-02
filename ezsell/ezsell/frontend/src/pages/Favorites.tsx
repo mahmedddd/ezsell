@@ -38,7 +38,7 @@ export default function Favorites() {
   const [removingId, setRemovingId] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function Favorites() {
       navigate('/login');
       return;
     }
-    
+
     fetchFavorites();
   }, []);
 
@@ -76,10 +76,10 @@ export default function Favorites() {
   const handleRemoveFavorite = async (listingId: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setRemovingId(listingId);
     try {
-      await favoritesService.removeFromFavorites(listingId);
+      await favoritesService.removeFavorite(listingId);
       setFavorites(prev => prev.filter(f => f.id !== listingId));
       toast({
         title: "Removed",
@@ -115,11 +115,21 @@ export default function Favorites() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
+  };
+
+  const getConditionLabel = (condition: string | number) => {
+    const c = typeof condition === 'string' ? parseInt(condition) : condition;
+    if (c >= 10) return "Brand New";
+    if (c >= 9) return "Like New";
+    if (c >= 7) return "Excellent";
+    if (c >= 5) return "Good";
+    if (c >= 3) return "Fair";
+    return "Poor";
   };
 
   return (
@@ -127,17 +137,17 @@ export default function Favorites() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)} 
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
             className="text-[#143109] hover:bg-[#143109]/10"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/')} 
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
             className="text-[#143109] hover:bg-[#143109]/10"
           >
             <Home className="mr-2 h-4 w-4" />
@@ -175,7 +185,7 @@ export default function Favorites() {
               <p className="text-slate-500 text-center mb-6">
                 When you find something you like, tap the heart icon to save it here.
               </p>
-              <Button 
+              <Button
                 onClick={() => navigate('/listings')}
                 className="bg-[#143109] hover:bg-[#1a4a0d]"
               >
@@ -192,7 +202,7 @@ export default function Favorites() {
                 {favorites.length} saved listing{favorites.length !== 1 ? 's' : ''}
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {favorites.map((listing) => (
                 <Link key={listing.id} to={`/product/${listing.id}`}>
@@ -244,16 +254,16 @@ export default function Favorites() {
                       {/* Image */}
                       <div className="aspect-video bg-slate-200 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                         {getListingImage(listing) ? (
-                          <img 
-                            src={getListingImage(listing)!} 
-                            alt={listing.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                          <img
+                            src={getListingImage(listing)!}
+                            alt={listing.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
                           <span className="text-slate-400">No image</span>
                         )}
                       </div>
-                      
+
                       {/* Title & Category */}
                       <div className="flex justify-between items-start gap-2 mb-1">
                         <CardTitle className="text-lg line-clamp-1 group-hover:text-[#143109] transition-colors">
@@ -263,24 +273,24 @@ export default function Favorites() {
                           {listing.category}
                         </Badge>
                       </div>
-                      
+
                       {/* Description */}
                       <CardDescription className="line-clamp-2 text-sm">
                         {listing.description}
                       </CardDescription>
                     </CardHeader>
-                    
+
                     <CardContent className="pt-0">
                       {/* Price & Condition */}
                       <div className="flex justify-between items-center mb-3">
                         <span className="text-xl font-bold text-[#143109]">
                           PKR {listing.price.toLocaleString()}
                         </span>
-                        <Badge variant="outline" className="capitalize">
-                          {listing.condition}
+                        <Badge variant="outline" className="shrink-0 bg-amber-50 text-amber-700 border-amber-200">
+                          {listing.condition}/10 {getConditionLabel(listing.condition)}
                         </Badge>
                       </div>
-                      
+
                       {/* Stats */}
                       <div className="flex justify-between items-center text-xs text-slate-500">
                         <span>{listing.views} views</span>

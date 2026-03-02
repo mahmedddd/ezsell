@@ -28,6 +28,7 @@ import {
   Camera, Smartphone, Scan, ChevronRight, X, Loader2,
   Ruler, Move, RotateCw, ZoomIn, Info, CheckCircle2,
   AlertTriangle, Sparkles, Box, Eye, QrCode, ExternalLink,
+  Vibrate, Zap, LayoutGrid, ArrowDownCircle, MousePointer2
 } from 'lucide-react';
 
 import { useARSupport } from '@/hooks/useARSupport';
@@ -43,7 +44,7 @@ import {
   type FurnitureType,
   type ColorProfile,
 } from '@/components/ar/FurnitureGLBGenerator';
-import { arAssetsService } from '@/lib/api';
+import { arAssetsService, API_BASE_URL } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,11 +88,15 @@ type ARStep =
   | 'placed'            // furniture anchored
   | 'error';
 
+type ScanPhase = 'tilting' | 'sweeping' | 'ready_to_place';
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function cmLabel(dims: FurnitureDimensions) {
   return `${dims.w} × ${dims.l} × ${dims.h} cm`;
 }
+
+type AIStage = 'idle' | 'detecting' | 'generating' | 'polling' | 'downloading' | 'success' | 'error';
 
 function mLabel(dims: FurnitureDimensions) {
   return `${(dims.w / 100).toFixed(2)}m × ${(dims.l / 100).toFixed(2)}m × ${(dims.h / 100).toFixed(2)}m`;
@@ -99,6 +104,12 @@ function mLabel(dims: FurnitureDimensions) {
 
 function detectARModesAttr(supportedModes: string[]): string {
   return supportedModes.join(' ');
+}
+
+function getFullUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  // Let Vite proxy handle /uploads requests to avoid CORS errors with <model-viewer>
+  return url;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -221,6 +232,109 @@ function DesktopQRHint({ url }: { url: string }) {
   );
 }
 
+/** Animated Scanning Overlay inside the AR viewport */
+function ScanningOverlay({ phase, hint }: { phase: ScanPhase; hint: string }) {
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
+      <div className="relative mb-8">
+        <div className="w-32 h-32 rounded-full border-4 border-white/20 animate-ping absolute inset-0" />
+        <div className="w-32 h-32 rounded-full border-4 border-[#143109] border-t-transparent animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          {phase === 'tilting' && <ArrowDownCircle className="h-10 w-10 text-white animate-bounce" />}
+          {phase === 'sweeping' && <Scan className="h-10 w-10 text-white animate-pulse" />}
+          {phase === 'ready_to_place' && <MousePointer2 className="h-10 w-10 text-[#AAAE7F] animate-bounce" />}
+        </div>
+      </div>
+
+      <div className="bg-black/60 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 text-center max-w-[80%] animate-in fade-in slide-in-from-bottom-4">
+        <p className="text-white font-bold text-lg mb-1">{hint}</p>
+        <div className="flex justify-center gap-1 mt-2">
+          <div className={`h-1.5 w-8 rounded-full transition-colors ${phase === 'tilting' ? 'bg-[#AAAE7F]' : 'bg-white/20'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors ${phase === 'sweeping' ? 'bg-[#AAAE7F]' : 'bg-white/20'}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-colors ${phase === 'ready_to_place' ? 'bg-[#AAAE7F]' : 'bg-white/20'}`} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Pre-Launch Checklist to ensure user has enough room */
+function PreLaunchChecklist({ dims }: { dims: FurnitureDimensions }) {
+  const floorNeeded = `${dims.w}cm × ${dims.l}cm`;
+  return (
+    <div className="bg-[#143109]/5 border border-[#143109]/10 rounded-2xl p-4 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <LayoutGrid className="h-4 w-4 text-[#143109]" />
+        <span className="text-sm font-bold text-gray-900">Room Readiness</span>
+      </div>
+      <ul className="space-y-2">
+        <li className="flex items-center gap-2 text-xs text-gray-700">
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+          Need <b>{floorNeeded}</b> clear floor space
+        </li>
+        <li className="flex items-center gap-2 text-xs text-gray-700">
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+          Good lighting helps floor detection
+        </li>
+        <li className="flex items-center gap-2 text-xs text-gray-700">
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+          Scan slowly at a downward angle
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+/** Post-Placement Interaction Coach Overlay */
+function PostPlacementCoach({ onDismiss }: { onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(() => onDismiss(), 5000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  return (
+    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 w-[90%] animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-[#143109] text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
+        <div className="bg-white/20 p-2 rounded-xl">
+          <Zap className="h-5 w-5 text-[#AAAE7F]" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold leading-tight">Interaction Ready</p>
+          <p className="text-[11px] text-white/70">Drag to move · Twist to rotate · Scale fixed 1:1</p>
+        </div>
+        <button onClick={() => onDismiss()} className="p-1 text-white/50 hover:text-white">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Room Scale Sanity Indicator */
+function RoomScaleBadge({ dims }: { dims: FurnitureDimensions }) {
+  const areaCm2 = dims.w * dims.l;
+  const isLarge = areaCm2 > 200 * 200; // >4m2
+
+  return (
+    <div className={`p-4 rounded-2xl border flex items-start gap-3 ${isLarge ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+      <div className={`p-2 rounded-xl ${isLarge ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+        <Box className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Room Scale Analysis</p>
+        <p className="text-sm font-bold text-gray-900 leading-tight">
+          {isLarge ? 'Large Footprint' : 'Standard Footprint'}
+        </p>
+        <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
+          {isLarge
+            ? 'This item covers a significant area. Best for open living spaces.'
+            : 'Fits comfortably in most rooms and corridors.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function WebARViewer({
@@ -249,19 +363,18 @@ export function WebARViewer({
   const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
   const [tfLoading, setTfLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'ar' | 'info'>('ar');
+  const [scanPhase, setScanPhase] = useState<ScanPhase>('tilting');
+  const [scanDuration, setScanDuration] = useState(0);
+  const [showCoach, setShowCoach] = useState(false);
 
-  const modelViewerRef = useRef<any>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const prevGlbUrl = useRef<string | undefined>(undefined);
-  // Prevents COCO-SSD from re-running every time tfLoading state changes (which
-  // would recreate the useCallback and re-fire the useEffect in an infinite loop).
-  const detectionAttemptedRef = useRef(false);
-
-  // AI image-to-3D generation state
-  type AIStage = 'idle' | 'requesting' | 'processing' | 'complete' | 'failed';
+  // AI Generation State
   const [aiStage, setAiStage] = useState<AIStage>('idle');
   const [aiProgress, setAiProgress] = useState(0);
   const [aiTaskId, setAiTaskId] = useState<string | null>(null);
+  const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+
+  const modelViewerRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Only render for furniture
   if (category?.toLowerCase() !== 'furniture') return null;
@@ -289,8 +402,8 @@ export function WebARViewer({
     try {
       // 1. Use server-side GLB if available
       if (arAssets?.model_glb_url) {
-        setGlbUrl(arAssets.model_glb_url);
-        if (arAssets.model_usdz_url) setUsdzUrl(arAssets.model_usdz_url);
+        setGlbUrl(getFullUrl(arAssets.model_glb_url));
+        if (arAssets.model_usdz_url) setUsdzUrl(getFullUrl(arAssets.model_usdz_url));
       } else {
         // 2. Extract full colour profile → primary fabric + accent trim + metallic + glossiness
         //    AND load the product image canvas for tiling texture — both in parallel.
@@ -312,7 +425,7 @@ export function WebARViewer({
             productCanvas = canvas ?? undefined;
           } catch { /* ignore — fallback profile + no texture */ }
         }
-        const url = await generateFurnitureGLB(fType, dims, prevGlbUrl.current, {
+        const url = await generateFurnitureGLB(fType, dims, undefined, {
           primaryColor: colorProfile?.primaryColor,
           accentColor: colorProfile?.accentColor,
           hasMetal: colorProfile?.hasMetal,
@@ -326,9 +439,13 @@ export function WebARViewer({
           imageUrl: furnitureImageUrl ?? undefined,
           productCanvas,
         });
-        prevGlbUrl.current = url;
-        setGlbUrl(url);
+
+        // Cache bust the blob so we don't load the old floating version
+        setGlbUrl(`${url}#v=${Date.now()}`);
       }
+
+      // Important: Add QuickLook scale-lock parameter for iOS
+      setUsdzUrl(prevUsdz => prevUsdz ? `${prevUsdz.split('#')[0]}#allowsContentScaling=0` : null);
 
       setBuildProgress(100);
       setStep('model_ready');
@@ -344,6 +461,79 @@ export function WebARViewer({
       clearInterval(interval);
     }
   }, [arAssets, fType, dims, glbUrl, furnitureSubtype, listingTitle, listingDescription, furnitureMaterial, toast]);
+
+  // ── AI Generation Logic ──────────────────────────────────────────────────
+  const startAIGeneration = async (useAllImages: boolean = false) => {
+    if (aiStage === 'generating' || aiStage === 'polling') return;
+
+    setAiStage('generating');
+    setAiProgress(5);
+
+    try {
+      const imgUrls = (allImageUrls && allImageUrls.length > 0) ? allImageUrls : (furnitureImageUrl ? [furnitureImageUrl] : []);
+      const targetUrl = useAllImages ? undefined : imgUrls[selectedImgIdx];
+
+      const { task_id } = await arAssetsService.generate3D(listingId, targetUrl, useAllImages);
+      setAiTaskId(task_id);
+      setAiStage('polling');
+      setAiProgress(15);
+    } catch (err) {
+      console.error('[WebARViewer] AI Start failed:', err);
+      setAiStage('error');
+      toast({
+        title: "AI Generation Failed",
+        description: "Could not start AI generation. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // AI Polling Effect
+  useEffect(() => {
+    if (aiStage !== 'polling' || !aiTaskId) return;
+
+    let isMounted = true;
+    const poll = async () => {
+      try {
+        const status = await arAssetsService.poll3DStatus(listingId, aiTaskId);
+        if (!isMounted) return;
+
+        if (status.status === 'SUCCEEDED') {
+          setAiProgress(90);
+          setAiStage('downloading');
+
+          // The backend already downloaded it to local_url
+          if (status.local_url) {
+            setGlbUrl(status.local_url);
+            setAiStage('success');
+            setAiProgress(100);
+            toast({
+              title: "3D Model Ready",
+              description: "AI generation complete! You can now view the high-quality model.",
+            });
+          }
+        } else if (status.status === 'FAILED') {
+          setAiStage('error');
+          toast({
+            title: "AI Generation Failed",
+            description: status.error || "Generation failed at Tripo AI.",
+            variant: "destructive"
+          });
+        } else {
+          // Still processing
+          setAiProgress(15 + (status.progress || 0) * 0.7);
+        }
+      } catch (err) {
+        console.error('[WebARViewer] Polling error:', err);
+      }
+    };
+
+    const interval = setInterval(poll, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [aiStage, aiTaskId, listingId, toast]);
 
   // ── Reset cached GLB when the furniture type or subtype changes ────────────
   // This ensures that if the user navigates between listings (or a delayed API
@@ -362,9 +552,8 @@ export function WebARViewer({
       prevFTypeRef.current = fType;
       prevSubtypeRef.current = furnitureSubtype;
       // Revoke old GLB blob URL and clear state so prepareModel rebuilds
-      if (prevGlbUrl.current) {
-        URL.revokeObjectURL(prevGlbUrl.current);
-        prevGlbUrl.current = undefined;
+      if (glbUrl) {
+        URL.revokeObjectURL(glbUrl);
       }
       setGlbUrl(null);
       setStep('idle');
@@ -377,6 +566,7 @@ export function WebARViewer({
     prepareModel();
   };
 
+
   // ── model-viewer event handlers ───────────────────────────────────────────
   useEffect(() => {
     const mv = modelViewerRef.current;
@@ -385,11 +575,28 @@ export function WebARViewer({
     const onARStatus = (e: any) => {
       const status: string = e.detail?.status ?? '';
       setArStatus(status);
-      if (status === 'session-started') setStep('scanning');
-      if (status === 'object-placed') setStep('placed');
-      if (status === 'not-presenting') setStep('model_ready');
+
+      if (status === 'session-started') {
+        setStep('scanning');
+        setScanPhase('tilting');
+        setScanDuration(0);
+        triggerHaptic('success');
+      }
+
+      if (status === 'object-placed') {
+        setStep('placed');
+        setShowCoach(true);
+        triggerHaptic('success');
+      }
+
+      if (status === 'not-presenting') {
+        setStep('model_ready');
+        setScanPhase('tilting');
+      }
+
       if (status === 'failed') {
         setStep('error');
+        triggerHaptic('error');
         toast({
           title: 'AR Failed',
           description: 'Could not start AR. Ensure camera access is granted.',
@@ -415,9 +622,8 @@ export function WebARViewer({
   const runObjectDetection = useCallback(async () => {
     // Ref guard prevents re-running when camera permission is denied and
     // tfLoading flips false → callback is recreated → effect fires again.
-    if (detectionAttemptedRef.current || detectedObjects.length > 0) return;
+    if (detectedObjects.length > 0) return;
     if (!caps.hasCamera) return;
-    detectionAttemptedRef.current = true;  // mark immediately before any await
 
     setTfLoading(true);
     try {
@@ -457,71 +663,50 @@ export function WebARViewer({
     }
   }, [isSheetOpen, step, caps.hasCamera, runObjectDetection]);
 
-  // Cleanup object URL on unmount
-  useEffect(() => {
-    return () => {
-      if (prevGlbUrl.current) URL.revokeObjectURL(prevGlbUrl.current);
-    };
-  }, []);
+  // ── Haptic Feedback Helper ────────────────────────────────────────────────
+  const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'warning' | 'error') => {
+    if (!('vibrate' in navigator)) return;
 
-  // ── AI Image-to-3D generation ──────────────────────────────────────────────
-  const startAIGeneration = useCallback(async () => {
-    if (!furnitureImageUrl) {
-      toast({ title: 'No product image', description: 'This listing has no photo to convert to 3D.', variant: 'destructive' });
-      return;
+    switch (type) {
+      case 'light': navigator.vibrate(10); break;
+      case 'medium': navigator.vibrate(20); break;
+      case 'success': navigator.vibrate([20, 30, 40]); break;
+      case 'warning': navigator.vibrate([50, 100]); break;
+      case 'error': navigator.vibrate([100, 50, 100]); break;
     }
-    try {
-      setAiStage('requesting');
-      // Pass ALL listing images so Tripo3D can use multi-angle reconstruction.
-      // allImageUrls contains the full set: front, side, back, top etc.
-      const photos = (allImageUrls && allImageUrls.length > 0) ? allImageUrls : [furnitureImageUrl];
-      const result = await arAssetsService.generate3D(listingId, furnitureImageUrl, photos);
-      setAiTaskId(result.task_id);
-      setAiStage('processing');
-      setAiProgress(0);
-      const isMultiview = (result as any).mode === 'multiview';
-      const imgCount = (result as any).image_count ?? photos.length;
-      if (isMultiview) {
-        toast({
-          title: `✨ AI 3D Generation Started (${imgCount} angles)`,
-          description: 'Multi-angle reconstruction in progress — front, side & back photos used for higher accuracy. Takes ~2 minutes.',
-        });
-      } else {
-        // Only one image — prompt the user to add more angle photos
-        toast({
-          title: '📸 AI 3D Started — Add More Angles for Best Results',
-          description: 'Only 1 photo found. Upload front, side, and back photos to the listing for a much more accurate 3D model.',
-        });
-      }
-    } catch (err: any) {
-      setAiStage('idle');
-      const msg: string = err?.response?.data?.detail ?? 'AI 3D service not available. Check that TRIPO_API_KEY is set in backend/.env';
-      toast({ title: 'Could not start AI generation', description: msg, variant: 'destructive' });
-    }
-  }, [furnitureImageUrl, allImageUrls, listingId, toast]);
+  };
 
-  // Polling — runs every 3 s while AI task is in progress
+  // ── Scan Phase Logic ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (aiStage !== 'processing' || !aiTaskId) return;
-    const poll = async () => {
-      try {
-        const res = await arAssetsService.poll3DStatus(listingId, aiTaskId);
-        setAiProgress(res.progress ?? 0);
-        if (res.status === 'complete' && res.glb_url) {
-          if (prevGlbUrl.current) { URL.revokeObjectURL(prevGlbUrl.current); prevGlbUrl.current = undefined; }
-          setGlbUrl(res.glb_url);
-          setAiStage('complete');
-          setStep('model_ready');
-          toast({ title: '🎉 True 3D Model Ready!', description: 'AI-generated from the actual product photo — real design, real colours.' });
-        } else if (res.status === 'failed') {
-          setAiStage('failed');
-          toast({ title: 'AI Generation Failed', description: res.error ?? 'Unknown error. Try again.', variant: 'destructive' });
+    if (step !== 'scanning') return;
+
+    const interval = setInterval(() => {
+      setScanDuration(prev => {
+        const next = prev + 1;
+        // Coaching phases
+        if (next === 4 && scanPhase === 'tilting') {
+          setScanPhase('sweeping');
+          triggerHaptic('light');
         }
-      } catch { /* network hiccup — keep polling */ }
-    };
-    const id = setInterval(poll, 3000);
-    return () => clearInterval(id);
-  }, [aiStage, aiTaskId, listingId, toast]);
+        // Check if tracking has picked up a floor (hit-test found)
+        const mv = modelViewerRef.current;
+        if (mv?.arTracking === 'tracking' && scanPhase !== 'ready_to_place') {
+          setScanPhase('ready_to_place');
+          triggerHaptic('medium');
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [step, scanPhase]);
+
+  const getScanHint = () => {
+    if (scanPhase === 'tilting') return "Point camera at the floor";
+    if (scanPhase === 'sweeping') return "Scan slowly side to side";
+    if (scanPhase === 'ready_to_place') return "Tap the floor to place furniture";
+    return "";
+  };
 
   // ── AR launch: directly invoke model-viewer's activateAR ──────────────────
   const launchAR = () => {
@@ -714,15 +899,17 @@ export function WebARViewer({
                         ar
                         ar-modes={arModesAttr || 'webxr scene-viewer quick-look'}
                         ar-placement="floor"
+                        ar-scale="fixed"
                         camera-controls
                         touch-action="pan-y"
-                        shadow-intensity="1.6"
-                        shadow-softness="0.9"
+                        shadow-intensity={2.2}
+                        shadow-softness={0.6}
                         environment-image="neutral"
-                        exposure="0.95"
+                        exposure={0.95}
                         auto-rotate
-                        auto-rotate-delay="3000"
-                        rotation-per-second="15deg"
+                        auto-rotate-delay={2000}
+                        rotation-per-second="10deg"
+                        camera-orbit="-30deg 75deg auto"
                         interaction-prompt="auto"
                         loading="eager"
                         style={{
@@ -731,7 +918,7 @@ export function WebARViewer({
                           minHeight: '38vh',
                           '--poster-color': 'transparent',
                           background: 'transparent',
-                        } as React.CSSProperties}
+                        } as any}
                       >
                         {/* Custom AR button inside model-viewer slot */}
                         <button
@@ -752,13 +939,44 @@ export function WebARViewer({
                           View in AR
                         </button>
 
+                        {/* AR prompt slot — shown inside the native AR session (WebXR) */}
+                        <div slot="ar-prompt" style={{
+                          position: 'absolute',
+                          bottom: '80px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: 'rgba(0,0,0,0.72)',
+                          backdropFilter: 'blur(8px)',
+                          borderRadius: '20px',
+                          padding: '12px 20px',
+                          color: '#fff',
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          whiteSpace: 'nowrap',
+                          letterSpacing: '0.01em',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          pointerEvents: 'none',
+                        } as any}>
+                          👇 Point at floor &amp; tap to place
+                        </div>
+
                         {/* Loading slot */}
                         <div slot="progress-bar" style={{ display: 'none' }} />
                       </model-viewer>
 
+                      {/* Enriched Scanning Overlay */}
+                      {step === 'scanning' && (
+                        <ScanningOverlay phase={scanPhase} hint={getScanHint()} />
+                      )}
+
+                      {/* Post-Placement Coach */}
+                      {step === 'placed' && showCoach && (
+                        <PostPlacementCoach onDismiss={() => setShowCoach(false)} />
+                      )}
+
                       {/* Detected objects overlay */}
                       {detectedObjects.length > 0 && (
-                        <div className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-1 max-w-[70%]">
+                        <div className="absolute top-14 left-3 z-10 flex flex-wrap gap-1 max-w-[70%]">
                           {detectedObjects.slice(0, 4).map((obj) => (
                             <span
                               key={obj}
@@ -774,31 +992,72 @@ export function WebARViewer({
                     {/* Bottom controls */}
                     <div className="px-5 pt-4 pb-6 bg-white shrink-0 space-y-3">
 
+                      {/* Scan Phase Warnings */}
+                      {step === 'scanning' && scanDuration > 8 && (
+                        <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-2xl border border-amber-200 animate-in fade-in zoom-in">
+                          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                          <div>
+                            <p className="text-xs font-semibold text-amber-800">Slow scanning?</p>
+                            <p className="text-[10px] text-amber-700">Try more light or move closer to the floor surface.</p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Scanning instructions */}
                       {step === 'scanning' && (
-                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-2xl border border-green-200">
-                          <Scan className="h-5 w-5 text-green-600 shrink-0 animate-pulse" />
-                          <div>
-                            <p className="text-xs font-semibold text-green-800">Scanning floor</p>
-                            <p className="text-[11px] text-green-600">
-                              Move your phone slowly across the floor until the reticle appears, then tap.
-                            </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-2xl border border-green-200">
+                            <Scan className="h-5 w-5 text-green-600 shrink-0 animate-pulse" />
+                            <div>
+                              <p className="text-xs font-semibold text-green-800">Scanning floor surface</p>
+                              <p className="text-[11px] text-green-600">
+                                Move phone slowly across the floor. A glowing reticle will appear — tap it to place.
+                              </p>
+                            </div>
+                          </div>
+                          {/* Dimension scale reference card */}
+                          <div className="bg-[#143109]/5 rounded-2xl border border-[#143109]/10 p-3">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Furniture will appear at real scale ·  Scale locked 1:1</p>
+                            <div className="flex items-center justify-between">
+                              <div className="text-center">
+                                <p className="text-base font-bold text-[#143109]">{dims.w}<span className="text-[10px] font-normal">cm</span></p>
+                                <p className="text-[9px] text-gray-400 uppercase">Width</p>
+                              </div>
+                              <div className="h-px flex-1 mx-2 bg-[#143109]/20 relative">
+                                <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center">
+                                  <Ruler className="h-3.5 w-3.5 text-[#143109]/40" />
+                                </div>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-base font-bold text-[#143109]">{dims.l}<span className="text-[10px] font-normal">cm</span></p>
+                                <p className="text-[9px] text-gray-400 uppercase">Depth</p>
+                              </div>
+                              <div className="h-px flex-1 mx-2 bg-[#143109]/20" />
+                              <div className="text-center">
+                                <p className="text-base font-bold text-[#143109]">{dims.h}<span className="text-[10px] font-normal">cm</span></p>
+                                <p className="text-[9px] text-gray-400 uppercase">Height</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
 
                       {/* Placed success */}
                       {step === 'placed' && (
-                        <div className="flex items-center gap-3 p-3 bg-[#143109]/8 rounded-2xl border border-[#143109]/20">
-                          <CheckCircle2 className="h-5 w-5 text-[#143109] shrink-0" />
-                          <div>
-                            <p className="text-xs font-semibold text-[#143109]">Furniture placed!</p>
-                            <p className="text-[11px] text-gray-600">
-                              Drag to reposition · Twist to rotate · Scale locked to real dimensions
-                            </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3 p-3 rounded-2xl border bg-[#143109]/5 border-[#143109]/20">
+                            <CheckCircle2 className="h-5 w-5 text-[#143109] shrink-0" />
+                            <div>
+                              <p className="text-xs font-semibold text-[#143109]">Placed at true scale</p>
+                              <p className="text-[11px] text-gray-600">
+                                Drag to move · 2-finger twist to rotate · Scale locked 1:1
+                              </p>
+                            </div>
                           </div>
                         </div>
                       )}
+
+
 
                       {/* Desktop redirect hint */}
                       {caps.isDesktop && caps.isChecked && (
@@ -840,66 +1099,121 @@ export function WebARViewer({
                         </div>
                       )}
 
+                      {/* Pre-launch checklist */}
+                      {step === 'model_ready' && (
+                        <PreLaunchChecklist dims={dims} />
+                      )}
+
                       {/* Gesture hints */}
                       {step === 'model_ready' && !caps.isDesktop && (
                         <GestureHints />
                       )}
 
-                      {/* ── AI 3D generation strip ──────────────────────── */}
-                      {step === 'model_ready' && !arAssets?.model_glb_url && aiStage === 'idle' && furnitureImageUrl && (
-                        <button
-                          onClick={startAIGeneration}
-                          className="
-                            w-full flex items-center justify-center gap-2
-                            bg-gradient-to-r from-purple-600 to-indigo-600
-                            hover:from-purple-700 hover:to-indigo-700
-                            active:scale-[0.98] text-white font-semibold text-sm
-                            py-3.5 rounded-2xl shadow-lg transition-all duration-200
-                          "
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          Generate True 3D from Product Photo
-                          <span className="text-xs opacity-60 ml-1">(AI · ~2 min)</span>
-                        </button>
-                      )}
+                      {/* AI Generation UI (Advanced) */}
+                      {step === 'model_ready' && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          {aiStage === 'idle' || aiStage === 'error' ? (
+                            <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2007] to-[#1a4510] p-5 rounded-2xl">
+                              {/* Sparkle shimmer background */}
+                              <div className="absolute inset-0 opacity-10 pointer-events-none"
+                                style={{ backgroundImage: 'radial-gradient(circle at 20% 40%, #AAAE7F 0%, transparent 60%), radial-gradient(circle at 80% 70%, #143109 0%, transparent 50%)' }} />
 
-                      {/* AI generating — progress bar */}
-                      {(aiStage === 'requesting' || aiStage === 'processing') && (
-                        <div className="flex flex-col gap-2 p-3.5 bg-purple-50 rounded-2xl border border-purple-200">
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 text-purple-600 animate-spin shrink-0" />
-                            <p className="text-xs font-semibold text-purple-800">
-                              {aiStage === 'requesting'
-                                ? 'Starting AI generation…'
-                                : `Converting photo to 3D model… ${aiProgress}%`}
-                            </p>
-                          </div>
-                          {aiStage === 'processing' && (
-                            <Progress value={aiProgress} className="h-1.5" />
+                              <div className="relative">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Sparkles className="h-4 w-4 text-[#AAAE7F]" />
+                                  <span className="text-[11px] font-bold text-[#AAAE7F] uppercase tracking-widest">Tripo AI · Experimental</span>
+                                </div>
+                                <p className="text-white font-bold text-base mb-1">Photorealistic 3D Model</p>
+                                <p className="text-white/60 text-[11px] mb-4 leading-relaxed">
+                                  AI converts your product images into a true photorealistic 3D model for the most accurate AR view.
+                                </p>
+
+                                {aiStage === 'error' && (
+                                  <p className="text-red-400 text-[10px] flex items-center gap-1 mb-3">
+                                    <AlertTriangle className="h-3 w-3" /> Last attempt failed — try again
+                                  </p>
+                                )}
+
+                                <button
+                                  onClick={() => startAIGeneration(true)}
+                                  className="w-full flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-xl font-bold text-sm text-[#143109] bg-[#AAAE7F] hover:bg-[#bcc08e] active:scale-[0.97] transition-all duration-150 shadow-lg shadow-black/30"
+                                >
+                                  <Sparkles className="h-4 w-4" />
+                                  Generate Photorealistic 3D
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* ── Rich 2D→3D Conversion Loading Screen ── */
+                            <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2007] to-[#1a4510] rounded-2xl p-5 animate-in fade-in zoom-in duration-300">
+                              {/* Rotating orbital rings */}
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-20">
+                                <div className="w-48 h-48 rounded-full border-2 border-[#AAAE7F] animate-spin" style={{ animationDuration: '8s' }} />
+                                <div className="absolute w-36 h-36 rounded-full border border-white animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }} />
+                                <div className="absolute w-20 h-20 rounded-full border border-[#AAAE7F]/60 animate-spin" style={{ animationDuration: '3s' }} />
+                              </div>
+
+                              <div className="relative">
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                      <Loader2 className="h-5 w-5 text-[#AAAE7F] animate-spin" />
+                                    </div>
+                                    <span className="text-white font-bold text-sm">
+                                      {aiStage === 'generating' && 'Initializing AI...'}
+                                      {aiStage === 'polling' && 'Building 3D Model...'}
+                                      {aiStage === 'downloading' && 'Applying Textures...'}
+                                      {aiStage === 'success' && '✨ Model Ready!'}
+                                    </span>
+                                  </div>
+                                  <span className="text-[#AAAE7F] font-mono font-bold text-sm">{Math.round(aiProgress)}%</span>
+                                </div>
+
+                                {/* Progress bar */}
+                                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-4">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-[#AAAE7F] to-white rounded-full transition-all duration-500"
+                                    style={{ width: `${aiProgress}%` }}
+                                  />
+                                </div>
+
+                                {/* Stage steps */}
+                                {(() => {
+                                  const stages = [
+                                    { id: 'generating', label: 'Analyzing images', icon: '🔍' },
+                                    { id: 'polling', label: 'Building geometry', icon: '🧊' },
+                                    { id: 'downloading', label: 'Baking textures', icon: '🎨' },
+                                    { id: 'success', label: 'Finalizing model', icon: '✅' },
+                                  ];
+                                  const currentIdx = stages.findIndex(s => s.id === aiStage);
+                                  return (
+                                    <div className="space-y-2">
+                                      {stages.map((s, i) => {
+                                        const done = i < currentIdx;
+                                        const active = i === currentIdx;
+                                        return (
+                                          <div key={s.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-300 ${active ? 'bg-white/10' : 'opacity-40'}`}>
+                                            <span className="text-base leading-none">{s.icon}</span>
+                                            <span className={`text-xs font-semibold ${active ? 'text-white' : done ? 'text-[#AAAE7F]' : 'text-white/40'}`}>
+                                              {s.label}
+                                            </span>
+                                            {done && <span className="ml-auto text-[#AAAE7F] text-xs">✓</span>}
+                                            {active && <Loader2 className="ml-auto h-3 w-3 text-white animate-spin" />}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })()}
+
+                                <p className="text-white/40 text-[10px] mt-3 text-center">
+                                  {aiStage === 'polling' && 'Typically 20–40 seconds · Keep this panel open'}
+                                </p>
+                              </div>
+                            </div>
                           )}
-                          <p className="text-[11px] text-purple-500">
-                            AI is building a true 3D mesh with the real design, shape &amp; colours of this product
-                          </p>
                         </div>
-                      )}
-
-                      {/* AI complete badge */}
-                      {aiStage === 'complete' && (
-                        <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-2xl border border-purple-200">
-                          <Sparkles className="h-4 w-4 text-purple-600 shrink-0" />
-                          <p className="text-xs font-semibold text-purple-800">True 3D model loaded — generated from the product photo</p>
-                        </div>
-                      )}
-
-                      {/* AI failed — retry */}
-                      {aiStage === 'failed' && (
-                        <button
-                          onClick={() => { setAiStage('idle'); setAiTaskId(null); }}
-                          className="w-full flex items-center justify-center gap-2 text-xs text-purple-700 font-semibold py-2.5 rounded-xl border border-purple-200 hover:bg-purple-50 transition-colors"
-                        >
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Retry AI 3D Generation
-                        </button>
                       )}
 
                       {/* Room detection status */}
@@ -927,6 +1241,9 @@ export function WebARViewer({
             {/* ── Info Tab ────────────────────────────────────────────────── */}
             {activeTab === 'info' && (
               <div className="px-5 py-4 space-y-4">
+
+                {/* Room scale analysis */}
+                <RoomScaleBadge dims={dims} />
 
                 {/* Dimensions card */}
                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
@@ -998,46 +1315,6 @@ export function WebARViewer({
                   </div>
                 )}
 
-                {/* ── Multi-angle photo accuracy card ──────────────────────── */}
-                <div className={`p-4 rounded-2xl border space-y-2 ${(allImageUrls && allImageUrls.length >= 3)
-                    ? 'bg-green-50 border-green-200'
-                    : (allImageUrls && allImageUrls.length >= 2)
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-amber-50 border-amber-200'
-                  }`}>
-                  <p className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${(allImageUrls && allImageUrls.length >= 3) ? 'text-green-700' :
-                      (allImageUrls && allImageUrls.length >= 2) ? 'text-blue-700' : 'text-amber-700'
-                    }`}>
-                    <Camera className="h-3.5 w-3.5" />
-                    3D Accuracy — {(allImageUrls?.length ?? 1)} photo{(allImageUrls?.length ?? 1) !== 1 ? 's' : ''} provided
-                  </p>
-                  {allImageUrls && allImageUrls.length >= 3 ? (
-                    <p className="text-xs text-green-800">
-                      ✅ <strong>Excellent!</strong> {allImageUrls.length} angle photos will be used for multi-view 3D reconstruction — the model will closely match the actual product.
-                    </p>
-                  ) : allImageUrls && allImageUrls.length >= 2 ? (
-                    <p className="text-xs text-blue-800">
-                      📸 <strong>Good</strong> — 2 photos found. Add a <strong>back</strong> or <strong>top</strong> photo to the listing for even better 3D accuracy.
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <p className="text-xs text-amber-800 font-medium">
-                        ⚠️ Only 1 photo — AI 3D accuracy is limited to a single view.
-                      </p>
-                      <p className="text-xs text-amber-700">
-                        For the most accurate 3D model, ask the seller to add photos from these angles:
-                      </p>
-                      <div className="grid grid-cols-2 gap-1 mt-1">
-                        {['📷 Front (straight on)', '📷 Side (left or right)', '📷 Back', '📷 Top / overhead'].map(angle => (
-                          <span key={angle} className="text-[10px] bg-amber-100 text-amber-800 font-medium px-2 py-1 rounded-lg">{angle}</span>
-                        ))}
-                      </div>
-                      <p className="text-[10px] text-amber-600 mt-1">
-                        💡 4 angles = ~100% reconstruction accuracy with Tripo3D multi-view AI
-                      </p>
-                    </div>
-                  )}
-                </div>
 
                 {/* How AR works */}
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-2">
@@ -1061,8 +1338,8 @@ export function WebARViewer({
                     3D Model
                   </p>
                   <p className="text-xs text-gray-600">
-                    {arAssets?.model_glb_url || aiStage === 'complete'
-                      ? 'AI-generated true 3D from product photo · Real design, shape & colours'
+                    {arAssets?.model_glb_url
+                      ? 'Custom 3D model provided by seller · Real design, shape & colours'
                       : `Procedural ${fType} model · Coloured from product image · ≈30k polygons`}
                   </p>
                   {arAssets?.polygon_count && (
@@ -1076,8 +1353,8 @@ export function WebARViewer({
               </div>
             )}
           </div>
-        </SheetContent>
-      </Sheet>
+        </SheetContent >
+      </Sheet >
     </>
   );
 }

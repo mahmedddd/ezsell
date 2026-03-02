@@ -1,0 +1,901 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\ahmed\\ezsell\\ezsell\\ezsell\\backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [26388] using StatReload
+INFO:     Started server process [28696]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers\listings.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28696]
+INFO:     Started server process [30796]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'core\recommendation_engine.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [30796]
+WARNING:  StatReload detected changes in 'routers\recommendations.py'. Reloading...
+INFO:     Started server process [29892]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\aINFO:     Started server process [13900]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\runners.py", line 132, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\starlette\routing.py", line 7INFO:     Started server process [24156]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'core\recommendation_engine.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24156]
+INFO:     Started server process [29772]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers\analytics.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29772]
+INFO:     Started server process [11716]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'models\database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11716]
+INFO:     Started server process [17560]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'core\fraud_protection.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17560]
+WARNING:  StatReload detected changes in 'routers\listings.py'. Reloading...
+INFO:     Started server process [24732]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\runners.py", line 132, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\starlette\routing.py", line 701, in lifespan
+    await receive()
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\queues.py", line 186, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+INFO:     Started server process [27696]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'core\fraud_protection.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [27696]
+WARNING:  StatReload detected changes in 'routers\listings.py'. Reloading...
+INFO:     Started server process [23676]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\runners.py", line 132, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\starlette\routing.py", line 701, in lifespan
+    await receive()
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\queues.py", line 186, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+INFO:     Started server process [20576]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'core\fraud_protection.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20576]
+INFO:     Started server process [25544]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [25544]
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Started server process [30764]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\runners.py", line 132, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\starlette\routing.py", line 701, in lifespan
+    await receive()
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\queues.py", line 186, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+INFO:     Started server process [19984]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers\listings.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [19984]
+Process SpawnProcess-15:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+    ~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+  File "C:\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\server.py", line 71, in serve
+    await self._serve(sockets)
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\server.py", line 78, in _serve
+    config.load()
+    ~~~~~~~~~~~^^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "C:\Python314\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1398, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 762, in exec_module
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "C:\Users\ahmed\ezsell\ezsell\ezsell\backend\main.py", line 9, in <module>
+    from routers import (
+    ...<4 lines>...
+    )
+  File "C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\listings.py", line 217
+    if not title or title.strip() == "":
+    ^^
+IndentationError: expected an indented block after 'try' statement on line 215
+WARNING:  StatReload detected changes in 'routers\listings.py'. Reloading...
+INFO:     Started server process [29624]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'core\recommendation_engine.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29624]
+WARNING:  StatReload detected changes in 'routers\favorites.py'. Reloading...
+INFO:     Started server process [30728]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Python314\Lib\asyncio\runners.py", line 132, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\starlette\routing.py", line 701, in lifespan
+    await receive()
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\queues.py", line 186, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+INFO:     Started server process [17240]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'services\llm_pricing_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17240]
+INFO:     Started server process [28016]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers\predictions_advanced.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28016]
+INFO:     Started server process [14440]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\services\llm_pricing_service.py:219: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  with DDGS() as ddgs:
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1732: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  request_data = request.dict()
+INFO:ml_pipeline.enhanced_preprocessor:Preparing enhanced features for mobile
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column battery not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column camera not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column screen_size not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_storage_ratio not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column capacity_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column tech_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column completeness_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column age_factor not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column price_per_gb not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_ram_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_storage_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column condition_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column non_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_5g not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_amoled not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column brand_premium not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column processor_type not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column with_box not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column has_warranty not found, filling with 0
+INFO:ml_pipeline.enhanced_preprocessor:Enhanced features prepared: 24 features
+INFO:ml_pipeline.enhanced_preprocessor:NaN count after preparation: 0
+INFO:ml_pipeline.enhanced_preprocessor:Final dataset: 1 samples
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1611: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  title = request.dict().get('title', '')
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1612: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  description = request.dict().get('description', '')
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1613: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  material = request.dict().get('material', '')
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1653: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  user_selections=request.dict(exclude_unset=True),
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\services\llm_pricing_service.py:219: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  with DDGS() as ddgs:
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1732: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  request_data = request.dict()
+INFO:ml_pipeline.enhanced_preprocessor:Preparing enhanced features for mobile
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column battery not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column camera not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column screen_size not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_storage_ratio not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column capacity_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column tech_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column completeness_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column age_factor not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column price_per_gb not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_ram_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_storage_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column condition_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column non_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_5g not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_amoled not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column brand_premium not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column processor_type not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column with_box not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column has_warranty not found, filling with 0
+INFO:ml_pipeline.enhanced_preprocessor:Enhanced features prepared: 24 features
+INFO:ml_pipeline.enhanced_preprocessor:NaN count after preparation: 0
+INFO:ml_pipeline.enhanced_preprocessor:Final dataset: 1 samples
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+WARNING:  StatReload detected changes in 'services\llm_pricing_service.py'. Reloading...
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14440]
+INFO:     Started server process [26680]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\services\llm_pricing_service.py:221: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  with DDGS() as ddgs:
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1732: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  request_data = request.dict()
+INFO:ml_pipeline.enhanced_preprocessor:Preparing enhanced features for mobile
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column battery not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column camera not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column screen_size not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_storage_ratio not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column capacity_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column tech_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column completeness_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column age_factor not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column price_per_gb not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_ram_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_storage_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column condition_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column non_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_5g not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_amoled not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column brand_premium not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column processor_type not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column with_box not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column has_warranty not found, filling with 0
+INFO:ml_pipeline.enhanced_preprocessor:Enhanced features prepared: 24 features
+INFO:ml_pipeline.enhanced_preprocessor:NaN count after preparation: 0
+INFO:ml_pipeline.enhanced_preprocessor:Final dataset: 1 samples
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1611: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  title = request.dict().get('title', '')
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1612: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  description = request.dict().get('description', '')
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1613: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  material = request.dict().get('material', '')
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1653: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  user_selections=request.dict(exclude_unset=True),
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\services\llm_pricing_service.py:221: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+  with DDGS() as ddgs:
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\routers\predictions_advanced.py:1732: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  request_data = request.dict()
+INFO:ml_pipeline.enhanced_preprocessor:Preparing enhanced features for mobile
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column battery not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column camera not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column screen_size not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_storage_ratio not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column storage_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column ram_per_price not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column capacity_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column tech_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column completeness_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column age_factor not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column price_per_gb not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_ram_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column premium_storage_interaction not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column condition_score not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column non_pta not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_5g not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column is_amoled not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column brand_premium not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column processor_type not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column with_box not found, filling with 0
+WARNING:ml_pipeline.enhanced_preprocessor:Column has_warranty not found, filling with 0
+INFO:ml_pipeline.enhanced_preprocessor:Enhanced features prepared: 24 features
+INFO:ml_pipeline.enhanced_preprocessor:NaN count after preparation: 0
+INFO:ml_pipeline.enhanced_preprocessor:Final dataset: 1 samples
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+WARNING:  StatReload detected changes in 'services\llm_pricing_service.py'. Reloading...
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+C:\Users\ahmed\ezsell\ezsell\ezsell\backend\core\security.py:52: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  user.last_seen = datetime.utcnow()
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26680]
+INFO:     Started server process [14312]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
