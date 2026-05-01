@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { API_BASE_URL } from "../lib/api";
 
 export default function GoogleCallback() {
   const [searchParams] = useSearchParams();
@@ -38,7 +39,7 @@ export default function GoogleCallback() {
     localStorage.setItem("authToken", token);
 
     // Fetch full user info
-    fetch("/api/v1/me", {
+    fetch(`${API_BASE_URL}/api/v1/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {

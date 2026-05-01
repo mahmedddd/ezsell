@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Phone, MapPin, Sparkles } from "lucide-react";
+import { API_BASE_URL } from "../lib/api";
 
 export default function CompleteProfile() {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function CompleteProfile() {
 
         setLoading(true);
         try {
-            const res = await fetch("/api/v1/me", {
+            const res = await fetch(`${API_BASE_URL}/api/v1/me`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

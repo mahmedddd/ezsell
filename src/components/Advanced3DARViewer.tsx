@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { API_BASE_URL } from '../lib/api';
 
 interface Advanced3DARViewerProps {
   listingId: number;
@@ -1560,7 +1561,7 @@ export function Advanced3DARViewer({ listingId, listingTitle, category, price, f
     
     setLoadingGallery(true);
     try {
-      const response = await fetch('/api/v1/ar-configs', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/ar-configs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -1666,7 +1667,7 @@ export function Advanced3DARViewer({ listingId, listingTitle, category, price, f
         price: price
       };
 
-      const response = await fetch('/api/v1/ar-configs', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/ar-configs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1733,7 +1734,7 @@ export function Advanced3DARViewer({ listingId, listingTitle, category, price, f
   // Delete a saved configuration
   const deleteSavedConfig = async (configId: string) => {
     try {
-      await fetch(`/api/v1/ar-configs/${configId}`, {
+      await fetch(`${API_BASE_URL}/api/v1/ar-configs/${configId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

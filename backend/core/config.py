@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # AI 3D Generation
     TRIPO_API_KEY: str = ""
 
+    # Frontend URL (set on Render to point to Vercel frontend)
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:8080")
+
 settings = Settings()
 
 # Debug: Print loaded 3D settings

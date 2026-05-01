@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, TrendingUp, DollarSign, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { API_BASE_URL } from '../lib/api';
 
 interface PredictionResult {
   predicted_price: number;
@@ -108,7 +109,7 @@ export default function PricePrediction() {
   // Load dropdown options for a category
   const loadOptions = async (category: string) => {
     try {
-      const response = await fetch(`/api/v1/prediction-options/${category}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/prediction-options/${category}`);
       if (response.ok) {
         const data = await response.json();
         setOptions(data);
@@ -143,7 +144,7 @@ export default function PricePrediction() {
         requestData = { ...requestData, ...furnitureData };
       }
 
-      const response = await fetch('/api/v1/predict-price-with-dropdowns', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/predict-price-with-dropdowns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),

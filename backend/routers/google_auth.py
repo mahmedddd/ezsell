@@ -138,17 +138,25 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         
         print(f"User authenticated successfully: {user.username}, is_new={is_new_user}")
         
-        # Detect frontend origin from the request (supports any port)
+        # Detect frontend origin:
+        # 1. Use FRONTEND_URL env var if set (production)
+        # 2. Detect from request headers (local dev)
+        frontend_url_env = getattr(settings, 'FRONTEND_URL', '')
         origin = request.headers.get("origin", "")
         referer = request.headers.get("referer", "")
-        if "8080" in (origin + referer):
+        if frontend_url_env:
+            frontend_base = frontend_url_env.rstrip('/')
+        elif "vercel.app" in (origin + referer):
+            # Extract Vercel origin from headers
+            frontend_base = origin if "vercel.app" in origin else referer.split("/auth")[0].rstrip('/')
+        elif "8080" in (origin + referer):
             frontend_base = "http://localhost:8080"
         elif "5173" in (origin + referer):
             frontend_base = "http://localhost:5173"
         elif "3000" in (origin + referer):
             frontend_base = "http://localhost:3000"
         else:
-            frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:8080')
+            frontend_base = "http://localhost:8080"
         
         # Pass is_new_user so frontend can route to profile completion
         new_flag = "1" if is_new_user else "0"
@@ -159,14 +167,19 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         print(f"Google OAuth Error: {str(e)}")
         traceback.print_exc()
         # Detect frontend base for error redirect
+        frontend_url_env = getattr(settings, 'FRONTEND_URL', '')
         origin = request.headers.get("origin", "")
         referer = request.headers.get("referer", "")
-        if "8080" in (origin + referer):
+        if frontend_url_env:
+            frontend_base = frontend_url_env.rstrip('/')
+        elif "vercel.app" in (origin + referer):
+            frontend_base = origin if "vercel.app" in origin else referer.split("/auth")[0].rstrip('/')
+        elif "8080" in (origin + referer):
             frontend_base = "http://localhost:8080"
         elif "5173" in (origin + referer):
             frontend_base = "http://localhost:5173"
         else:
-            frontend_base = getattr(settings, 'FRONTEND_URL', 'http://localhost:8080')
+            frontend_base = "http://localhost:8080"
         error_message = str(e).replace(' ', '+')
         frontend_callback_url = f"{frontend_base}/auth/google/callback?error={error_message}"
         return RedirectResponse(url=frontend_callback_url, status_code=302)
