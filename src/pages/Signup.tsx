@@ -32,8 +32,7 @@ export default function Signup() {
     setUsernameStatus("checking");
     usernameTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/v1/check-username/${encodeURIComponent(u)}`);
-        const data = await res.json();
+        const data = await authService.checkUsername(u);
         setUsernameStatus(data.available ? "available" : "taken");
       } catch { setUsernameStatus("idle"); }
     }, 500);
@@ -46,11 +45,7 @@ export default function Signup() {
     if (!formData.email) { toast({ title: "Email required", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/send-verification-code", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
-      });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Failed to send code"); }
+      await authService.sendVerificationCode({ email: formData.email });
       toast({ title: "Code sent! 📬", description: "Check your email for the verification code" });
       setStep(2);
     } catch (error: any) {
@@ -66,11 +61,7 @@ export default function Signup() {
     if (!verificationCode) { toast({ title: "Code required", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/verify-code", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, code: verificationCode }),
-      });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Invalid code"); }
+      await authService.verifyCode({ email: formData.email, code: verificationCode });
       toast({ title: "Email verified! ✅", description: "Complete your profile" });
       setStep(3);
     } catch (error: any) {
@@ -322,4 +313,4 @@ function GoogleIcon() {
   );
 }
 
-function googleLogin() { window.location.href = "/api/v1/auth/google/login"; }
+function googleLogin() { window.location.href = authService.getLoginUrl(); }

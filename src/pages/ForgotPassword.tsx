@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { authService } from '../lib/api.ts';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Check, Sparkles } from "lucide-react";
 
 const STEPS = ["Enter Email", "Verify Code", "New Password"];
@@ -20,17 +21,11 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const post = async (url: string, body: object) => {
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Request failed"); }
-    return res;
-  };
-
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await post("/api/v1/request-password-reset", { email });
+      await authService.requestPasswordReset({ email });
       toast({ title: "Reset code sent! 📬", description: "Check your email" });
       setStep(2);
     } catch (err: any) { toast({ title: "Request Failed", description: err.message, variant: "destructive", duration: 5000 }); }
@@ -41,7 +36,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      await post("/api/v1/verify-reset-code", { email, code });
+      await authService.verifyResetCode({ email, code });
       toast({ title: "Code verified! ✅", description: "Enter your new password" });
       setStep(3);
     } catch (err: any) { toast({ title: "Verification Failed", description: err.message, variant: "destructive", duration: 5000 }); }
@@ -54,7 +49,7 @@ export default function ForgotPassword() {
     if (newPassword.length < 6) { toast({ title: "Password too short (min 6)", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      await post("/api/v1/reset-password", { email, code, new_password: newPassword });
+      await authService.resetPassword({ email, code, new_password: newPassword });
       toast({ title: "Password reset! 🎉", description: "You can now login with your new password" });
       navigate("/login");
     } catch (err: any) { toast({ title: "Reset Failed", description: err.message, variant: "destructive", duration: 5000 }); }

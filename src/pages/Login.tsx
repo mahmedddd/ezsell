@@ -38,7 +38,7 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
-  const googleLogin = () => { window.location.href = "/api/v1/auth/google/login"; };
+  const googleLogin = () => { window.location.href = `${authService.getLoginUrl()}`; };
 
   return (
     <div className="min-h-screen flex">
