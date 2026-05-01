@@ -6,14 +6,7 @@ import json
 from typing import List, Dict, Optional
 import numpy as np
 
-try:
-    from sentence_transformers import SentenceTransformer
-    from sklearn.metrics.pairwise import cosine_similarity
-    import numpy as np
-    HAS_ML = True
-except ImportError:
-    HAS_ML = False
-    print("Warning: ML dependencies (numpy, sentence-transformers, scikit-learn) not installed. Falling back to basic NLP.")
+HAS_ML = True # We assume True and handle errors in the function
 
 class SemanticEmbeddingService:
     """Service to generate and compare semantic embeddings"""
@@ -26,8 +19,13 @@ class SemanticEmbeddingService:
         if not HAS_ML:
             return None
         if cls._model is None:
-            # We use a very lightweight, fast model suitable for CPU
-            cls._model = SentenceTransformer('all-MiniLM-L6-v2')
+            try:
+                from sentence_transformers import SentenceTransformer
+                # We use a very lightweight, fast model suitable for CPU
+                cls._model = SentenceTransformer('all-MiniLM-L6-v2')
+            except ImportError:
+                print("Warning: ML dependencies not installed.")
+                return None
         return cls._model
 
     @classmethod
@@ -52,6 +50,8 @@ class SemanticEmbeddingService:
             return 0.0
             
         try:
+            from sklearn.metrics.pairwise import cosine_similarity
+            import numpy as np
             v1 = np.array(vec1).reshape(1, -1)
             v2 = np.array(vec2).reshape(1, -1)
             similarity = cosine_similarity(v1, v2)[0][0]

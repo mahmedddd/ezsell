@@ -2,12 +2,7 @@ import hashlib
 import json
 import re
 from typing import List, Optional, Tuple, Dict
-try:
-    import torch
-    from transformers import CLIPProcessor, CLIPModel
-    HAS_AI = True
-except ImportError:
-    HAS_AI = False
+HAS_AI = True # Handled lazily
 from PIL import Image
 from sqlalchemy.orm import Session
 from models.database import Listing, User
@@ -25,7 +20,7 @@ class FraudProtectionService:
     
     _clip_model = None
     _clip_processor = None
-    _device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if HAS_AI else "cpu"
+    _device = "cpu" # Default to cpu, set properly in load_clip
     
     # Map internal categories to valid descriptors for CLIP comparison
     # If the AI's best guess contains any of these, it's a match
@@ -66,11 +61,18 @@ class FraudProtectionService:
             return None, None
             
         if cls._clip_model is None:
-            print(f"Loading CLIP model for fraud prevention on {cls._device}...")
-            model_id = "openai/clip-vit-base-patch32"
-            cls._clip_processor = CLIPProcessor.from_pretrained(model_id)
-            cls._clip_model = CLIPModel.from_pretrained(model_id).to(cls._device)
-            cls._clip_model.eval() # Set to evaluation mode
+            try:
+                import torch
+                from transformers import CLIPProcessor, CLIPModel
+                cls._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                print(f"Loading CLIP model for fraud prevention on {cls._device}...")
+                model_id = "openai/clip-vit-base-patch32"
+                cls._clip_processor = CLIPProcessor.from_pretrained(model_id)
+                cls._clip_model = CLIPModel.from_pretrained(model_id).to(cls._device)
+                cls._clip_model.eval() # Set to evaluation mode
+            except ImportError:
+                print("Warning: ML dependencies for fraud protection not installed.")
+                return None, None
         return cls._clip_model, cls._clip_processor
 
     @staticmethod
@@ -250,6 +252,7 @@ class FraudProtectionService:
             # Perform global search across all labels
             labels = cls.GLOBAL_IDENTIFY_LABELS
             
+            import torch
             with torch.no_grad():
                 inputs = processor(text=labels, images=image, return_tensors="pt", padding=True)
                 inputs = {k: v.to(cls._device) for k, v in inputs.items()}

@@ -1,7 +1,7 @@
 # Enhanced AR with AI-powered room analysis
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
-import cv2
+# cv2 imported lazily
 import numpy as np
 from pathlib import Path
 import uuid
@@ -40,6 +40,7 @@ def analyze_room_image(img: np.ndarray) -> Dict:
     """
     height, width = img.shape[:2]
     
+    import cv2
     # Convert to different color spaces for analysis
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -204,6 +205,7 @@ async def analyze_room(room_image: UploadFile = File(...)):
         # Read and decode image
         contents = await room_image.read()
         nparr = np.frombuffer(contents, np.uint8)
+        import cv2
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is None:
@@ -239,6 +241,7 @@ async def generate_realistic_ar_preview(
         # Read image
         contents = await room_image.read()
         nparr = np.frombuffer(contents, np.uint8)
+        import cv2
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is None:
@@ -389,6 +392,7 @@ async def generate_ar_preview(
     try:
         contents = await room_image.read()
         nparr = np.frombuffer(contents, np.uint8)
+        import cv2
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is None:

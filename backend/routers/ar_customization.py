@@ -1,7 +1,7 @@
 # AR furniture customization endpoints
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
-import cv2
+# cv2 imported lazily
 import numpy as np
 from pathlib import Path
 import uuid
@@ -25,6 +25,7 @@ async def generate_ar_preview(
         # Read the uploaded image
         contents = await room_image.read()
         nparr = np.frombuffer(contents, np.uint8)
+        import cv2
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is None:
