@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { favoritesService, getImageUrl } from '@/lib/api';
+import { favoritesService, getImageUrl } from "../lib/api.ts";
 import { Home, Heart, Trash2, ShoppingBag, ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {

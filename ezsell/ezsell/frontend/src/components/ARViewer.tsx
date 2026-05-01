@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Upload, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { arService, API_BASE_URL } from '@/lib/api';
+import { arService, API_BASE_URL } from './lib/api.ts';
 
 interface ARViewerProps {
   listingId: number;
