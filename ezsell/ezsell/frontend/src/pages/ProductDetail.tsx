@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { listingService, getImageUrl, favoritesService, arAssetsService, analyticsService, recommendationService, getSessionId } from '@/lib/api';
+import { listingService, getImageUrl, favoritesService, arAssetsService, analyticsService, recommendationService, getSessionId } from '@/lib/api.ts';
 import { Home, MapPin, Eye, MessageCircle, Heart, ChevronLeft, ChevronRight, Share2, ShoppingBag, Star, Clock, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { ChatWindow } from '@/components/ChatWindow';

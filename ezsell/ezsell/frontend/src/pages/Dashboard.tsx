@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { listingService, authService, getImageUrl, favoritesService, analyticsService } from '@/lib/api';
+import { listingService, authService, getImageUrl, favoritesService, analyticsService } from '@/lib/api.ts';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, Package, Home, Heart, BarChart3, RefreshCw, Eye, EyeOff, Check } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
