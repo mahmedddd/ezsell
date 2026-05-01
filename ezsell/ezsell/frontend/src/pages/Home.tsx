@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Plus, Heart, ChevronRight, Loader2, TrendingUp, Shield, Zap } from "lucide-react";
-import { listingService, getImageUrl, favoritesService, recommendationService, analyticsService } from "@/lib/api";
+import { listingService, getImageUrl, favoritesService, recommendationService, analyticsService } from "@/lib/api.ts";
 import { listingMatchesSearch } from "@/lib/nlp";
 import { useToast } from "@/components/ui/use-toast";
 
