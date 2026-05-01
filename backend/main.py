@@ -57,6 +57,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:8080",
         "http://127.0.0.1:3000",
+        "https://ezsell-indol.vercel.app",
+        "https://ezsell.vercel.app",
     ],
     # Covers 192.168.x.x, 10.x.x.x, 172.16-31.x.x on any port
     allow_origin_regex=(
@@ -64,7 +66,8 @@ app.add_middleware(
         r"|192\.168\.\d{1,3}\.\d{1,3}"
         r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
         r"|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})"
-        r":\d+"
+        r"(:\d+)?"
+        r"|https://ezsell-.*\.vercel\.app"
     ),
     allow_credentials=True,
     allow_methods=["*"],
