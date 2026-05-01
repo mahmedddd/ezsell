@@ -2,9 +2,13 @@ import hashlib
 import json
 import re
 from typing import List, Optional, Tuple, Dict
-import torch
+try:
+    import torch
+    from transformers import CLIPProcessor, CLIPModel
+    HAS_AI = True
+except ImportError:
+    HAS_AI = False
 from PIL import Image
-from transformers import CLIPProcessor, CLIPModel
 from sqlalchemy.orm import Session
 from models.database import Listing, User
 
@@ -21,7 +25,7 @@ class FraudProtectionService:
     
     _clip_model = None
     _clip_processor = None
-    _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    _device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if HAS_AI else "cpu"
     
     # Map internal categories to valid descriptors for CLIP comparison
     # If the AI's best guess contains any of these, it's a match
@@ -58,6 +62,9 @@ class FraudProtectionService:
     @classmethod
     def load_clip(cls):
         """Lazy load CLIP model for image validation"""
+        if not HAS_AI:
+            return None, None
+            
         if cls._clip_model is None:
             print(f"Loading CLIP model for fraud prevention on {cls._device}...")
             model_id = "openai/clip-vit-base-patch32"
@@ -225,8 +232,15 @@ class FraudProtectionService:
         Use CLIP to verify if the image content matches the selected category.
         Returns: (is_match, confidence, best_label)
         """
+        if not HAS_AI:
+            return True, 1.0, "ai_disabled_on_server"
+
         try:
             model, processor = cls.load_clip()
+            if not model or not processor:
+                return True, 1.0, "ai_load_failed"
+                
+            from PIL import Image
             image = Image.open(image_path).convert("RGB")
             
             # Optimization: Resize for faster inference
