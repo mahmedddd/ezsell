@@ -114,6 +114,15 @@ export const authService = {
     return response.data;
   },
 
+  getLoginUrl() {
+    return `${API_V1}/auth/google/login`;
+  },
+
+  async forgotPassword(email: string) {
+    const response = await apiClient.post('/forgot-password', { email });
+    return response.data;
+  },
+
   async updateProfile(data: any) {
     const response = await apiClient.patch('/me', data);
     return response.data;
