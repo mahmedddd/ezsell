@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import Avatar from './ui/avatar';
-import { messageService, getImageUrl } from '../lib/api.ts';
+import { messageService, getImageUrl } from '../lib/api';
 
 interface Message {
   id: number;

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { listingService, predictionService, API_BASE_URL } from '../lib/api.ts';
+import { listingService, predictionService, API_BASE_URL } from '../lib/api';
 import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
