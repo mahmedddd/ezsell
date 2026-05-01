@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService } from './lib/api.ts';
+import { authService } from '../lib/api.ts';
 import { useToast } from "@/components/ui/use-toast";
 import { Check, X, Loader2, Eye, EyeOff, ArrowLeft, Mail, User, Phone, MapPin, Lock, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -97,7 +97,7 @@ export default function Signup() {
       localStorage.setItem("authToken", loginRes.access_token);
       const user = await authService.getCurrentUser();
       localStorage.setItem("user", JSON.stringify(user));
-      const { rotateSessionId } = await import('./lib/api.ts');
+      const { rotateSessionId } = await import('../lib/api.ts');
       rotateSessionId();
       toast({ title: "Account created! 🎉", description: "Welcome to EzSell!" });
       navigate("/dashboard");

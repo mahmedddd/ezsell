@@ -19,7 +19,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, TrendingUp, DollarSign, Sparkles, CheckCircle2, XCircle } from 'lucide-react';
-import { API_BASE_URL } from './lib/api.ts';
+import { API_BASE_URL } from '../lib/api.ts';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface PredictionResult {

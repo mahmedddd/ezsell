@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { listingService, getImageUrl, favoritesService, analyticsService } from "../lib/api.ts";
+import { listingService, getImageUrl, favoritesService, analyticsService } from '../lib/api.ts';
 import { Search, Filter, X, Heart, Loader2, Tag, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "../lib/utils";

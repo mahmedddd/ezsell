@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { messageService, getImageUrl } from './lib/api.ts';
+import { messageService, getImageUrl } from '../lib/api.ts';
 import { toast } from '@/components/ui/use-toast';
 import Avatar from '@/components/ui/avatar';
 import { ChatWindow } from '@/components/ChatWindow';

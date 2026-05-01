@@ -44,7 +44,7 @@ import {
   type FurnitureType,
   type ColorProfile,
 } from '@/components/ar/FurnitureGLBGenerator';
-import { arAssetsService, API_BASE_URL } from '../lib/api.ts';
+import { arAssetsService, API_BASE_URL } from '../../lib/api.ts';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

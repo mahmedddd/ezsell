@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { messageService, listingService, analyticsService, notificationService, getImageUrl, authService } from './lib/api.ts';
+import { messageService, listingService, analyticsService, notificationService, getImageUrl, authService } from '../lib/api.ts';
 
 const Navigation = () => {
   const navigate = useNavigate();

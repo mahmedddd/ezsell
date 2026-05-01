@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService, rotateSessionId } from './lib/api.ts';
+import { authService, rotateSessionId } from '../lib/api.ts';
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, ArrowLeft, Lock, User, Sparkles } from "lucide-react";
 
