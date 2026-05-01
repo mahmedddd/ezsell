@@ -332,8 +332,8 @@ async def get_for_you_feed(
                 combined.append((listing, score, rec_type))
                 seen_ids.add(listing.id)
         
-        # Sort by created_at desc primarily
-        combined.sort(key=lambda x: x[0].created_at, reverse=True)
+        # Sort by score primarily
+        combined.sort(key=lambda x: x[1], reverse=True)
         recommendations = combined[skip:skip + limit]
     else:
         # Show trending for anonymous users

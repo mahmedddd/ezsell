@@ -108,7 +108,7 @@ export default function PricePrediction() {
   // Load dropdown options for a category
   const loadOptions = async (category: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/prediction-options/${category}`);
+      const response = await fetch(`/api/v1/prediction-options/${category}`);
       if (response.ok) {
         const data = await response.json();
         setOptions(data);
@@ -143,7 +143,7 @@ export default function PricePrediction() {
         requestData = { ...requestData, ...furnitureData };
       }
 
-      const response = await fetch('http://localhost:8000/api/v1/predict-price-with-dropdowns', {
+      const response = await fetch('/api/v1/predict-price-with-dropdowns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),

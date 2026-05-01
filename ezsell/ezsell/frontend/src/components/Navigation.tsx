@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import Avatar from "@/components/ui/avatar";
+import Avatar, { parseAvatarUrl } from "@/components/ui/avatar";
 import {
   Store, User, LogOut, Plus, Package, MessageCircle, Home,
   Search, Grid, Heart, ChevronLeft, ChevronRight, RotateCw,
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { messageService, listingService, analyticsService, notificationService, getImageUrl } from "@/lib/api";
+import { messageService, listingService, analyticsService, notificationService, getImageUrl, authService } from "@/lib/api";
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -34,10 +34,15 @@ const Navigation = () => {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try { setUser(JSON.parse(userData)); } catch (e) { /* ignore */ }
-    }
+    const loadUser = () => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        try { setUser(JSON.parse(userData)); } catch (e) { /* ignore */ }
+      }
+    };
+    loadUser();
+    window.addEventListener("user-updated", loadUser);
+    return () => window.removeEventListener("user-updated", loadUser);
   }, [token]);
 
   useEffect(() => {
@@ -116,8 +121,8 @@ const Navigation = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
+    authService.logout();
+    setUser(null);
     navigate("/login");
   };
 
@@ -373,7 +378,7 @@ const Navigation = () => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl hover:bg-foreground/5 transition-all outline-none">
-                        {user?.avatar_url && !imgError ? (
+                        {user?.avatar_url && !imgError && (user.avatar_url.startsWith('http') || user.avatar_url.startsWith('/uploads')) ? (
                           <img
                             src={getImageUrl(user.avatar_url)}
                             alt="Profile"
@@ -381,7 +386,7 @@ const Navigation = () => {
                             onError={() => setImgError(true)}
                           />
                         ) : (
-                          <Avatar seed={user?.username || "U"} size={28} className="shadow-sm" />
+                          <Avatar seed={user?.username || "U"} {...parseAvatarUrl(user?.avatar_url, user?.username)} size={28} className="shadow-sm" />
                         )}
                         <span className="hidden lg:inline max-w-[80px] truncate">{user?.username || "Account"}</span>
                       </div>

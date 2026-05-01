@@ -1,0 +1,67 @@
+[0;93m2026-03-01 13:58:16.834469287 [W:onnxruntime:Default, device_discovery.cc:164 DiscoverDevicesForPlatform] GPU device discovery failed: device_discovery.cc:89 ReadFileContents Failed to open file: "/sys/class/drm/card0/device/vendor"[m
+/root/miniconda/envs/triposr/lib/python3.10/site-packages/transformers/utils/generic.py:441: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+/root/miniconda/envs/triposr/lib/python3.10/site-packages/transformers/utils/generic.py:309: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+/home/ubuntu/TripoSR/tsr/system.py:69: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ckpt = torch.load(weight_path, map_location="cpu")
+Traceback (most recent call last):
+  File "/home/ubuntu/diagnose_worker.py", line 32, in <module>
+    meshes = model.extract_mesh(scene_codes, has_vertex_color=True, resolution=128, threshold=float(25.0))
+  File "/home/ubuntu/TripoSR/tsr/system.py", line 176, in extract_mesh
+    density = self.renderer.query_triplane(
+  File "/home/ubuntu/TripoSR/tsr/models/nerf_renderer.py", line 82, in query_triplane
+    net_out = _query_chunk(positions)
+  File "/home/ubuntu/TripoSR/tsr/models/nerf_renderer.py", line 61, in _query_chunk
+    input = input.float()
+UnboundLocalError: local variable 'input' referenced before assignment
+Traceback (most recent call last):
+  File "/home/ubuntu/diagnose_worker.py", line 32, in <module>
+    meshes = model.extract_mesh(scene_codes, has_vertex_color=True, resolution=128, threshold=float(25.0))
+  File "/home/ubuntu/TripoSR/tsr/system.py", line 176, in extract_mesh
+    density = self.renderer.query_triplane(
+  File "/home/ubuntu/TripoSR/tsr/models/nerf_renderer.py", line 82, in query_triplane
+    net_out = _query_chunk(positions)
+  File "/home/ubuntu/TripoSR/tsr/models/nerf_renderer.py", line 61, in _query_chunk
+    input = input.float()
+UnboundLocalError: local variable 'input' referenced before assignment
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/diagnose_worker.py", line 40, in <module>
+    meshes = model.extract_mesh(scene_codes)
+TypeError: TSR.extract_mesh() missing 1 required positional argument: 'has_vertex_color'
+Traceback (most recent call last):
+  File "/home/ubuntu/diagnose_worker.py", line 32, in <module>
+    meshes = model.extract_mesh(scene_codes, has_vertex_color=True, resolution=128, threshold=float(25.0))
+  File "/home/ubuntu/TripoSR/tsr/system.py", line 176, in extract_mesh
+    density = self.renderer.query_triplane(
+  File "/home/ubuntu/TripoSR/tsr/models/nerf_renderer.py", line 82, in query_triplane
+    net_out = _query_chunk(positions)
+  File "/home/ubuntu/TripoSR/tsr/models/nerf_renderer.py", line 61, in _query_chunk
+    input = input.float()
+UnboundLocalError: local variable 'input' referenced before assignment
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/diagnose_worker.py", line 40, in <module>
+    meshes = model.extract_mesh(scene_codes)
+TypeError: TSR.extract_mesh() missing 1 required positional argument: 'has_vertex_color'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/diagnose_worker.py", line 53, in <module>
+    meshes = model.extract_mesh(scene_codes, resolution=128)
+TypeError: TSR.extract_mesh() missing 1 required positional argument: 'has_vertex_color'
+Loading model...
+Model loaded. Running inference...
+Inference done. Extracting mesh...
+Attempt 1 failed: local variable 'input' referenced before assignment
+Attempt 2 failed: TSR.extract_mesh() missing 1 required positional argument: 'has_vertex_color'
+
+extract_mesh signature:
+(scene_codes, has_vertex_color, resolution: int = 256, threshold: float = 25.0)
+Attempt 3 (resolution only) failed: TSR.extract_mesh() missing 1 required positional argument: 'has_vertex_color'

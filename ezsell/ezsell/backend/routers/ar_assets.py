@@ -23,6 +23,8 @@ import shutil
 from models.database import get_db, Listing
 from core.security import get_current_user
 from routers.users import get_user_by_username
+import os
+
 
 # 3D Assets only (Manual/Procedural)
 _IMAGE_TO_3D_AVAILABLE = False
@@ -229,7 +231,11 @@ async def generate_3d_ai(
     Experimental endpoint: Generate a 3-D mesh from product images via Tripo AI.
     If all_images=True and the listing has multiple images, uses multiview_to_model.
     """
-    from services.image_to_3d import start_image_to_3d_task, start_multiview_to_3d_task
+    from services.image_to_3d import (
+        start_image_to_3d_task, 
+        start_multiview_to_3d_task,
+        upload_image_to_tripo
+    )
     
     listing = _get_listing_or_404(listing_id, db)
     user = get_user_by_username(db, current_user.username)
@@ -237,26 +243,59 @@ async def generate_3d_ai(
         raise HTTPException(status_code=403, detail="Not authorised")
 
     try:
+        # Helper to get absolute path from relative DB path
+        def get_abs_path(rel_p: str):
+            if not rel_p: return None
+            # If it's already a full disk path or URL, ignore
+            if rel_p.startswith("/") and not rel_p.startswith("//"):
+                # Check /uploads/ vs something else
+                if rel_p.startswith("/uploads/"):
+                    return str(Path(__file__).parent.parent / rel_p.lstrip("/"))
+            return None
+
         if all_images:
             img_list = json.loads(listing.images) if listing.images else []
             if len(img_list) > 1:
-                # Resolve full URLs for Tripo
-                base = "http://localhost:8000" # fallback if needed
-                full_urls = [img if img.startswith("http") else f"{base}{img}" for img in img_list]
-                task_id = await start_multiview_to_3d_task(full_urls)
+                # Upload all to Tripo and get tokens
+                tokens = []
+                for img in img_list:
+                    abs_p = get_abs_path(img)
+                    if abs_p and os.path.exists(abs_p):
+                        token = await upload_image_to_tripo(abs_p)
+                        tokens.append(token)
+                
+                if not tokens: raise ValueError("No valid local images found to upload")
+                task_id = await start_multiview_to_3d_task(file_tokens=tokens)
             else:
                 target = image_url or (img_list[0] if img_list else None)
                 if not target: raise ValueError("No image found")
-                full_url = target if target.startswith("http") else f"http://localhost:8000{target}"
-                task_id = await start_image_to_3d_task(full_url)
+                
+                abs_p = get_abs_path(target)
+                if abs_p and os.path.exists(abs_p):
+                    token = await upload_image_to_tripo(abs_p)
+                    task_id = await start_image_to_3d_task(file_token=token)
+                else:
+                    # Fallback to URL if it's already a full URL or not local
+                    full_url = target if target.startswith("http") else f"http://localhost:8000{target}"
+                    task_id = await start_image_to_3d_task(image_url=full_url)
         else:
             if not image_url: raise ValueError("image_url required for single-image gen")
-            full_url = image_url if image_url.startswith("http") else f"http://localhost:8000{image_url}"
-            task_id = await start_image_to_3d_task(full_url)
+            
+            abs_p = get_abs_path(image_url)
+            if abs_p and os.path.exists(abs_p):
+                token = await upload_image_to_tripo(abs_p)
+                task_id = await start_image_to_3d_task(file_token=token)
+            else:
+                full_url = image_url if image_url.startswith("http") else f"http://localhost:8000{image_url}"
+                task_id = await start_image_to_3d_task(image_url=full_url)
             
         return {"task_id": task_id, "status": "queued"}
     except Exception as e:
+        import traceback
+        print(f"❌ [AR_ASSETS] AI Gen Error: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.get("/products/{listing_id}/assets/generate-3d/{task_id}")

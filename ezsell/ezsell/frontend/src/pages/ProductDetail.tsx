@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { listingService, getImageUrl, favoritesService, arAssetsService, analyticsService, recommendationService } from '@/lib/api';
+import { listingService, getImageUrl, favoritesService, arAssetsService, analyticsService, recommendationService, getSessionId } from '@/lib/api';
 import { Home, MapPin, Eye, MessageCircle, Heart, ChevronLeft, ChevronRight, Share2, ShoppingBag, Star, Clock, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { ChatWindow } from '@/components/ChatWindow';
@@ -113,7 +113,7 @@ export default function ProductDetail() {
             activity_type: 'view',
             listing_id: parseInt(id),
             category: listing.category,
-            session_id: 'web-session'
+            session_id: getSessionId()
           });
         } catch (err) {
           console.error('Failed to track view activity:', err);

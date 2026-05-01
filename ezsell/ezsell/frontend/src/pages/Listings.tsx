@@ -407,7 +407,7 @@ export default function Listings() {
                           {/* Extra tags */}
                           <div className="flex flex-wrap gap-1">
                             {listing.brand && <span className="badge-pill bg-muted text-muted-foreground">🏷️ {listing.brand}</span>}
-                            {listing.furniture_type && <span className="badge-pill bg-muted text-muted-foreground">🪑 {listing.furniture_type}</span>}
+                            {listing.category === 'furniture' && listing.furniture_type && <span className="badge-pill bg-muted text-muted-foreground">🪑 {listing.furniture_type}</span>}
                           </div>
                           {listing.views > 0 && (
                             <p className="text-[11px] text-muted-foreground/70">{listing.views} views</p>

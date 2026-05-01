@@ -78,7 +78,7 @@ class FurniturePredictionInput(BaseModel):
     title: str = Field(..., min_length=3, description="Product title")
     description: str = Field(..., min_length=5, description="Product description")
     condition: ConditionEnum = Field(..., description="Product condition")
-    material: str = Field(..., min_length=2, description="Material type")
+    material: Optional[str] = Field(None, description="Material type")
     furniture_type: Optional[str] = Field(None)
     dimensions: Optional[str] = Field(None)
     seating_capacity: Optional[int] = Field(None, ge=1, le=20)

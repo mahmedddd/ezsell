@@ -62,10 +62,10 @@ class SemanticEmbeddingService:
 
     @staticmethod
     def construct_listing_text(title: str, description: str, category: str, brand: str) -> str:
-        """Combine relevant listing fields into a semantic block"""
+        """Combine relevant listing fields into a semantic block without structural labels"""
         components = []
         if title: components.append(title)
-        if category: components.append(f"Category: {category}")
-        if brand: components.append(f"Brand: {brand}")
+        if category: components.append(category)
+        if brand: components.append(brand)
         if description: components.append(description)
         return " ".join(components)

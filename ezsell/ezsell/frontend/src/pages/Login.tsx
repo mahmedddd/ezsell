@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService } from "@/lib/api";
+import { authService, rotateSessionId } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, ArrowLeft, Lock, User, Sparkles } from "lucide-react";
 
@@ -23,6 +23,7 @@ export default function Login() {
       localStorage.setItem("authToken", response.access_token);
       const user = await authService.getCurrentUser();
       localStorage.setItem("user", JSON.stringify(user));
+      rotateSessionId(); // Clear previous anonymous user context
       toast({ title: "Welcome back! 👋", description: `Logged in as ${user.username}` });
       navigate("/dashboard");
     } catch (error: any) {
@@ -37,7 +38,7 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
-  const googleLogin = () => { window.location.href = "http://localhost:8000/api/v1/auth/google/login"; };
+  const googleLogin = () => { window.location.href = "/api/v1/auth/google/login"; };
 
   return (
     <div className="min-h-screen flex">

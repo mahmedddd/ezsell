@@ -145,13 +145,20 @@ async def get_user_dashboard(
         for cat, count in category_counts.most_common(5)
     ]
     
-    # Get top keywords
+    # Get top keywords (filter BEFORE counting)
+    from core.nlp_service import KeywordExtractor
     all_keywords = []
     for activity in activities:
         if activity.keywords:
             try:
                 keywords = json.loads(activity.keywords)
-                all_keywords.extend(keywords)
+                # Filter out stopwords and junk phrases
+                cleaned_kws = [
+                    kw for kw in keywords 
+                    if kw.lower() not in KeywordExtractor.STOPWORDS 
+                    and not any(word in KeywordExtractor.STOPWORDS for word in kw.lower().split())
+                ]
+                all_keywords.extend(cleaned_kws)
             except json.JSONDecodeError:
                 pass
     
@@ -247,6 +254,7 @@ async def get_user_dashboard(
     ]
     engagement_score = round(sum(engagement_factors), 1)
     
+
     return UserDashboard(
         total_searches=total_searches,
         total_views=total_views,

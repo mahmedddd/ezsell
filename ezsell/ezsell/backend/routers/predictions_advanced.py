@@ -465,7 +465,7 @@ def get_mobile_market_price(title: str, condition: str = 'used') -> Optional[flo
 
 def apply_mobile_price_adjustments(base_price: float, data: Dict[str, Any]) -> Tuple[float, List[str]]:
     """
-    Apply realistic price adjustments based on PTA, warranty, box, condition, etc.
+    Apply realistic price adjustments based on PTA, 5G, Display, warranty, box, condition, etc.
     Returns adjusted price and list of adjustments made
     """
     adjustments = []
@@ -474,10 +474,14 @@ def apply_mobile_price_adjustments(base_price: float, data: Dict[str, Any]) -> T
     condition = data.get('condition', 'used').lower()
     
     # PTA Status - MAJOR impact in Pakistan
-    has_pta = data.get('has_pta', False)
-    if has_pta:
-        # PTA approved phones are worth 15-25% more
-        pta_bonus = base_price * 0.18
+    # Use boolean flag from request if available, otherwise check text (fallback)
+    has_pta_bool = data.get('has_pta', False)
+    title_lower = data.get('title', '').lower()
+    has_pta_text = any(x in title_lower for x in ['pta approved', 'pta approved', 'official pta'])
+    
+    if has_pta_bool or has_pta_text:
+        # PTA approved phones are worth 18-25% more in RS
+        pta_bonus = base_price * 0.20
         final_price += pta_bonus
         adjustments.append(f"+Rs.{int(pta_bonus):,} (PTA Approved)")
     else:
@@ -486,10 +490,26 @@ def apply_mobile_price_adjustments(base_price: float, data: Dict[str, Any]) -> T
         final_price -= pta_penalty
         adjustments.append(f"-Rs.{int(pta_penalty):,} (Non-PTA)")
     
+    # 5G Support
+    has_5g_bool = data.get('has_5g', False)
+    has_5g_text = '5g' in title_lower
+    if has_5g_bool or has_5g_text:
+        five_g_bonus = base_price * 0.12
+        final_price += five_g_bonus
+        adjustments.append(f"+Rs.{int(five_g_bonus):,} (5G Support)")
+        
+    # AMOLED Display
+    has_amoled_bool = data.get('has_amoled', False)
+    has_amoled_text = any(x in title_lower for x in ['amoled', 'oled', 'super amoled'])
+    if has_amoled_bool or has_amoled_text:
+        amoled_bonus = base_price * 0.08
+        final_price += amoled_bonus
+        adjustments.append(f"+Rs.{int(amoled_bonus):,} (AMOLED Display)")
+
     # Warranty - Important for resale
     has_warranty = data.get('has_warranty', False)
     if has_warranty:
-        warranty_bonus = base_price * 0.08
+        warranty_bonus = base_price * 0.10
         final_price += warranty_bonus
         adjustments.append(f"+Rs.{int(warranty_bonus):,} (With Warranty)")
     
@@ -1061,16 +1081,23 @@ def apply_laptop_price_adjustments(base_price: float, data: Dict[str, Any], tier
     # Gaming laptop bonus (dedicated GPU)
     is_gaming = data.get('is_gaming', False)
     if is_gaming and tier not in ['gaming', 'gaming_premium']:
-        gaming_bonus = base_price * 0.10
+        gaming_bonus = base_price * 0.15
         final_price += gaming_bonus
         adjustments.append(f"+Rs.{int(gaming_bonus):,} (Gaming/GPU)")
     
     # Touchscreen bonus
     is_touchscreen = data.get('is_touchscreen', False)
     if is_touchscreen:
-        touch_bonus = base_price * 0.05
+        touch_bonus = base_price * 0.08
         final_price += touch_bonus
         adjustments.append(f"+Rs.{int(touch_bonus):,} (Touchscreen)")
+    
+    # Backlit keyboard bonus
+    has_backlit = data.get('has_backlit_keyboard', False)
+    if has_backlit:
+        backlit_bonus = base_price * 0.05
+        final_price += backlit_bonus
+        adjustments.append(f"+Rs.{int(backlit_bonus):,} (Backlit Keyboard)")
     
     # Processor generation bonus (if mentioned)
     title = data.get('title', '').lower()
@@ -1545,6 +1572,36 @@ def apply_furniture_price_adjustments(base_price: float, data: Dict[str, Any]) -
         final_price += brand_bonus
         adjustments.append(f"+Rs.{int(brand_bonus):,} (Designer Collection)")
 
+    # ── Global Feature Checkboxes ────────────────────────────────────────────
+    # Direct structural influence from user-selected features
+    
+    if data.get('is_imported') or 'imported' in full_text:
+        imp_bonus = base_price * 0.35
+        final_price += imp_bonus
+        adjustments.append(f"+Rs.{int(imp_bonus):,} (Imported Premium)")
+        
+    if data.get('is_handmade') or 'handmade' in full_text:
+        hand_bonus = base_price * 0.20
+        final_price += hand_bonus
+        adjustments.append(f"+Rs.{int(hand_bonus):,} (Handmade Craftsmanship)")
+        
+    if data.get('is_antique') or 'antique' in full_text:
+        ant_bonus = base_price * 0.25
+        final_price += ant_bonus
+        adjustments.append(f"+Rs.{int(ant_bonus):,} (Antique Value)")
+        
+    if data.get('has_storage') or 'storage' in full_text:
+        # Avoid double-counting hydraulic if already applied, but general storage counts
+        if 'Hydraulic' not in str(adjustments):
+            stor_bonus = base_price * 0.12
+            final_price += stor_bonus
+            adjustments.append(f"+Rs.{int(stor_bonus):,} (Storage Space)")
+            
+    if data.get('is_foldable') or 'foldable' in full_text:
+        fold_bonus = base_price * 0.05
+        final_price += fold_bonus
+        adjustments.append(f"+Rs.{int(fold_bonus):,} (Foldable/Space-Saving)")
+
     return final_price, adjustments
 
 
@@ -1663,14 +1720,12 @@ async def predict_price(request: PricePredictionRequest):
         reasoning = llm_result.get("reasoning", "Historical data utilized")
         data_source = "ML Model"
         
-        # Prepare features based on category
+        # Handle Laptop category
         if category == 'laptop':
-            # For laptop: Use market price database first, then fall back to ML model
+            # 1. Get base reference price (Market data or ML Model)
             request_data = request.dict()
-            condition = request_data.get('condition', 'used')
-            
-            # Try to get market price
-            market_price, tier = get_laptop_market_price(title, condition)
+            condition_str = request_data.get('condition', 'used')
+            market_price, tier = get_laptop_market_price(title, condition_str)
             
             # Prepare features for ML model
             features = prepare_laptop_features_advanced(request_data)
@@ -1680,31 +1735,24 @@ async def predict_price(request: PricePredictionRequest):
                 features_scaled = features
             ml_predicted = model.predict(features_scaled)[0]
             
-            if market_price:
-                # Apply adjustments for warranty, SSD, RAM, etc.
-                predicted_price, adjustments = apply_laptop_price_adjustments(market_price, request_data, tier or 'mid')
-                
-                # Build recommendation with adjustments
-                adjustment_text = " | ".join(adjustments) if adjustments else "No adjustments"
-                recommendation = f"Predicted price. Adjustments: {adjustment_text}"
-            else:
-                # Fall back to ML model for unknown models
-                # Apply adjustments to ML prediction too
-                predicted_price, adjustments = apply_laptop_price_adjustments(ml_predicted, request_data, 'mid')
-                recommendation = f"Predicted price. Adjustments: {' | '.join(adjustments) if adjustments else 'None'}"
+            # Use market price if available, otherwise ML
+            base_ml_price = market_price if market_price else ml_predicted
+            ml_price_final = base_ml_price  # Store unadjusted for metadata
             
-            predicted_price = max(25000, predicted_price)  # Minimum Rs.25,000 for laptops
-            ml_price_final = predicted_price
-            
+            # 2. Blend with LLM Price (Undisturbed Blend)
             if llm_price > 0:
                 if llm_conf > 0.6:
-                    predicted_price = (llm_price * 0.7) + (ml_price_final * 0.3)
+                    # High confidence LLM - weigh it more
+                    predicted_price = (llm_price * 0.7) + (base_ml_price * 0.3)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (ml_price_final * 0.7)
+                    predicted_price = (llm_price * 0.3) + (base_ml_price * 0.7)
                     data_source = "ML Model + LLM Blend"
-            
-            # Apply condition multiplier (condition 1-10)
+            else:
+                predicted_price = base_ml_price
+                data_source = "Enhanced ML Model"
+
+            # 3. Apply Condition Multiplier (Condition 1-10)
             try:
                 cond_val = int(request.condition) if str(request.condition).isdigit() else 5
                 cond_val = max(1, min(10, cond_val))
@@ -1713,30 +1761,26 @@ async def predict_price(request: PricePredictionRequest):
             condition_multiplier = 0.10 + (cond_val / 10) * 0.90
             predicted_price = predicted_price * condition_multiplier
             
-            # Calculate price gap based on predicted amount (Rs. 5,000 - 7,000 total range)
-            # Higher prices get larger gaps
-            if predicted_price < 50000:
-                price_gap = 5000
-            elif predicted_price < 100000:
-                price_gap = 5500
-            elif predicted_price < 200000:
-                price_gap = 6000
-            elif predicted_price < 400000:
-                price_gap = 6500
-            else:
-                price_gap = 7000
+            # 4. FINAL STRUCTURAL ADJUSTMENTS (Checkboxes)
+            # This ensures checkboxes have a visible impact on the final calculated price
+            predicted_price, adjustments = apply_laptop_price_adjustments(predicted_price, request_data, tier or 'mid')
             
+            adjustment_text = " | ".join(adjustments) if adjustments else "Standard Specs"
+            recommendation = f"Calculated based on {data_source}. Adjustments: {adjustment_text}"
+            
+            predicted_price = max(25000, predicted_price)  # Minimum Rs.25,000 for laptops
+            
+            # Calculate price range/gap
+            price_gap = 5000 if predicted_price < 50000 else 6000 if predicted_price < 150000 else 7000
             half_gap = price_gap / 2
             confidence_lower = predicted_price - half_gap
             confidence_upper = predicted_price + half_gap
             
         elif category == 'mobile':
-            # For mobile: Use market price database first, then fall back to ML model
+            # 1. Get base reference price
             request_data = request.dict()
-            condition = request_data.get('condition', 'used')
-            
-            # Try to get market price
-            market_price = get_mobile_market_price(title, condition)
+            condition_str = request_data.get('condition', 'used')
+            market_price = get_mobile_market_price(title, condition_str)
             
             # Prepare features for ML model
             features = prepare_mobile_features(request_data)
@@ -1746,123 +1790,98 @@ async def predict_price(request: PricePredictionRequest):
                 features_scaled = features
             ml_predicted = model.predict(features_scaled)[0]
             
-            if market_price:
-                # Apply adjustments for PTA, warranty, box, etc.
-                predicted_price, adjustments = apply_mobile_price_adjustments(market_price, request_data)
-                
-                # Build recommendation with adjustments
-                adjustment_text = " | ".join(adjustments) if adjustments else "No adjustments"
-                recommendation = f"Predicted price. Adjustments: {adjustment_text}"
-            else:
-                # Fall back to ML model for unknown models
-                # Apply adjustments to ML prediction too
-                predicted_price, adjustments = apply_mobile_price_adjustments(ml_predicted, request_data)
-                recommendation = f"Predicted price. Adjustments: {' | '.join(adjustments) if adjustments else 'None'}"
+            base_ml_price = market_price if market_price else ml_predicted
+            ml_price_final = base_ml_price  # Store unadjusted for metadata
             
-            predicted_price = max(5000, predicted_price)  # Minimum Rs.5,000 for mobiles
-            ml_price_final = predicted_price
-            
+            # 2. Blend with LLM Price
             if llm_price > 0:
                 if llm_conf > 0.6:
-                    predicted_price = (llm_price * 0.7) + (ml_price_final * 0.3)
+                    predicted_price = (llm_price * 0.7) + (base_ml_price * 0.3)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (ml_price_final * 0.7)
+                    predicted_price = (llm_price * 0.3) + (base_ml_price * 0.7)
                     data_source = "ML Model + LLM Blend"
+            else:
+                predicted_price = base_ml_price
+                data_source = "Enhanced ML Model"
             
-            # Apply condition multiplier (condition 1-10, where 10=brand new)
-            # Maps: 10->1.0, 7->0.65, 5->0.50, 3->0.35, 1->0.15
+            # 3. Apply Condition Multiplier
             try:
                 cond_val = int(request.condition) if str(request.condition).isdigit() else 5
                 cond_val = max(1, min(10, cond_val))
             except (ValueError, TypeError):
                 cond_val = 5
-            # Non-linear curve: gives more weight to high-condition items
             condition_multiplier = 0.10 + (cond_val / 10) * 0.90
             predicted_price = predicted_price * condition_multiplier
             
-            # Calculate price gap based on predicted amount (Rs. 5,000 - 7,000 total range)
-            # Higher prices get larger gaps
-            if predicted_price < 20000:
-                price_gap = 5000
-            elif predicted_price < 50000:
-                price_gap = 5500
-            elif predicted_price < 100000:
-                price_gap = 6000
-            elif predicted_price < 200000:
-                price_gap = 6500
-            else:
-                price_gap = 7000
+            # 4. FINAL STRUCTURAL ADJUSTMENTS (PTA, 5G, display, etc)
+            predicted_price, adjustments = apply_mobile_price_adjustments(predicted_price, request_data)
             
+            adjustment_text = " | ".join(adjustments) if adjustments else "Standard Specs"
+            recommendation = f"Calculated based on {data_source}. Adjustments: {adjustment_text}"
+            
+            predicted_price = max(5000, predicted_price)  # Minimum Rs.5,000 for mobiles
+            
+            # Calculate price range
+            price_gap = 5000 if predicted_price < 30000 else 6000
             half_gap = price_gap / 2
             confidence_lower = predicted_price - half_gap
             confidence_upper = predicted_price + half_gap
             
         elif category == 'furniture':
-            # For furniture: Use market price database first, then fall back to ML model
+            # 1. Get base reference price
             request_data = request.dict()
-            condition = request_data.get('condition', 'used')
             furniture_type = request_data.get('furniture_type', '')
             furniture_subtype = request_data.get('furniture_subtype', '')
+            condition_str = request_data.get('condition', 'used')
             
             # Try to get market price based on type and subtype
-            market_price, tier = get_furniture_market_price(furniture_type, furniture_subtype, condition)
+            market_price, tier = get_furniture_market_price(furniture_type, furniture_subtype, condition_str)
             
-            # Prepare features for ML model (as fallback/reference)
-            features = prepare_furniture_features(request_data)
-            if scaler is not None:
-                features_scaled = scaler.transform(features)
+            # Prepare features for ML model
+            features_vec = prepare_furniture_features(request_data)
+            if scaler is not None and features_vec is not None:
+                features_scaled = scaler.transform(features_vec)
+                ml_predicted = model.predict(features_scaled)[0]
             else:
-                features_scaled = features
-            ml_predicted = model.predict(features_scaled)[0]
+                ml_predicted = model.predict(features_vec)[0] if features_vec is not None else 0
             
-            if market_price and furniture_type:
-                # Apply adjustments for material, antique, handmade, etc.
-                predicted_price, adjustments = apply_furniture_price_adjustments(market_price, request_data)
-                
-                # Build recommendation with adjustments
-                adjustment_text = " | ".join(adjustments) if adjustments else "No adjustments"
-                recommendation = f"Predicted price. Adjustments: {adjustment_text}"
-            else:
-                # Fall back to ML model for unknown types
-                predicted_price, adjustments = apply_furniture_price_adjustments(ml_predicted, request_data)
-                recommendation = f"Predicted price. Adjustments: {' | '.join(adjustments) if adjustments else 'None'}"
+            base_ml_price = market_price if market_price else ml_predicted
+            ml_price_final = base_ml_price  # Store unadjusted for metadata
             
-            predicted_price = max(2000, predicted_price)  # Minimum Rs.2,000 for furniture
-            ml_price_final = predicted_price
-            
+            # 2. Blend with LLM
             if llm_price > 0:
-                if llm_conf > 0.6:
-                    predicted_price = (llm_price * 0.7) + (ml_price_final * 0.3)
+                if llm_conf > 0.7:
+                    predicted_price = (llm_price * 0.8) + (base_ml_price * 0.2)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (ml_price_final * 0.7)
+                    predicted_price = (llm_price * 0.4) + (base_ml_price * 0.6)
                     data_source = "ML Model + LLM Blend"
+            else:
+                predicted_price = base_ml_price
+                data_source = "ML Model"
             
-            # Apply condition multiplier (condition 1-10)
+            # 3. Apply Condition Multiplier
             try:
                 cond_val = int(request.condition) if str(request.condition).isdigit() else 5
                 cond_val = max(1, min(10, cond_val))
             except (ValueError, TypeError):
                 cond_val = 5
-            condition_multiplier = 0.10 + (cond_val / 10) * 0.90
+            condition_multiplier = 0.20 + (cond_val / 10) * 0.80
             predicted_price = predicted_price * condition_multiplier
             
-            # Calculate price gap based on predicted amount (Rs. 5,000 - 7,000 total range)
-            # Higher prices get larger gaps
-            if predicted_price < 10000:
-                price_gap = 5000
-            elif predicted_price < 30000:
-                price_gap = 5500
-            elif predicted_price < 60000:
-                price_gap = 6000
-            elif predicted_price < 100000:
-                price_gap = 6500
-            else:
-                price_gap = 7000
+            # 4. FINAL STRUCTURAL ADJUSTMENTS (Imported, Handmade, etc)
+            predicted_price, adjustments = apply_furniture_price_adjustments(predicted_price, request_data)
             
+            adjustment_text = " | ".join(adjustments) if adjustments else "Standard Quality"
+            recommendation = f"Calculated based on {data_source}. Adjustments: {adjustment_text}"
+            
+            predicted_price = max(1000, predicted_price)  # Minimum Rs.1,000 for furniture
+            
+            # Calculate price range
+            price_gap = 3000 if predicted_price < 20000 else 5000
             half_gap = price_gap / 2
-            confidence_lower = max(2000, predicted_price - half_gap)
+            confidence_lower = max(1000, predicted_price - half_gap)
             confidence_upper = predicted_price + half_gap
         
         # Get model metadata for response

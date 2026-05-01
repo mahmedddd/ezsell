@@ -121,6 +121,8 @@ from schemas.schemas import ListingCreate, ListingUpdate, ListingResponse, Image
 from core.security import get_current_user, get_current_user_optional
 from routers.users import get_user_by_username
 from core.fraud_protection import FraudProtectionService
+from services.cloud_storage import CloudStorageService
+from core.config import settings
 
 router = APIRouter()
 
@@ -130,8 +132,8 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
-def save_upload_file(upload_file: UploadFile) -> str:
-    """Save uploaded file and return the file path"""
+async def save_upload_file(upload_file: UploadFile) -> str:
+    """Save uploaded file and return the file path or URL"""
     # Validate file extension
     file_ext = Path(upload_file.filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
@@ -140,7 +142,15 @@ def save_upload_file(upload_file: UploadFile) -> str:
             detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
-    # Generate unique filename
+    # Try cloud upload first if configured
+    try:
+        cloud_url = await CloudStorageService.upload_file(upload_file)
+        if cloud_url:
+            return cloud_url
+    except Exception as e:
+        print(f"Cloud upload failed, falling back to local: {e}")
+
+    # Fallback to local storage
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_path = UPLOADS_DIR / unique_filename
     
@@ -278,12 +288,12 @@ async def create_listing(
             
             # First image becomes the main image_url
             if len(images_to_process) > 0 and images_to_process[0].filename:
-                image_url = save_upload_file(images_to_process[0])
+                image_url = await save_upload_file(images_to_process[0])
             
             # Remaining images go to additional_images
             for img in images_to_process[1:]:
                 if img.filename:
-                    img_url = save_upload_file(img)
+                    img_url = await save_upload_file(img)
                     additional_images_list.append(img_url)
         
         # Convert additional images list to JSON string
@@ -309,24 +319,39 @@ async def create_listing(
                 approval_status = "pending"
                 fraud_flags.append(f"price_{reason}")
 
-        # 5. Image-Category Validation (CLIP AI) & Hashing
-        image_hash = None
+        # 5. Image Hashing (dHash) for all images
+        image_hashes = []
         if image_url:
-            # Resolve absolute path for CLIP and Hashing
-            abs_image_path = Path(__file__).parent.parent / image_url.lstrip('/')
+            abs_main_path = Path(__file__).parent.parent / image_url.lstrip('/')
+            main_hash = FraudProtectionService.calculate_image_hash(str(abs_main_path))
+            image_hash = main_hash # Stoing main hash for the DB record
+            if main_hash: image_hashes.append(main_hash)
             
-            # Calculate Image Hash (dHash)
-            image_hash = FraudProtectionService.calculate_image_hash(str(abs_image_path))
-            
-            # Perform Global Duplicate Check (Content + Image)
-            duplicate_match = FraudProtectionService.is_duplicate(db, listing_hash, image_hash)
+            # Check additional images too
+            for img_path in additional_images_list:
+                abs_extra_path = Path(__file__).parent.parent / img_path.lstrip('/')
+                extra_h = FraudProtectionService.calculate_image_hash(str(abs_extra_path))
+                if extra_h: image_hashes.append(extra_h)
+
+            # Perform Global Duplicate Check (Content + ALL Images)
+            duplicate_match = FraudProtectionService.is_duplicate(db, listing_hash, image_hashes)
             if duplicate_match:
                 print(f"DEBUG: Duplicate detected. Match ID: {duplicate_match.id}")
                 approval_status = "pending"
-                fraud_flags.append("duplicate_detected")
-                if duplicate_match.image_hash == image_hash:
+                if "duplicate_detected" not in fraud_flags:
+                    fraud_flags.append("duplicate_detected")
+                
+                # Check if it was specifically an image match
+                is_img_match = False
+                for h in image_hashes:
+                    if h == duplicate_match.image_hash:
+                        is_img_match = True
+                        break
+                if is_img_match and "duplicate_image" not in fraud_flags:
                     fraud_flags.append("duplicate_image")
 
+            # 6. Category Validation (CLIP AI)
+            abs_image_path = Path(__file__).parent.parent / image_url.lstrip('/')
             is_match, confidence, best_label = await FraudProtectionService.validate_image_category(
                 str(abs_image_path), category
             )
@@ -357,13 +382,13 @@ async def create_listing(
             brand=brand,
             condition=condition,
             location=location,
-            furniture_type=furniture_type,
-            material=material,
-            furniture_subtype=furniture_subtype,
-            furniture_brand=furniture_brand,
-            is_sliding_door=is_sliding_door,
-            has_mattress=has_mattress,
-            mattress_type=mattress_type,
+            furniture_type=furniture_type if category == "furniture" else None,
+            material=material if category == "furniture" else None,
+            furniture_subtype=furniture_subtype if category == "furniture" else None,
+            furniture_brand=furniture_brand if category == "furniture" else None,
+            is_sliding_door=is_sliding_door if category == "furniture" else False,
+            has_mattress=has_mattress if category == "furniture" else False,
+            mattress_type=mattress_type if category == "furniture" else None,
             images=images_json,
             owner_id=user.id,
             approval_status=approval_status,
@@ -489,7 +514,8 @@ def get_listings(
         # Tokenise: split on whitespace/punctuation, drop short/stopwords
         import re
         raw_words = re.split(r'[\s\-_/,]+', search.strip())
-        words = [w.lower() for w in raw_words if len(w) >= 2 and w.lower() not in STOPWORDS]
+        # Allow short numeric tokens (e.g. model numbers '6', '7s') even if len < 2
+        words = [w.lower() for w in raw_words if (len(w) >= 2 or w.isdigit()) and w.lower() not in STOPWORDS]
 
         if not words:
             words = [search.strip().lower()]  # fallback: use the raw query
@@ -732,7 +758,7 @@ async def upload_image(
     current_user = Depends(get_current_user)
 ):
     """Upload an image and return the URL"""
-    image_url = save_upload_file(image)
+    image_url = await save_upload_file(image)
     return {"image_url": image_url, "message": "Image uploaded successfully"}
 
 # ============= ADMIN ENDPOINTS =============

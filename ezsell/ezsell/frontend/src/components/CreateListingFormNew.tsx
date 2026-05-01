@@ -105,17 +105,84 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     furniture_brand: 'none',
   });
 
+  const getDropdownSchemaKey = (key: string, category: string) => {
+    let schemaKey = key.toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[()]/g, '')
+      .replace(/gb/g, '')
+      .replace(/mp/g, '')
+      .trim();
+
+    // Specific mapping overrides
+    if (schemaKey.includes('ram')) return 'ram';
+    if (schemaKey.includes('storage') || schemaKey.includes('rom')) {
+      return category === 'furniture' ? 'has_storage' : 'storage';
+    }
+    if (schemaKey.includes('camera')) return 'camera';
+    if (schemaKey.includes('processor')) return 'processor';
+    if (schemaKey.includes('brand')) {
+      return category === 'furniture' ? 'furniture_brand' : 'brand';
+    }
+    if (schemaKey.includes('material')) return 'material';
+    if (schemaKey.includes('mattress')) return 'has_mattress';
+    if (schemaKey.includes('capacity') || schemaKey.includes('seats')) return 'seating_capacity';
+    if (schemaKey.includes('type')) return 'furniture_type';
+    if (schemaKey.includes('size') && category === 'furniture') return 'furniture_subtype';
+
+    return schemaKey;
+  };
+
   // Cache for LLM responses to prevent hammering the 70B model rate limit on every keystroke
   const titleValidationCache = useRef<Record<string, any>>({});
   const dynamicDropdownCache = useRef<Record<string, any>>({});
 
-  // Load dynamic dropdown options based on category and title (LLM Augmented)
+  // Load dynamic dropdown options based on category and title (LLM Augmented) - Sync Fix Applied
   const loadDynamicDropdowns = async (category: string, title: string) => {
     if (!title || title.length < 3) return;
 
     const cacheKey = `${category}|${title.toLowerCase()}`;
+
+    const syncPrepopulations = (dropdowns: any) => {
+      const initialSelections: Record<string, string> = {};
+      const formDataUpdates: Record<string, any> = {};
+      const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size'];
+      const booleanFields = ['has_mattress', 'has_storage', 'is_imported', 'is_handmade', 'is_antique'];
+
+      Object.entries(dropdowns).forEach(([key, options]: [string, any]) => {
+        const lowerTitle = title.toLowerCase();
+        const schemaKey = getDropdownSchemaKey(key, category);
+        const foundOption = options.find((opt: string) => lowerTitle.includes(opt.toLowerCase()));
+
+        // Use found option from title, OR auto-select the first option for material fields
+        // so that formData.material is never empty when AI dropdowns are loaded
+        const selectedOption = foundOption || (schemaKey === 'material' && options.length > 0 ? options[0] : null);
+
+        if (selectedOption) {
+          initialSelections[key] = selectedOption;
+
+          let val: any = selectedOption;
+          if (numericFields.includes(schemaKey)) {
+            const match = selectedOption.match(/\d+/);
+            val = match ? parseInt(match[0]) : 0;
+          } else if (booleanFields.includes(schemaKey)) {
+            val = selectedOption.toLowerCase().includes('yes') || selectedOption.toLowerCase().includes('included') || selectedOption.toLowerCase().includes('true');
+          }
+          formDataUpdates[schemaKey] = val;
+        }
+      });
+
+      if (Object.keys(initialSelections).length > 0) {
+        setDynamicDropdownSelections(prev => ({ ...prev, ...initialSelections }));
+      }
+      if (Object.keys(formDataUpdates).length > 0) {
+        setFormData(prev => ({ ...prev, ...formDataUpdates }));
+      }
+    };
+
     if (dynamicDropdownCache.current[cacheKey]) {
-      setDropdownOptions(dynamicDropdownCache.current[cacheKey]);
+      const cached = dynamicDropdownCache.current[cacheKey];
+      setDropdownOptions(cached);
+      syncPrepopulations(cached);
       return;
     }
 
@@ -127,6 +194,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         if (data.dropdowns) {
           dynamicDropdownCache.current[cacheKey] = data.dropdowns;
           setDropdownOptions(data.dropdowns);
+          syncPrepopulations(data.dropdowns);
         }
       }
     } catch (err) {
@@ -332,16 +400,16 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     // 2. Furniture Extraction
     if (category === 'furniture') {
       // Material detection
-      if (text.includes('sheesham') || text.includes('teak') || text.includes('walnut')) updates.material = 'Wood';
-      else if (text.includes('wood') && !text.includes('mdf')) updates.material = 'Wood';
-      else if (text.includes('mdf') || text.includes('particle board')) updates.material = 'MDF';
-      else if (text.includes('metal') || text.includes('iron') || text.includes('steel') || text.includes('almirah')) updates.material = 'Metal';
-      else if (text.includes('velvet')) updates.material = 'Velvet';
-      else if (text.includes('fabric') || text.includes('cloth') || text.includes('suede')) updates.material = 'Fabric';
-      else if (text.includes('foam') || text.includes('sponge')) updates.material = 'Foam';
-      else if (text.includes('leather') || text.includes('rexine') || text.includes('pu leather')) updates.material = 'Leather';
-      else if (text.includes('fiber') || text.includes('fibre') || text.includes('plastic')) updates.material = 'Plastic';
-      else if (text.includes('glass')) updates.material = 'Glass';
+      if (text.includes('sheesham') || text.includes('teak') || text.includes('walnut')) updates.material = 'wood';
+      else if (text.includes('wood') && !text.includes('mdf')) updates.material = 'wood';
+      else if (text.includes('mdf') || text.includes('particle board')) updates.material = 'mdf';
+      else if (text.includes('metal') || text.includes('iron') || text.includes('steel') || text.includes('almirah')) updates.material = 'metal';
+      else if (text.includes('velvet')) updates.material = 'velvet';
+      else if (text.includes('fabric') || text.includes('cloth') || text.includes('suede')) updates.material = 'fabric';
+      else if (text.includes('foam') || text.includes('sponge')) updates.material = 'foam';
+      else if (text.includes('leather') || text.includes('rexine') || text.includes('pu leather')) updates.material = 'leather';
+      else if (text.includes('fiber') || text.includes('fibre') || text.includes('plastic')) updates.material = 'plastic';
+      else if (text.includes('glass')) updates.material = 'glass';
 
       // Furniture type detection (order matters: more specific first)
       if (text.includes('l shape') || text.includes('l-shape') || text.includes('l shaped') || text.includes('corner sofa') || text.includes('sectional')) {
@@ -353,8 +421,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       } else if (text.includes('sofa set') || text.includes('sofa suite')) {
         updates.furniture_type = 'sofa';
         updates.furniture_subtype = 'Sofa Set';
-      } else if (text.includes('sofa') || text.includes('couch') || text.includes('settee')) {
-        updates.furniture_type = 'sofa';
       } else if (text.includes('king size') || text.includes('king sized') || text.includes('queen size') || text.includes('double bed') || text.includes('single bed') || text.includes('bunk bed')) {
         updates.furniture_type = 'bed';
         if (text.includes('king')) updates.furniture_subtype = 'King Size Bed';
@@ -362,6 +428,8 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         else if (text.includes('double')) updates.furniture_subtype = 'Double Bed';
         else if (text.includes('single')) updates.furniture_subtype = 'Single Bed';
         else if (text.includes('bunk')) updates.furniture_subtype = 'Bunk Bed';
+      } else if (text.includes('sofa') || text.includes('couch') || text.includes('settee')) {
+        updates.furniture_type = 'sofa';
       } else if (text.includes('bed') && !text.includes('bedroom')) {
         updates.furniture_type = 'bed';
       } else if (text.includes('dining table') || text.includes('dining set') || text.includes('dining chair')) {
@@ -784,7 +852,8 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       return;
     }
 
-    if (formData.category === 'furniture' && !formData.material) {
+    const hasDynamicSpecs = Object.keys(dynamicDropdownSelections).length > 0;
+    if (formData.category === 'furniture' && !formData.material && !hasDynamicSpecs) {
       alert('❌ Please select the material for furniture');
       return;
     }
@@ -832,8 +901,35 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
 
       let result;
       if (editMode && listingId) {
-        console.log('Calling listingService.updateListing...');
-        result = await listingService.updateListing(listingId, listingData);
+        console.log('Processing images for update...');
+        // Handle images for update
+        let finalImageUrls: string[] = [];
+        // Keep existing remote URLs (filter out local data URIs)
+        const existingUrls = imagePreviews.filter(p => !p.startsWith('data:'));
+        finalImageUrls = [...existingUrls];
+
+        // Upload any new selected files
+        if (imageFiles.length > 0) {
+          for (const file of imageFiles) {
+            try {
+              const uploadRes = await listingService.uploadImage(file);
+              if (uploadRes && uploadRes.image_url) {
+                finalImageUrls.push(uploadRes.image_url);
+              }
+            } catch (err) {
+              console.error("Failed to upload image during update", err);
+              throw new Error("Failed to upload one or more new images.");
+            }
+          }
+        }
+
+        const updateData = {
+          ...listingData,
+          images: finalImageUrls.length > 0 ? JSON.stringify(finalImageUrls) : undefined
+        };
+
+        console.log('Calling listingService.updateListing with:', updateData);
+        result = await listingService.updateListing(listingId, updateData);
         console.log('✅ Listing updated successfully:', result);
         alert('✅ Listing updated successfully!');
         navigate(`/product/${listingId}`);
@@ -1250,28 +1346,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                 {Object.keys(dropdownOptions).length > 0 ? (
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     {Object.entries(dropdownOptions).map(([key, options]: [string, any]) => {
-                      // Try to map abstract LLM keys to our exact schema keys for predictions
-                      let schemaKey = key.toLowerCase()
-                        .replace(/\s+/g, '_')
-                        .replace(/[()]/g, '')
-                        .replace(/gb/g, '')
-                        .replace(/mp/g, '')
-                        .trim();
-
-                      // Specific mapping overrides
-                      if (schemaKey.includes('ram')) schemaKey = 'ram';
-                      if (schemaKey.includes('storage') || schemaKey.includes('rom')) {
-                        schemaKey = formData.category === 'furniture' ? 'has_storage' : 'storage';
-                      }
-                      if (schemaKey.includes('camera')) schemaKey = 'camera';
-                      if (schemaKey.includes('processor')) schemaKey = 'processor';
-                      if (schemaKey.includes('brand')) {
-                        schemaKey = formData.category === 'furniture' ? 'furniture_brand' : 'brand';
-                      }
-                      if (schemaKey.includes('material')) schemaKey = 'material';
-                      if (schemaKey.includes('mattress')) schemaKey = 'has_mattress';
-                      if (schemaKey.includes('capacity') || schemaKey.includes('seats')) schemaKey = 'seating_capacity';
-                      if (schemaKey.includes('type')) schemaKey = 'furniture_type';
+                      const schemaKey = getDropdownSchemaKey(key, formData.category);
 
                       const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size'];
                       const booleanFields = ['has_mattress', 'has_storage', 'is_imported', 'is_handmade', 'is_antique'];

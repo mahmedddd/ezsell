@@ -361,12 +361,12 @@ async def request_password_reset(request: dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to send reset email")
     
     # Store reset code in database (expires in 1 minute)
-    reset = PasswordReset(
-        email=email,
-        code=code,
-        expires_at=datetime.utcnow() + timedelta(minutes=1),
-        is_used=False
-    )
+    reset = PasswordReset()
+    reset.email = email
+    reset.code = code
+    reset.expires_at = datetime.utcnow() + timedelta(minutes=1)
+    reset.is_used = False
+    
     db.add(reset)
     db.commit()
     
@@ -466,6 +466,40 @@ def reset_password(request: dict, db: Session = Depends(get_db)):
     return {"message": "Password reset successfully"}
 
 # ============= ADMIN ENDPOINTS =============
+
+@router.get("/admin/all-listings")
+def get_all_listings_admin(
+    skip: int = 0,
+    limit: int = 200,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get ALL listings (any status) with fraud_flags + predicted_price for admin charts"""
+    from models.database import Listing
+    import json
+
+    listings = db.query(Listing).order_by(Listing.created_at.desc()).offset(skip).limit(limit).all()
+    result = []
+    for l in listings:
+        result.append({
+            "id": l.id,
+            "title": l.title,
+            "price": l.price,
+            "category": l.category,
+            "condition": l.condition,
+            "is_sold": bool(l.is_sold) if l.is_sold is not None else False,
+            "is_active": bool(l.is_active) if l.is_active is not None else True,
+            "approval_status": l.approval_status or "approved",
+            "predicted_price": l.predicted_price,
+            "fraud_flags": l.fraud_flags,
+            "images": l.images,
+            "views": l.views or 0,
+            "owner_id": l.owner_id,
+            "created_at": l.created_at.isoformat() if l.created_at else None,
+            "is_featured": bool(l.is_featured) if hasattr(l, "is_featured") and l.is_featured is not None else False,
+        })
+    return result
+
 
 @router.get("/admin/analytics")
 def get_admin_analytics(

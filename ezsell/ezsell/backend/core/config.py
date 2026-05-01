@@ -21,10 +21,18 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8 # 8 days
 
     # Database
-    DATABASE_URL: str = "sqlite:///./ezsell.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./ezsell.db")
+    # If DATABASE_URL starts with postgres://, replace with postgresql:// for SQLAlchemy compatibility
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost:8080", "http://localhost:3000"]
+
+    # Cloudinary for image storage
+    CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
+    CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""

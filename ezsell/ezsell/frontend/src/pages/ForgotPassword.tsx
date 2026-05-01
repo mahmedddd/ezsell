@@ -30,7 +30,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      await post("http://localhost:8000/api/v1/request-password-reset", { email });
+      await post("/api/v1/request-password-reset", { email });
       toast({ title: "Reset code sent! 📬", description: "Check your email" });
       setStep(2);
     } catch (err: any) { toast({ title: "Request Failed", description: err.message, variant: "destructive", duration: 5000 }); }
@@ -41,7 +41,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      await post("http://localhost:8000/api/v1/verify-reset-code", { email, code });
+      await post("/api/v1/verify-reset-code", { email, code });
       toast({ title: "Code verified! ✅", description: "Enter your new password" });
       setStep(3);
     } catch (err: any) { toast({ title: "Verification Failed", description: err.message, variant: "destructive", duration: 5000 }); }
@@ -54,7 +54,7 @@ export default function ForgotPassword() {
     if (newPassword.length < 6) { toast({ title: "Password too short (min 6)", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      await post("http://localhost:8000/api/v1/reset-password", { email, code, new_password: newPassword });
+      await post("/api/v1/reset-password", { email, code, new_password: newPassword });
       toast({ title: "Password reset! 🎉", description: "You can now login with your new password" });
       navigate("/login");
     } catch (err: any) { toast({ title: "Reset Failed", description: err.message, variant: "destructive", duration: 5000 }); }

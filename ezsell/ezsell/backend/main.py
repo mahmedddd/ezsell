@@ -82,26 +82,9 @@ uploads_path.mkdir(exist_ok=True)
 static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
 
-from fastapi.responses import FileResponse
-from fastapi import HTTPException
-
-@app.get("/uploads/{file_path:path}")
-async def serve_uploads(file_path: str):
-    full_path = uploads_path / file_path
-    if not full_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-    # Setting media_type based on extension
-    media_type = None
-    if full_path.suffix.lower() == ".glb":
-        media_type = "model/gltf-binary"
-    return FileResponse(full_path, media_type=media_type, headers={"Cross-Origin-Resource-Policy": "cross-origin"})
-
-@app.get("/static/{file_path:path}")
-async def serve_static(file_path: str):
-    full_path = static_path / file_path
-    if not full_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(full_path, headers={"Cross-Origin-Resource-Policy": "cross-origin"})
+# Mount static and uploads directories
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+app.mount("/uploads", StaticFiles(directory=uploads_path), name="uploads")
 
 # Ensure the AR models sub-directory exists
 ar_models_path = uploads_path / "ar_models"

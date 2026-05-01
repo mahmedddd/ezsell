@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Upload, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { arService } from '@/lib/api';
+import { arService, API_BASE_URL } from '@/lib/api';
 
 interface ARViewerProps {
   listingId: number;
@@ -195,7 +195,7 @@ export function ARViewer({ listingId, listingTitle, category }: ARViewerProps) {
                 <div className="space-y-4">
                   <div className="relative">
                     <img 
-                      src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${arPreviewUrl}`}
+                      src={`${API_BASE_URL}${arPreviewUrl}`}
                       alt="AR Preview" 
                       className="w-full h-64 object-cover rounded-lg border-2 border-[#143109]"
                     />

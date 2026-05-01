@@ -32,7 +32,7 @@ export default function Signup() {
     setUsernameStatus("checking");
     usernameTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/check-username/${encodeURIComponent(u)}`);
+        const res = await fetch(`/api/v1/check-username/${encodeURIComponent(u)}`);
         const data = await res.json();
         setUsernameStatus(data.available ? "available" : "taken");
       } catch { setUsernameStatus("idle"); }
@@ -46,7 +46,7 @@ export default function Signup() {
     if (!formData.email) { toast({ title: "Email required", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/send-verification-code", {
+      const res = await fetch("/api/v1/send-verification-code", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email }),
       });
@@ -66,7 +66,7 @@ export default function Signup() {
     if (!verificationCode) { toast({ title: "Code required", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/verify-code", {
+      const res = await fetch("/api/v1/verify-code", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, code: verificationCode }),
       });
@@ -97,6 +97,8 @@ export default function Signup() {
       localStorage.setItem("authToken", loginRes.access_token);
       const user = await authService.getCurrentUser();
       localStorage.setItem("user", JSON.stringify(user));
+      const { rotateSessionId } = await import("@/lib/api");
+      rotateSessionId();
       toast({ title: "Account created! 🎉", description: "Welcome to EzSell!" });
       navigate("/dashboard");
     } catch (error: any) {
@@ -320,4 +322,4 @@ function GoogleIcon() {
   );
 }
 
-function googleLogin() { window.location.href = "http://localhost:8000/api/v1/auth/google/login"; }
+function googleLogin() { window.location.href = "/api/v1/auth/google/login"; }

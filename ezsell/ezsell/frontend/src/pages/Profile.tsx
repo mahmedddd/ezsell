@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Avatar from '@/components/ui/avatar';
+import Avatar, { parseAvatarUrl } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,10 @@ import {
     ArrowRight,
     Search as SearchIcon,
     LayoutGrid,
-    Package
+    Package,
+    Camera,
+    Palette,
+    Zap
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -129,19 +132,21 @@ export default function Profile() {
 
         setSaving(true);
         try {
-            await authService.updateProfile({
+            const updatedUser = await authService.updateProfile({
                 full_name: user.full_name,
                 phone: user.phone,
                 bio: user.bio,
-                location: user.location
+                location: user.location,
+                avatar_url: user.avatar_url
             });
             toast({
                 title: 'Profile Updated',
                 description: 'Your changes have been saved successfully! ✨'
             });
-            // Update local storage user data
-            const updatedUser = { ...JSON.parse(localStorage.getItem('user') || '{}'), ...user };
+            // Update local storage and notify other components
+            setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
+            window.dispatchEvent(new CustomEvent('user-updated'));
         } catch (error) {
             toast({
                 title: 'Update Failed',
@@ -187,6 +192,20 @@ export default function Profile() {
         }
     };
 
+    const handleAvatarClick = (preset: string) => {
+        if (!isOwnProfile) return;
+        const newUser = { ...user, avatar_url: preset };
+        setUser(newUser);
+        // We'll save it when they hit "Save Profile Changes" or immediately?
+        // Let's do it immediately for better UX
+        authService.updateProfile({ avatar_url: preset }).then((updatedUser) => {
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            toast({ title: "Avatar Updated! ✨", description: "Your new stylish look is saved." });
+            window.dispatchEvent(new CustomEvent('user-updated'));
+        });
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#f5f5f0] flex items-center justify-center">
@@ -195,15 +214,24 @@ export default function Profile() {
         );
     }
 
+    const avatarPresets = [
+        { id: 'init', label: 'Initial', value: `init:${(user?.full_name || user?.username || 'U')[0]}` },
+        { id: 'sunset', label: 'Sunset', value: 'style:sunset:1' },
+        { id: 'emerald', label: 'Emerald', value: 'style:emerald:0' },
+        { id: 'midnight', label: 'Midnight', value: 'style:midnight:2' },
+        { id: 'ocean', label: 'Ocean', value: 'style:ocean:3' },
+        { id: 'berry', label: 'Berry', value: 'style:berry:4' },
+    ];
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc] pb-12">
             {/* Wholesome Hero Section */}
             <div className="bg-[#143109] text-white py-16 px-4">
                 <div className="container mx-auto max-w-5xl">
                     <div className="flex flex-col md:flex-row items-center gap-8">
-                        <div className="relative">
-                            <div className="w-32 h-32 rounded-[2rem] border-4 border-white/20 overflow-hidden shadow-2xl">
-                                {user?.avatar_url && !imgError ? (
+                        <div className="relative group/avatar">
+                            <div className="w-32 h-32 rounded-[2rem] border-4 border-white/20 overflow-hidden shadow-2xl transition-all duration-300 group-hover/avatar:scale-105 group-hover/avatar:border-white/40">
+                                {user?.avatar_url && !imgError && (user.avatar_url.startsWith('http') || user.avatar_url.startsWith('/uploads')) ? (
                                     <img
                                         src={getImageUrl(user.avatar_url)}
                                         alt="Avatar"
@@ -211,7 +239,7 @@ export default function Profile() {
                                         onError={() => setImgError(true)}
                                     />
                                 ) : (
-                                    <Avatar seed={user?.username || "user"} size={128} className="w-full h-full" />
+                                    <Avatar {...parseAvatarUrl(user?.avatar_url, user?.username)} size={128} className="w-full h-full" />
                                 )}
                             </div>
                             <div className="absolute -bottom-2 -right-2 bg-yellow-400 p-2 rounded-full shadow-lg">
@@ -267,14 +295,43 @@ export default function Profile() {
                     <TabsContent value="profile">
                         <Card className="border-0 shadow-xl rounded-3xl overflow-hidden bg-white/90 backdrop-blur">
                             <CardHeader className="border-b bg-gray-50/50">
-                                <CardTitle className="text-2xl font-bold text-[#143109]">
-                                    {isOwnProfile ? 'Profile Maintenance' : 'User Information'}
-                                </CardTitle>
-                                <CardDescription>
-                                    {isOwnProfile
-                                        ? 'Keep your information up to date so people can reach you easily.'
-                                        : 'A little more about this member of the community.'}
-                                </CardDescription>
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div>
+                                        <CardTitle className="text-2xl font-bold text-[#143109]">
+                                            {isOwnProfile ? 'Profile Maintenance' : 'User Information'}
+                                        </CardTitle>
+                                        <CardDescription>
+                                            {isOwnProfile
+                                                ? 'Keep your information up to date so people can reach you easily.'
+                                                : 'A little more about this member of the community.'}
+                                        </CardDescription>
+                                    </div>
+                                    {isOwnProfile && (
+                                        <div className="bg-[#143109]/5 rounded-2xl p-4 border border-[#143109]/10">
+                                            <p className="text-xs font-bold text-[#143109] uppercase mb-3 flex items-center gap-2">
+                                                <Palette className="w-3 h-3" /> Customize Your Look
+                                            </p>
+                                            <div className="flex gap-2">
+                                                {avatarPresets.map((preset) => (
+                                                    <button
+                                                        key={preset.id}
+                                                        onClick={() => handleAvatarClick(preset.value)}
+                                                        className={`relative transition-all hover:scale-110 active:scale-95 rounded-xl overflow-hidden ring-offset-2 hover:ring-2 hover:ring-[#143109]/30 ${user?.avatar_url === preset.value ? 'ring-2 ring-[#143109]' : ''
+                                                            }`}
+                                                        title={preset.label}
+                                                    >
+                                                        <Avatar {...parseAvatarUrl(preset.value, user?.username)} size={32} />
+                                                        {user?.avatar_url === preset.value && (
+                                                            <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                                                                <div className="w-1.5 h-1.5 bg-white rounded-full shadow-sm" />
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </CardHeader>
                             <CardContent className="p-8">
                                 <form onSubmit={handleUpdateProfile} className="space-y-6">

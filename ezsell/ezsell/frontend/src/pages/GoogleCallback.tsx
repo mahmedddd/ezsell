@@ -38,7 +38,7 @@ export default function GoogleCallback() {
     localStorage.setItem("authToken", token);
 
     // Fetch full user info
-    fetch("http://localhost:8000/api/v1/me", {
+    fetch("/api/v1/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {

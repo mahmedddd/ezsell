@@ -18,7 +18,10 @@ class KeywordExtractor:
         'this', 'these', 'those', 'am', 'been', 'being', 'have', 'had',
         'do', 'does', 'did', 'but', 'or', 'not', 'so', 'than', 'too', 'very',
         'can', 'just', 'should', 'now', 'get', 'got', 'want', 'need', 'used',
-        'one', 'two', 'three', 'good', 'new', 'old', 'looking', 'buy', 'sell'
+        'one', 'two', 'three', 'good', 'new', 'old', 'looking', 'buy', 'sell',
+        'category', 'brand', 'type', 'price', 'condition', 'material', 'model', 'details',
+        'all', 'any', 'each', 'every', 'other', 'some', 'such', 'very', 'only', 'own', 'same',
+        'so', 'than', 'too', 'very', 'can', 'will', 'just', 'dont', 'should', 'now'
     }
     
     # Product-specific important terms
@@ -26,11 +29,13 @@ class KeywordExtractor:
         # Electronics
         'laptop', 'mobile', 'phone', 'smartphone', 'tablet', 'computer', 'iphone',
         'samsung', 'dell', 'hp', 'lenovo', 'asus', 'acer', 'macbook', 'ipad',
-        'android', 'ios', 'gaming', 'processor', 'ram', 'storage', 'ssd', 'gb',
+        'android', 'ios', 'gaming', 'processor', 'ram', 'storage', 'ssd', 'gb', 'tb',
+        'unlocked', 'network', 'pta', 'approved', 'dual', 'sim', 'oled', 'amoled',
         
         # Furniture
         'furniture', 'sofa', 'chair', 'table', 'desk', 'bed', 'cabinet', 'wardrobe',
         'dining', 'bedroom', 'living', 'office', 'wooden', 'leather', 'fabric',
+        'imported', 'handmade', 'antique', 'storage', 'foldable', 'luxury',
         
         # Vehicles
         'car', 'bike', 'motorcycle', 'vehicle', 'auto', 'honda', 'toyota', 'suzuki',
@@ -78,12 +83,20 @@ class KeywordExtractor:
         for i in range(len(words) - 1):
             # 2-word phrases
             bigram = f"{words[i]} {words[i+1]}"
+            # Skip if any word in the bigram is a stopword or just a number
+            if any(w in KeywordExtractor.STOPWORDS or w.isdigit() for w in words[i:i+2]):
+                continue
+                
             if any(term in bigram for term in KeywordExtractor.IMPORTANT_TERMS):
                 phrases.append(bigram)
             
             # 3-word phrases
             if i < len(words) - 2:
                 trigram = f"{words[i]} {words[i+1]} {words[i+2]}"
+                # Skip if any word in the trigram is a stopword or just a number
+                if any(w in KeywordExtractor.STOPWORDS or w.isdigit() for w in words[i:i+3]):
+                    continue
+                    
                 if any(term in trigram for term in KeywordExtractor.IMPORTANT_TERMS):
                     phrases.append(trigram)
         
@@ -99,6 +112,7 @@ class KeywordExtractor:
         important_keywords = [
             word for word in filtered_words
             if word in KeywordExtractor.IMPORTANT_TERMS
+            and word not in KeywordExtractor.STOPWORDS
         ]
         
         # Get word frequencies
@@ -111,6 +125,11 @@ class KeywordExtractor:
         
         # Add phrases first
         for phrase in phrases[:5]:  # Top 5 phrases
+            # Skip phrases that are just stopwords or start/end with them
+            phrase_words = phrase.split()
+            if any(w in KeywordExtractor.STOPWORDS for w in phrase_words):
+                continue
+                
             if phrase not in seen:
                 keywords.append(phrase)
                 seen.add(phrase)

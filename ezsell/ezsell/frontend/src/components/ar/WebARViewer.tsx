@@ -357,8 +357,11 @@ export function WebARViewer({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [step, setStep] = useState<ARStep>('idle');
   const [buildProgress, setBuildProgress] = useState(0);
-  const [glbUrl, setGlbUrl] = useState<string | null>(null);
-  const [usdzUrl, setUsdzUrl] = useState<string | null>(null);
+  const [proceduralUrl, setProceduralUrl] = useState<string | null>(null);
+  const [tripoUrl, setTripoUrl] = useState<string | null>(getFullUrl(arAssets?.model_glb_url || null));
+  const [usdzUrl, setUsdzUrl] = useState<string | null>(getFullUrl(arAssets?.model_usdz_url || null));
+  const [viewMode, setViewMode] = useState<'fast' | 'advanced'>(arAssets?.model_glb_url ? 'advanced' : 'fast');
+
   const [arStatus, setArStatus] = useState<string>('');
   const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
   const [tfLoading, setTfLoading] = useState(false);
@@ -388,7 +391,7 @@ export function WebARViewer({
 
   // ── Build (or fetch) the GLB ───────────────────────────────────────────────
   const prepareModel = useCallback(async () => {
-    if (glbUrl) return; // already built
+    if (proceduralUrl) return; // already built procedural model
 
     setStep('building_model');
 
@@ -400,49 +403,43 @@ export function WebARViewer({
     }, 180);
 
     try {
-      // 1. Use server-side GLB if available
-      if (arAssets?.model_glb_url) {
-        setGlbUrl(getFullUrl(arAssets.model_glb_url));
-        if (arAssets.model_usdz_url) setUsdzUrl(getFullUrl(arAssets.model_usdz_url));
-      } else {
-        // 2. Extract full colour profile → primary fabric + accent trim + metallic + glossiness
-        //    AND load the product image canvas for tiling texture — both in parallel.
-        let colorProfile: ColorProfile | null = null;
-        let productCanvas: HTMLCanvasElement | undefined;
-        const imgUrls = (allImageUrls && allImageUrls.length > 0)
-          ? allImageUrls
-          : (furnitureImageUrl ? [furnitureImageUrl] : []);
-        if (imgUrls.length > 0) {
-          try {
-            // Run colour extraction and canvas load concurrently — same image, one fetch
-            const [profile, canvas] = await Promise.all([
-              imgUrls.length > 1
-                ? extractColorProfileMulti(imgUrls)
-                : extractColorProfile(imgUrls[0]),
-              extractProductCanvas(imgUrls[0]),
-            ]);
-            colorProfile = profile;
-            productCanvas = canvas ?? undefined;
-          } catch { /* ignore — fallback profile + no texture */ }
-        }
-        const url = await generateFurnitureGLB(fType, dims, undefined, {
-          primaryColor: colorProfile?.primaryColor,
-          accentColor: colorProfile?.accentColor,
-          hasMetal: colorProfile?.hasMetal,
-          isGold: colorProfile?.isGold,
-          glossiness: colorProfile?.glossiness,
-          isWarm: colorProfile?.isWarm,
-          isDark: colorProfile?.isDark,
-          tertiaryColor: colorProfile?.tertiaryColor,
-          // Keywords from listing text drive material roughness (velvet vs leather vs fabric)
-          styleHints: `${listingTitle} ${listingDescription ?? ''} ${subtypeText}${furnitureMaterial ? ' material:' + furnitureMaterial : ''}`,
-          imageUrl: furnitureImageUrl ?? undefined,
-          productCanvas,
-        });
-
-        // Cache bust the blob so we don't load the old floating version
-        setGlbUrl(`${url}#v=${Date.now()}`);
+      // 2. Extract full colour profile → primary fabric + accent trim + metallic + glossiness
+      //    AND load the product image canvas for tiling texture — both in parallel.
+      let colorProfile: ColorProfile | null = null;
+      let productCanvas: HTMLCanvasElement | undefined;
+      const imgUrls = (allImageUrls && allImageUrls.length > 0)
+        ? allImageUrls
+        : (furnitureImageUrl ? [furnitureImageUrl] : []);
+      if (imgUrls.length > 0) {
+        try {
+          // Run colour extraction and canvas load concurrently — same image, one fetch
+          const [profile, canvas] = await Promise.all([
+            imgUrls.length > 1
+              ? extractColorProfileMulti(imgUrls)
+              : extractColorProfile(imgUrls[0]),
+            extractProductCanvas(imgUrls[0]),
+          ]);
+          colorProfile = profile;
+          productCanvas = canvas ?? undefined;
+        } catch { /* ignore — fallback profile + no texture */ }
       }
+      const url = await generateFurnitureGLB(fType, dims, undefined, {
+        primaryColor: colorProfile?.primaryColor,
+        accentColor: colorProfile?.accentColor,
+        hasMetal: colorProfile?.hasMetal,
+        isGold: colorProfile?.isGold,
+        glossiness: colorProfile?.glossiness,
+        isWarm: colorProfile?.isWarm,
+        isDark: colorProfile?.isDark,
+        tertiaryColor: colorProfile?.tertiaryColor,
+        // Keywords from listing text drive material roughness (velvet vs leather vs fabric)
+        styleHints: `${listingTitle} ${listingDescription ?? ''} ${subtypeText}${furnitureMaterial ? ' material:' + furnitureMaterial : ''}`,
+        imageUrl: furnitureImageUrl ?? undefined,
+        productCanvas,
+      });
+
+      // Cache bust the blob so we don't load the old floating version
+      setProceduralUrl(`${url}#v=${Date.now()}`);
 
       // Important: Add QuickLook scale-lock parameter for iOS
       setUsdzUrl(prevUsdz => prevUsdz ? `${prevUsdz.split('#')[0]}#allowsContentScaling=0` : null);
@@ -460,7 +457,7 @@ export function WebARViewer({
     } finally {
       clearInterval(interval);
     }
-  }, [arAssets, fType, dims, glbUrl, furnitureSubtype, listingTitle, listingDescription, furnitureMaterial, toast]);
+  }, [arAssets, fType, dims, proceduralUrl, furnitureSubtype, listingTitle, listingDescription, furnitureMaterial, toast]);
 
   // ── AI Generation Logic ──────────────────────────────────────────────────
   const startAIGeneration = async (useAllImages: boolean = false) => {
@@ -504,7 +501,8 @@ export function WebARViewer({
 
           // The backend already downloaded it to local_url
           if (status.local_url) {
-            setGlbUrl(status.local_url);
+            setTripoUrl(status.local_url);
+            setViewMode('advanced');
             setAiStage('success');
             setAiProgress(100);
             toast({
@@ -552,10 +550,10 @@ export function WebARViewer({
       prevFTypeRef.current = fType;
       prevSubtypeRef.current = furnitureSubtype;
       // Revoke old GLB blob URL and clear state so prepareModel rebuilds
-      if (glbUrl) {
-        URL.revokeObjectURL(glbUrl);
+      if (proceduralUrl && proceduralUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(proceduralUrl);
       }
-      setGlbUrl(null);
+      setProceduralUrl(null);
       setStep('idle');
     }
   }, [fType, furnitureSubtype]);
@@ -857,7 +855,7 @@ export function WebARViewer({
                       </p>
                     </div>
                     <Button
-                      onClick={() => { setStep('idle'); setGlbUrl(null); prepareModel(); }}
+                      onClick={() => { setStep('idle'); setProceduralUrl(null); prepareModel(); }}
                       className="bg-[#143109] hover:bg-[#1e4d10]"
                     >
                       Retry
@@ -866,8 +864,32 @@ export function WebARViewer({
                 )}
 
                 {/* Model viewer */}
-                {(step === 'model_ready' || step === 'scanning' || step === 'placed') && glbUrl && (
+                {(step === 'model_ready' || step === 'scanning' || step === 'placed') && (proceduralUrl || tripoUrl) && (
                   <div className="flex flex-col h-full">
+
+                    {/* View Mode Toggle */}
+                    <div className="px-5 pt-3 pb-1 bg-gradient-to-b from-gray-50 to-gray-50/50">
+                      <div className="flex bg-gray-200/50 p-1 rounded-xl items-center shadow-inner">
+                        <button
+                          onClick={() => setViewMode('fast')}
+                          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#143109]' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                          <span className="text-[11px] font-bold">Fast View</span>
+                          <span className="text-[9px] font-medium opacity-70 leading-none">CV Generated</span>
+                        </button>
+                        <button
+                          onClick={() => setViewMode('advanced')}
+                          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#143109] text-white shadow' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                          <span className="text-[11px] font-bold flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" /> Advanced 3D
+                          </span>
+                          <span className="text-[9px] font-medium opacity-70 leading-none">Tripo AI</span>
+                        </button>
+                      </div>
+                    </div>
 
                     {/* model-viewer canvas area */}
                     <div className="relative flex-1 bg-gradient-to-b from-gray-50 to-gray-100" style={{ minHeight: '38vh' }}>
@@ -893,8 +915,8 @@ export function WebARViewer({
                       {/* ── model-viewer element ── */}
                       <model-viewer
                         ref={modelViewerRef as any}
-                        src={glbUrl}
-                        ios-src={usdzUrl ?? undefined}
+                        src={(viewMode === 'advanced' && tripoUrl) ? tripoUrl : proceduralUrl || undefined}
+                        ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
                         alt={listingTitle}
                         ar
                         ar-modes={arModesAttr || 'webxr scene-viewer quick-look'}
@@ -1121,12 +1143,35 @@ export function WebARViewer({
                               <div className="relative">
                                 <div className="flex items-center gap-2 mb-1">
                                   <Sparkles className="h-4 w-4 text-[#AAAE7F]" />
-                                  <span className="text-[11px] font-bold text-[#AAAE7F] uppercase tracking-widest">Tripo AI · Experimental</span>
+                                  <span className="text-[11px] font-bold text-[#AAAE7F] uppercase tracking-widest">Tripo AI · Photorealistic</span>
                                 </div>
-                                <p className="text-white font-bold text-base mb-1">Photorealistic 3D Model</p>
-                                <p className="text-white/60 text-[11px] mb-4 leading-relaxed">
-                                  AI converts your product images into a true photorealistic 3D model for the most accurate AR view.
+                                <p className="text-white font-bold text-base mb-1">Generate True 3D Model</p>
+                                <p className="text-white/60 text-[11px] mb-3 leading-relaxed">
+                                  Select the clearest, uncropped image showing the full product depth.
                                 </p>
+
+                                {/* Image Selector UI */}
+                                {(allImageUrls && allImageUrls.length > 0) ? (
+                                  <div className="flex gap-2 overflow-x-auto pb-3 mb-1 -mx-2 px-2 snap-x" style={{ scrollbarWidth: 'none' }}>
+                                    {allImageUrls.map((imgUrl, idx) => (
+                                      <button
+                                        key={idx}
+                                        onClick={() => setSelectedImgIdx(idx)}
+                                        className={`relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all snap-center ${selectedImgIdx === idx
+                                          ? 'border-[#AAAE7F] scale-105 shadow-md shadow-[#AAAE7F]/20'
+                                          : 'border-white/10 opacity-60 hover:opacity-100'
+                                          }`}
+                                      >
+                                        <img src={getFullUrl(imgUrl) || imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                                        {selectedImgIdx === idx && (
+                                          <div className="absolute top-1 right-1 bg-[#AAAE7F] text-[#143109] rounded-full p-0.5 shadow">
+                                            <CheckCircle2 className="w-3 h-3" />
+                                          </div>
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : null}
 
                                 {aiStage === 'error' && (
                                   <p className="text-red-400 text-[10px] flex items-center gap-1 mb-3">
@@ -1135,11 +1180,11 @@ export function WebARViewer({
                                 )}
 
                                 <button
-                                  onClick={() => startAIGeneration(true)}
+                                  onClick={() => startAIGeneration(false)}
                                   className="w-full flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-xl font-bold text-sm text-[#143109] bg-[#AAAE7F] hover:bg-[#bcc08e] active:scale-[0.97] transition-all duration-150 shadow-lg shadow-black/30"
                                 >
                                   <Sparkles className="h-4 w-4" />
-                                  Generate Photorealistic 3D
+                                  Generate from Selected Image
                                 </button>
                               </div>
                             </div>

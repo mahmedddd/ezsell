@@ -28,7 +28,7 @@ export default function CompleteProfile() {
 
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:8000/api/v1/me", {
+            const res = await fetch("/api/v1/me", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

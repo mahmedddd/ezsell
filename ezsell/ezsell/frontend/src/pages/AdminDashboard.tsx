@@ -89,6 +89,7 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [allListings, setAllListings] = useState<Listing[]>([]); // for charts (includes pending/rejected)
   const [pendingListings, setPendingListings] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [searchUser, setSearchUser] = useState('');
@@ -112,17 +113,18 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [analyticsData, usersData, listingsData, pendingData, ticketsData] = await Promise.all([
+      const [analyticsData, usersData, allListingsData, pendingData, ticketsData] = await Promise.all([
         adminService.getAnalytics(),
         adminService.getUsers({ limit: 50 }),
-        listingService.getListings({ limit: 50 }),
+        adminService.getAllListings({ limit: 200 }),
         adminService.getPendingListings(),
         supportService.getAllTickets(),
       ]);
 
       setAnalytics(analyticsData);
       setUsers(usersData);
-      setListings(listingsData);
+      setListings(allListingsData);   // table
+      setAllListings(allListingsData); // charts
       setPendingListings(pendingData);
       setTickets(ticketsData);
     } catch (error: any) {
@@ -277,7 +279,7 @@ export default function AdminDashboard() {
 
   const getFraudHotspotsData = () => {
     const flagCounts: Record<string, number> = {};
-    listings.forEach(listing => {
+    allListings.forEach(listing => {
       if (listing.fraud_flags) {
         try {
           const flags = typeof listing.fraud_flags === 'string' ? JSON.parse(listing.fraud_flags) : listing.fraud_flags;
@@ -299,7 +301,7 @@ export default function AdminDashboard() {
 
   const getPricingAccuracyData = () => {
     const categories: Record<string, { total_diff: number, count: number }> = {};
-    listings.forEach(l => {
+    allListings.forEach(l => {
       if (l.predicted_price && l.price) {
         if (!categories[l.category]) categories[l.category] = { total_diff: 0, count: 0 };
         const diffPercent = Math.abs(l.price - l.predicted_price) / l.predicted_price;
@@ -594,17 +596,25 @@ export default function AdminDashboard() {
                   Higher counts indicate common fraudulent patterns (e.g., duplicated listings from same IP or unrealistic pricing)
                   that require automated or manual moderation.
                 </div>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getFraudHotspotsData()} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" width={100} fontSize={10} />
-                      <Tooltip cursor={{ fill: 'transparent' }} />
-                      <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} name="Flag Occurrences" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {getFraudHotspotsData().length === 0 ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <ShieldAlert className="h-10 w-10 text-green-300" />
+                    <p className="text-sm font-medium text-green-600">No fraud flags detected</p>
+                    <p className="text-xs text-gray-400">All listings are clean so far 🎉</p>
+                  </div>
+                ) : (
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getFraudHotspotsData()} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" width={100} fontSize={10} />
+                        <Tooltip cursor={{ fill: 'transparent' }} />
+                        <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} name="Flag Occurrences" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -615,17 +625,25 @@ export default function AdminDashboard() {
                 <CardDescription>Average prediction confidence by category</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getPricingAccuracyData()}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="name" fontSize={10} />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip />
-                      <Bar dataKey="accuracy" fill="#10b981" radius={[4, 4, 0, 0]} name="Accuracy %" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {getPricingAccuracyData().length === 0 ? (
+                  <div className="h-72 flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <TrendingUp className="h-10 w-10 text-blue-200" />
+                    <p className="text-sm font-medium text-gray-500">No pricing data yet</p>
+                    <p className="text-xs text-gray-400">Accuracy will appear once listings with AI predictions are posted</p>
+                  </div>
+                ) : (
+                  <div className="h-72 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={getPricingAccuracyData()}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis dataKey="name" fontSize={10} />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip formatter={(val) => [`${val}%`, 'Accuracy']} />
+                        <Bar dataKey="accuracy" fill="#10b981" radius={[4, 4, 0, 0]} name="Accuracy %" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -790,9 +808,23 @@ export default function AdminDashboard() {
                           <Badge variant="outline">{listing.category}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={listing.is_sold ? "secondary" : "default"}>
-                            {listing.is_sold ? 'Sold' : 'Available'}
-                          </Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={listing.is_sold ? "secondary" : "default"}>
+                              {listing.is_sold ? 'Sold' : 'Available'}
+                            </Badge>
+                            {(listing as any).approval_status && (listing as any).approval_status !== 'approved' && (
+                              <Badge
+                                variant="outline"
+                                className={
+                                  (listing as any).approval_status === 'pending'
+                                    ? 'border-yellow-400 text-yellow-700 bg-yellow-50'
+                                    : 'border-red-400 text-red-700 bg-red-50'
+                                }
+                              >
+                                {(listing as any).approval_status === 'pending' ? '⏳ Pending' : '❌ Rejected'}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">

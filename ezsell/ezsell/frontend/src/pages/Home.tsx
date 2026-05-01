@@ -65,13 +65,25 @@ export default function Home() {
   const loadListings = async () => {
     try {
       setLoading(true);
+      let results = [];
       if (searchQuery || selectedCategory !== "all" || city || area) {
         const params = selectedCategory !== "all" ? { category: selectedCategory } : {};
-        setListings(Array.isArray(await listingService.getListings(params)) ? await listingService.getListings(params) : []);
+        const data = await listingService.getListings(params);
+        results = Array.isArray(data) ? data : [];
       } else {
-        const data = await recommendationService.getForYou({ limit: 20 });
-        setListings(data.items.map((item: any) => ({ ...item, id: item.listing_id })));
+        const data = await recommendationService.getForYou({ limit: 40 }); // Fetch more for better experience
+        results = data.items.map((item: any) => ({ ...item, id: item.listing_id }));
       }
+
+      // Deduplicate locally as a final safety measure
+      const seen = new Set();
+      const unique = results.filter(item => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+
+      setListings(unique);
     } catch (error: any) {
       setListings([]);
       toast({ title: "Error loading listings", description: error.response?.data?.detail || "Failed to load listings", variant: "destructive" });

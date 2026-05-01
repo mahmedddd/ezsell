@@ -243,11 +243,11 @@ class RecommendationEngine:
             score = self._calculate_hybrid_score(
                 listing, user_categories, user_keywords, user_embedding, user_interest
             )
-            if score > 0.1:
+            if score > 0.05: # Lowered threshold slightly for more diversity
                 scored_listings.append((listing, score, "interest_based"))
                 
-        # Sort by created_at desc primarily (most recent), then by score
-        scored_listings.sort(key=lambda x: (x[0].created_at, x[1]), reverse=True)
+        # Sort by score primarily, then by created_at for recency-based tie-breaking
+        scored_listings.sort(key=lambda x: (x[1], x[0].created_at), reverse=True)
         return scored_listings[:limit]
 
     def _calculate_hybrid_score(
@@ -286,12 +286,19 @@ class RecommendationEngine:
                 if total_keywords > 0:
                     score += (keyword_matches / total_keywords) * 0.60
 
-        # 2. Category match (20% weight)
+        # 2. Category match (40% weight - PRIMARY SIGNAL)
         if listing.category in user_categories:
             category_freq = user_categories[listing.category]
             total_categories = sum(user_categories.values())
             if total_categories > 0:
-                score += (category_freq / total_categories) * 0.20
+                # Calculate category dominance
+                category_ratio = category_freq / total_categories
+                score += category_ratio * 0.40
+                
+                # Check if this is the user's TOP category for an extra "affinity boost"
+                top_category = max(user_categories, key=user_categories.get) if user_categories else None
+                if listing.category == top_category:
+                    score += 0.15 # Top affinity boost
 
         # 3. Price range match (10% weight)
         if listing.price and user_interest.price_range_min and user_interest.price_range_max:
@@ -328,7 +335,8 @@ class RecommendationEngine:
             recency_bonus = 0.1
             
         # Blend relevance (score) and recency
-        final_score = (score * 0.7) + (recency_bonus)
+        # Increased weight for relevance (0.85) vs recency (0.15) to ensure categories dominate
+        final_score = (score * 0.85) + (recency_bonus * 0.5)
         
         return min(final_score, 1.0)
 
@@ -437,13 +445,19 @@ class RecommendationEngine:
         ]
         
         if len(result) < limit:
-            recent = self.db.query(Listing).filter(
+            trending_ids = [l.id for l, _, _ in result]
+            recent_query = self.db.query(Listing).filter(
                 Listing.is_active == True,
                 Listing.approval_status == "approved",
                 Listing.is_sold == False
-            ).order_by(
+            )
+            if trending_ids:
+                recent_query = recent_query.filter(Listing.id.notin_(trending_ids))
+            
+            recent = recent_query.order_by(
                 desc(Listing.created_at)
             ).limit(limit - len(result)).all()
+            
             result.extend([(l, 0.5, "recent") for l in recent])
             
         return result

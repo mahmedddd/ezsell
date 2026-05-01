@@ -113,7 +113,7 @@ class FraudProtectionService:
             return None
 
     @staticmethod
-    def is_duplicate(db: Session, listing_hash: str, image_hash: Optional[str] = None) -> Optional[Listing]:
+    def is_duplicate(db: Session, listing_hash: str, image_hashes: List[str] = None) -> Optional[Listing]:
         """
         Check if this listing (content or image) already exists GLOBALLY.
         Returns the matching listing if found.
@@ -128,14 +128,17 @@ class FraudProtectionService:
         if match:
             return match
             
-        # 2. Check Image Hash (if provided)
-        if image_hash:
-            match = db.query(Listing).filter(
-                Listing.image_hash == image_hash,
-                Listing.is_active == True,
-                Listing.is_sold == False
-            ).first()
-            return match
+        # 2. Check ANY of the Image Hashes (if provided)
+        if image_hashes:
+            for img_h in image_hashes:
+                if not img_h: continue
+                match = db.query(Listing).filter(
+                    Listing.image_hash == img_h,
+                    Listing.is_active == True,
+                    Listing.is_sold == False
+                ).first()
+                if match:
+                    return match
             
         return None
 
@@ -185,25 +188,34 @@ class FraudProtectionService:
             return True, "low_diversity_repetitive"
 
         # 3. Consonant-to-Vowel Ratio (Phonetic Check)
-        # Good for transliterated Urdu/English, but flags random button mashing
         vowels = set("aeiou")
         consonants = set("bcdfghjklmnpqrstvwxyz")
         
+        # Furniture-specific bypass: If common furniture words are found, be more lenient
+        furniture_keywords = {"bed", "sofa", "chair", "table", "wood", "size", "queen", "king", "double", "new"}
+        has_keywords = any(kw in text_lower for kw in furniture_keywords)
+        
         for word in words:
-            if len(word) > 8:
-                v_count = sum(1 for c in word if c in vowels)
-                c_count = sum(1 for c in word if c in consonants)
-                # Unpronounceable word (e.g. "vnlknvlkfv")
-                if v_count == 0 and c_count > 5:
-                    return True, f"unpronounceable_word_{word}"
-                if c_count > 0 and (v_count / (v_count + c_count)) < 0.15 and len(word) > 12:
-                    return True, "unusual_vowel_distribution"
+            # Skip very short words or those containing numbers/symbols
+            if len(word) <= 5 or not word.isalpha():
+                continue
+                
+            v_count = sum(1 for c in word if c in vowels)
+            c_count = sum(1 for c in word if c in consonants)
+            
+            # Blatant button mash (e.g. "vnlknvlkfv")
+            if v_count == 0 and c_count > 6:
+                return True, f"unpronounceable_word_{word}"
+            
+            # Vowel distribution check - relaxed if keywords are present
+            ratio_threshold = 0.10 if has_keywords else 0.15
+            if c_count > 0 and (v_count / (v_count + c_count)) < ratio_threshold and len(word) > 15:
+                # Still check for repeating patterns
+                return True, "unusual_vowel_distribution"
 
-        # 4. Repeated Character Sequences (e.g. "!!!!!!" or "aaaaa")
-        import itertools
-        for char, group in itertools.groupby(text_lower):
-            if len(list(group)) > 6:
-                return True, "excessive_repetition"
+        # 4. Global character diversity
+        if len(set(stripped_text)) < 4 and len(stripped_text) > 15:
+            return True, "too_few_unique_characters"
 
         return False, "ok"
 
