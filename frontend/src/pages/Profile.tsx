@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { authService, supportService, analyticsService, getImageUrl } from '../lib/api';
-import { listingService } from '../lib/api';
+import { authService, supportService, analyticsService, getImageUrl } from '../lib/api.ts';
+import { listingService } from '../lib/api.ts';
 import { useToast } from '@/components/ui/use-toast';
 import {
     User,

@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Upload, Eye, X, Loader2, Camera, Plus, Trash2, RotateCw, Move, Maximize2, Palette } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { arService } from '../lib/api';
+import { arService } from '../lib/api.ts';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

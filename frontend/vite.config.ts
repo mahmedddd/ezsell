@@ -13,10 +13,6 @@ export default defineConfig(({ mode }) => ({
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
-      "/uploads": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      }
     }
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
@@ -25,4 +21,8 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+  }
 }));

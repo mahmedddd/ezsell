@@ -15,10 +15,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { authService, listingService, getImageUrl, API_BASE_URL } from '../lib/api';
+import { authService, listingService, getImageUrl, API_BASE_URL } from '../lib/api.ts';
 import { Upload, Loader2, Sparkles, TrendingUp, AlertCircle, CheckCircle2, XCircle, Info, PartyPopper, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency } from '../lib/utils.ts';
 
 interface CreateListingFormNewProps {
   editMode?: boolean;

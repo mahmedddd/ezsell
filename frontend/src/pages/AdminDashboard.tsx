@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Users, Package, TrendingUp, ShoppingBag, Trash2, Ban, CheckCircle, Home, AlertCircle, RotateCw, Sparkles, ExternalLink, MapPin, Phone, Mail, Calendar, Info, ShieldAlert, Award, User as UserIcon, LifeBuoy, Bug, MessageSquare } from 'lucide-react';
-import { getImageUrl, adminService, listingService, supportService } from '../lib/api';
+import { getImageUrl, adminService, listingService, supportService } from '../lib/api.ts';
 import {
   Table,
   TableBody,
