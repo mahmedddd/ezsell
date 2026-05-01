@@ -1,0 +1,10 @@
+Text Snippet                   | Expected | Result   | Reason              
+--------------------------------------------------------------------------------
+kenneknvlkenvleknvleknvelvn..  | True     | True     | excessively_long_word
+vnlknvlkfv                     | True     | True     | unpronounceable_word_vnlknvlkfv
+k8#f2!m9*zL1^qPd7!xQ2$wR9*b..  | True     | True     | excessively_long_word
+aaaaaaaaaaaaaaaaaaaaaaaaaaa..  | True     | True     | excessive_repetition_of_a
+This is a high quality iPho..  | False    | False    | ok                  
+Ye phone bilkul naya hai au..  | False    | False    | ok                  
+Urgent sale! MacBook Pro M1..  | False    | False    | ok                  
+!!!!!!!!!                      | True     | True     | excessive_repetition_of_!

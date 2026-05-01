@@ -1,0 +1,26 @@
+--- ERROR AT AHMEDSDESKTOP ---
+Model: llama-3.3-70b-versatile
+Key: gsk_IItT...MQjM
+Traceback (most recent call last):
+  File "C:\Users\ahmed\ezsell\ezsell\ezsell\backend\services\llm_pricing_service.py", line 81, in validate_listing_content
+    chat_completion = self.client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+    ...<2 lines>...
+        temperature=0.1,
+    )
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\groq\resources\chat\completions.py", line 461, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/openai/v1/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<45 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\groq\_base_client.py", line 1242, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ahmed\AppData\Roaming\Python\Python314\site-packages\groq\_base_client.py", line 1044, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jvybk5cjfpz9q0fryeng3g7d` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99345, Requested 899. Please try again in 3m30.816s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
