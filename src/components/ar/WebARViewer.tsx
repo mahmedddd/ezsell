@@ -487,7 +487,7 @@ export function WebARViewer({
     } finally {
       clearInterval(interval);
     }
-  }, [arAssets, fType, dims, proceduralUrl, furnitureSubtype, listingTitle, listingDescription, furnitureMaterial, toast]);
+  }, [arAssets, fType, dims, proceduralUrl, subtypeText, listingTitle, listingDescription, furnitureMaterial, furnitureImageUrl, allImageUrls, toast]);
 
   // ── AI Generation Logic ──────────────────────────────────────────────────
   const startAIGeneration = async (useAllImages: boolean = false) => {
