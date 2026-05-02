@@ -46,6 +46,22 @@ import {
 } from '@/components/ar/FurnitureGLBGenerator';
 import { arAssetsService, API_BASE_URL } from '../../lib/api.ts';
 
+// ─── TypeScript Declarations for <model-viewer> ───────────────────────────────
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': any;
+    }
+  }
+}
+
+// Extend React's HTMLAttributes to allow the 'slot' attribute on all elements
+declare module 'react' {
+  interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+    slot?: string;
+  }
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ARAssets {
@@ -108,8 +124,15 @@ function detectARModesAttr(supportedModes: string[]): string {
 
 function getFullUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  // Let Vite proxy handle /uploads requests to avoid CORS errors with <model-viewer>
-  return url;
+  if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
+  
+  // For mobile devices, we MUST prefix relative paths with the backend IP
+  // otherwise the browser tries to hit the phone's localhost.
+  const base = typeof window !== 'undefined' ? (window as any).BACKEND_URL || API_BASE_URL : API_BASE_URL;
+  const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  
+  return `${cleanBase}${cleanUrl}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -235,23 +258,23 @@ function DesktopQRHint({ url }: { url: string }) {
 /** Animated Scanning Overlay inside the AR viewport */
 function ScanningOverlay({ phase, hint }: { phase: ScanPhase; hint: string }) {
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-      <div className="relative mb-8">
-        <div className="w-32 h-32 rounded-full border-4 border-white/20 animate-ping absolute inset-0" />
-        <div className="w-32 h-32 rounded-full border-4 border-[#143109] border-t-transparent animate-spin" />
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-6">
+      <div className="relative mb-10">
+        <div className="w-40 h-40 rounded-full border-2 border-white/10 animate-ping absolute inset-0" />
+        <div className="w-40 h-40 rounded-full border-2 border-white/30 border-t-[#AAAE7F] animate-spin" />
         <div className="absolute inset-0 flex items-center justify-center">
-          {phase === 'tilting' && <ArrowDownCircle className="h-10 w-10 text-white animate-bounce" />}
-          {phase === 'sweeping' && <Scan className="h-10 w-10 text-white animate-pulse" />}
-          {phase === 'ready_to_place' && <MousePointer2 className="h-10 w-10 text-[#AAAE7F] animate-bounce" />}
+          {phase === 'tilting' && <ArrowDownCircle className="h-12 w-12 text-white/80 animate-bounce" />}
+          {phase === 'sweeping' && <Scan className="h-12 w-12 text-white/80 animate-pulse" />}
+          {phase === 'ready_to_place' && <MousePointer2 className="h-12 w-12 text-[#AAAE7F] animate-bounce" />}
         </div>
       </div>
 
-      <div className="bg-black/60 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 text-center max-w-[80%] animate-in fade-in slide-in-from-bottom-4">
-        <p className="text-white font-bold text-lg mb-1">{hint}</p>
-        <div className="flex justify-center gap-1 mt-2">
-          <div className={`h-1.5 w-8 rounded-full transition-colors ${phase === 'tilting' ? 'bg-[#AAAE7F]' : 'bg-white/20'}`} />
-          <div className={`h-1.5 w-8 rounded-full transition-colors ${phase === 'sweeping' ? 'bg-[#AAAE7F]' : 'bg-white/20'}`} />
-          <div className={`h-1.5 w-8 rounded-full transition-colors ${phase === 'ready_to_place' ? 'bg-[#AAAE7F]' : 'bg-white/20'}`} />
+      <div className="bg-black/40 backdrop-blur-sm px-6 py-4 rounded-[24px] border border-white/5 text-center max-w-sm animate-in fade-in slide-in-from-bottom-4">
+        <p className="text-white font-medium text-base mb-1.5">{hint}</p>
+        <div className="flex justify-center gap-1.5 mt-2.5">
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'tilting' ? 'bg-[#AAAE7F] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'sweeping' ? 'bg-[#AAAE7F] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'ready_to_place' ? 'bg-[#AAAE7F] w-10' : 'bg-white/20'}`} />
         </div>
       </div>
     </div>
@@ -358,8 +381,10 @@ export function WebARViewer({
   const [step, setStep] = useState<ARStep>('idle');
   const [buildProgress, setBuildProgress] = useState(0);
   const [proceduralUrl, setProceduralUrl] = useState<string | null>(null);
-  const [tripoUrl, setTripoUrl] = useState<string | null>(getFullUrl(arAssets?.model_glb_url || null));
-  const [usdzUrl, setUsdzUrl] = useState<string | null>(getFullUrl(arAssets?.model_usdz_url || null));
+  
+  // These stay in sync with arAssets via useEffect or direct derivation
+  const tripoUrl = getFullUrl(arAssets?.model_glb_url);
+  const [usdzUrl, setUsdzUrl] = useState<string | null>(getFullUrl(arAssets?.model_usdz_url));
   const [viewMode, setViewMode] = useState<'fast' | 'advanced'>(arAssets?.model_glb_url ? 'advanced' : 'fast');
 
   const [arStatus, setArStatus] = useState<string>('');
@@ -382,12 +407,16 @@ export function WebARViewer({
   // Only render for furniture
   if (category?.toLowerCase() !== 'furniture') return null;
 
-  // ── Resolve furniture metadata ─────────────────────────────────────────────
-  const fType: FurnitureType = resolveFurnitureType(furnitureType, listingTitle, listingDescription);
-  // Normalise furniture_subtype underscores so '3_door' → '3 door' matches dimension regex
-  const subtypeText = (furnitureSubtype ?? '').replace(/_/g, ' ');
-  const dims: FurnitureDimensions =
-    dimensionsCm ?? arAssets?.dimensions_cm ?? resolveSmartDimensions(fType, listingTitle, `${listingDescription ?? ''} ${subtypeText}`);
+  // ── Resolve furniture metadata (Memoized to prevent drift) ───────────────────
+  const fType: FurnitureType = useMemo(() => 
+    resolveFurnitureType(furnitureType, listingTitle, listingDescription),
+    [furnitureType, listingTitle, listingDescription]
+  );
+
+  const dims: FurnitureDimensions = useMemo(() => {
+    const subtypeText = (furnitureSubtype ?? '').replace(/_/g, ' ');
+    return dimensionsCm ?? arAssets?.dimensions_cm ?? resolveSmartDimensions(fType, listingTitle, `${listingDescription ?? ''} ${subtypeText}`);
+  }, [dimensionsCm, arAssets?.dimensions_cm, fType, listingTitle, listingDescription, furnitureSubtype]);
 
   // ── Build (or fetch) the GLB ───────────────────────────────────────────────
   const prepareModel = useCallback(async () => {
@@ -919,15 +948,15 @@ export function WebARViewer({
                         ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
                         alt={listingTitle}
                         ar
-                        ar-modes={arModesAttr || 'webxr scene-viewer quick-look'}
+                        ar-modes="webxr scene-viewer quick-look"
                         ar-placement="floor"
                         ar-scale="fixed"
                         camera-controls
                         touch-action="pan-y"
-                        shadow-intensity={2.2}
-                        shadow-softness={0.6}
+                        shadow-intensity={2.8}
+                        shadow-softness={0}
                         environment-image="neutral"
-                        exposure={0.95}
+                        exposure={1.2}
                         auto-rotate
                         auto-rotate-delay={2000}
                         rotation-per-second="10deg"

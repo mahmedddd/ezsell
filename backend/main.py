@@ -48,32 +48,24 @@ app.add_middleware(
 # Instead we list explicit localhost origins PLUS a regex that covers every
 # private-network IP (192.168.x.x / 10.x.x.x / 172.16-31.x.x) on any port,
 # which allows phone-on-same-WiFi testing without hardcoding IPs.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "http://localhost:8081",
-        "http://localhost:8082",
-        "http://localhost:3000",
-        "http://127.0.0.1:8080",
-        "http://127.0.0.1:3000",
-        "https://ezsell-indol.vercel.app",
-        "https://ezsell.vercel.app",
-    ],
-    # Covers 192.168.x.x, 10.x.x.x, 172.16-31.x.x on any port
-    allow_origin_regex=(
-        r"http://(localhost|127\.0\.0\.1"
-        r"|192\.168\.\d{1,3}\.\d{1,3}"
-        r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
-        r"|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})"
-        r"(:\d+)?"
-        r"|https://ezsell-.*\.vercel\.app"
-    ),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
+# --- CORS CONFIGURATION ---
+@app.middleware("http")
+async def cors_handler(request, call_next):
+    if request.method == "OPTIONS":
+        from fastapi.responses import JSONResponse
+        response = JSONResponse(content="OK")
+    else:
+        response = await call_next(request)
+    
+    origin = request.headers.get("origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept"
+        response.headers["Access-Control-Expose-Headers"] = "*"
+    
+    return response
 
 # The original static_path was 'data', but the new routes will use a 'static' directory.
 # We keep the 'data' directory creation for backward compatibility or other uses if any.
@@ -85,13 +77,36 @@ uploads_path.mkdir(exist_ok=True)
 static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
 
-# Mount static and uploads directories
-app.mount("/static", StaticFiles(directory=static_path), name="static")
-app.mount("/uploads", StaticFiles(directory=uploads_path), name="uploads")
+# Custom StaticFiles class to force CORS headers on images/assets
+class CORSStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+# Mount static and uploads directories with the CORS-enabled class
+app.mount("/static", CORSStaticFiles(directory=static_path), name="static")
+app.mount("/uploads", CORSStaticFiles(directory=uploads_path), name="uploads")
 
 # Ensure the AR models sub-directory exists
 ar_models_path = uploads_path / "ar_models"
 ar_models_path.mkdir(exist_ok=True)
+
+# Global Error Logger
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    print(f"🔥 [GLOBAL_ERROR] {request.method} {request.url}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "msg": str(exc)}
+    )
 
 # Include routers
 app.include_router(users.router, prefix=settings.API_V1_STR, tags=["Users"])

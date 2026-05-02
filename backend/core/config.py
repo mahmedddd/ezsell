@@ -55,4 +55,4 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Debug: Print loaded 3D settings
-print(f"🛠️ [CONFIG] TRIPO_API_KEY length: {len(settings.TRIPO_API_KEY) if settings.TRIPO_API_KEY else 0}")
+print(f"[CONFIG] TRIPO_API_KEY length: {len(settings.TRIPO_API_KEY) if settings.TRIPO_API_KEY else 0}")

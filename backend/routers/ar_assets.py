@@ -26,9 +26,11 @@ from routers.users import get_user_by_username
 import os
 
 
-# 3D Assets only (Manual/Procedural)
-_IMAGE_TO_3D_AVAILABLE = False
-print("✅ [AR_ASSETS] AR Assets router initialized.")
+from services.image_to_3d import start_image_to_3d_task, upload_image_to_tripo
+
+# 3D Assets (AI & Manual)
+_IMAGE_TO_3D_AVAILABLE = True
+print("✅ [AR_ASSETS] AR Assets router initialized with AI support.")
 
 router = APIRouter()
 
@@ -246,12 +248,12 @@ async def generate_3d_ai(
         # Helper to get absolute path from relative DB path
         def get_abs_path(rel_p: str):
             if not rel_p: return None
-            # If it's already a full disk path or URL, ignore
-            if rel_p.startswith("/") and not rel_p.startswith("//"):
-                # Check /uploads/ vs something else
-                if rel_p.startswith("/uploads/"):
-                    return str(Path(__file__).parent.parent / rel_p.lstrip("/"))
-            return None
+            if rel_p.startswith("http"): return rel_p
+            # Resolve relative path to absolute disk path
+            return str(Path(__file__).parent.parent / rel_p.lstrip('/'))
+
+        print(f"DEBUG: Starting 3D generation for listing {listing_id}")
+        print(f"DEBUG: Input image_url: {image_url}")
 
         if all_images:
             img_list = json.loads(listing.images) if listing.images else []
@@ -281,20 +283,45 @@ async def generate_3d_ai(
         else:
             if not image_url: raise ValueError("image_url required for single-image gen")
             
+            # Strip cache-buster (?v=...) if present in the image_url string
+            if image_url and "?" in image_url:
+                image_url = image_url.split("?")[0]
+
             abs_p = get_abs_path(image_url)
             if abs_p and os.path.exists(abs_p):
-                token = await upload_image_to_tripo(abs_p)
-                task_id = await start_image_to_3d_task(file_token=token)
+                try:
+                    token = await upload_image_to_tripo(abs_p)
+                    task_id = await start_image_to_3d_task(file_token=token)
+                except Exception as e:
+                    if "credits" in str(e).lower():
+                        raise HTTPException(status_code=402, detail=str(e))
+                    raise e
             else:
-                full_url = image_url if image_url.startswith("http") else f"http://localhost:8000{image_url}"
-                task_id = await start_image_to_3d_task(image_url=full_url)
+                # Use the actual IP so Tripo's server can reach your laptop
+                server_ip = "192.168.18.106" 
+                full_url = image_url if image_url.startswith("http") else f"http://{server_ip}:8000{image_url}"
+                try:
+                    task_id = await start_image_to_3d_task(image_url=full_url)
+                except Exception as e:
+                    if "credits" in str(e).lower():
+                        raise HTTPException(status_code=402, detail=str(e))
+                    raise e
             
         return {"task_id": task_id, "status": "queued"}
     except Exception as e:
-        import traceback
-        print(f"❌ [AR_ASSETS] AI Gen Error: {e}")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        print(f"❌ [AR_ASSETS] AI Gen Error: {error_msg}")
+        
+        status_code = 500
+        if "credits" in error_msg.lower():
+            status_code = 402
+        elif "required" in error_msg.lower() or "invalid" in error_msg.lower():
+            status_code = 400
+
+        return JSONResponse(
+            status_code=status_code,
+            content={"detail": error_msg}
+        )
 
 
 

@@ -73,6 +73,8 @@ async def start_image_to_3d_task(
 
     async with httpx.AsyncClient() as client:
         response = await client.post(f"{TRIPO_V2_BASE_URL}/task", json=payload, headers=headers)
+        if response.status_code == 402 or (response.status_code == 200 and response.json().get("code") == 10006):
+            raise Exception("Insufficient Tripo AI credits. Please top up your account.")
         response.raise_for_status()
         data = response.json()
         if data.get("code") != 0:

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FurnitureGLBGenerator â€” v2 Enhanced
  * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * Generates true-to-type, real-scale 3-D furniture GLBs via Three.js.
@@ -1586,7 +1586,8 @@ export async function generateFurnitureGLB(
     fabricTex = new THREE.CanvasTexture(options.productCanvas);
     fabricTex.wrapS = THREE.RepeatWrapping;
     fabricTex.wrapT = THREE.RepeatWrapping;
-    fabricTex.repeat.set(3, 3);
+    fabricTex.repeat.set(1.5, 1.5); // Less repetition = more natural grain
+    fabricTex.anisotropy = 8; // Sharp textures from side angles
     fabricTex.colorSpace = THREE.SRGBColorSpace;
     fabricTex.needsUpdate = true;
   }
@@ -1705,58 +1706,71 @@ export async function generateFurnitureGLB(
     });
   }
 
-  scene.add(group);
+  // ── Final Grounding & Centering (Robust Root-Wrap Method) ────────────────
+  // We wrap the furniture in a root group so we can offset the furniture
+  // to be perfectly centered at (0,0) and sitting at Y=0 without affecting
+  // the exported scene's origin.
+  const root = new THREE.Group();
+  root.name = "FurnitureRoot";
+  
+  const bbox = new THREE.Box3().setFromObject(group);
+  const center = new THREE.Vector3();
+  bbox.getCenter(center);
+  
+  // Shift the group so its bottom-center is at (0,0,0) relative to the root
+  group.position.set(-center.x, -bbox.min.y, -center.z);
+  root.add(group);
+  scene.add(root);
 
   // ── Contact-shadow decal: a soft dark plane at exactly Y=0 ────────────────
-  // Baked into the GLB so it renders in ALL AR modes. Gives a strong visual
-  // cue that the furniture is touching the floor even if hit-test quality varies.
   {
-    const W = dims.w / 100;   // convert cm → metres
+    const W = dims.w / 100;
     const D = dims.l / 100;
     const shadowMat = new THREE.MeshStandardMaterial({
       color: 0x000000,
       roughness: 1.0,
       metalness: 0.0,
       transparent: true,
-      opacity: 0.20,
+      opacity: 0.55,  // Darker for better anchoring
       depthWrite: false,
+      blending: THREE.MultiplyBlending, // Better integration with floor tiles
     });
     const shadowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 1.10, D * 1.10),
+      new THREE.PlaneGeometry(W * 1.02, D * 1.02),
       shadowMat,
     );
-    shadowPlane.rotation.x = -Math.PI / 2;   // lay flat on the XZ plane
-    shadowPlane.position.y = 0.001;           // 1 mm above Y=0, avoids z-fighting
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = 0.0001; // Extremely close to 0 to avoid floating
     scene.add(shadowPlane);
   }
 
-  // directional/point/spot; ambient would be silently skipped and spams warnings).
-  // A soft bottom-bounce light fills the role ambient would have played.
-  const key = new THREE.DirectionalLight(0xffffff, 1.70);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.50);
-  const rim = new THREE.DirectionalLight(0xffffff, 0.30);
-  const bnc = new THREE.DirectionalLight(0xffffff, 0.30);  // bottom bounce
-  key.position.set(2, 5, 3);
-  fill.position.set(-3, 2, -2);
-  rim.position.set(0.5, -1, -3);
-  bnc.position.set(0, -3, 1);
-  // Attaching target as a child at local (0,0,-1) lets GLTFExporter export the
-  // light direction from the node's local -Z axis (per the GLTF spec).
-  [key, fill, rim, bnc].forEach((light) => {
-    light.target.position.set(0, 0, -1);
-    light.add(light.target);
+  // ── Lighting Optimization ──────────────────────────────────────────────────
+  const key = new THREE.DirectionalLight(0xffffff, 2.0);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.8);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.4);
+  const bnc = new THREE.DirectionalLight(0xffffff, 0.4); 
+  
+  key.position.set(1, 4, 2);
+  fill.position.set(-2, 2, -1);
+  rim.position.set(0, 1, -3);
+  bnc.position.set(0, -2, 0); // Pure bottom fill to stop "black voids" under legs
+
+  [key, fill, rim, bnc].forEach((l) => {
+    l.target.position.set(0, 0, 0);
+    l.add(l.target);
+    scene.add(l);
   });
-  scene.add(key, fill, rim, bnc);
 
   return new Promise((resolve, reject) => {
     const exporter = new GLTFExporter();
     exporter.parse(
       scene,
       (result) => {
-        resolve(URL.createObjectURL(new Blob([result as ArrayBuffer], { type: 'model/gltf-binary' })));
+        const blob = new Blob([result as ArrayBuffer], { type: 'model/gltf-binary' });
+        resolve(URL.createObjectURL(blob));
       },
       (error: unknown) => reject(error),
-      { binary: true },
+      { binary: true, includeCustomExtensions: true },
     );
   });
 }

@@ -57,11 +57,13 @@ apiClient.interceptors.response.use(
 export const getImageUrl = (imagePath: string | null | undefined): string => {
   if (!imagePath) return '/placeholder-image.jpg';
   if (imagePath.startsWith('http')) return imagePath;
+  
+  const v = `?v=${new Date().getTime()}`;
   if (imagePath.startsWith('/uploads')) {
-    return `${API_BASE_URL}${imagePath}`;
+    return `${API_BASE_URL}${imagePath}${v}`;
   }
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${API_BASE_URL}${cleanPath}`;
+  return `${API_BASE_URL}${cleanPath}${v}`;
 };
 
 // Session management for anonymous tracking
