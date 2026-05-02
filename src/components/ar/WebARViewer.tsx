@@ -413,10 +413,11 @@ export function WebARViewer({
     [furnitureType, listingTitle, listingDescription]
   );
 
+  const subtypeText = (furnitureSubtype ?? '').replace(/_/g, ' ');
+
   const dims: FurnitureDimensions = useMemo(() => {
-    const subtypeText = (furnitureSubtype ?? '').replace(/_/g, ' ');
     return dimensionsCm ?? arAssets?.dimensions_cm ?? resolveSmartDimensions(fType, listingTitle, `${listingDescription ?? ''} ${subtypeText}`);
-  }, [dimensionsCm, arAssets?.dimensions_cm, fType, listingTitle, listingDescription, furnitureSubtype]);
+  }, [dimensionsCm, arAssets?.dimensions_cm, fType, listingTitle, listingDescription, subtypeText]);
 
   // ── Build (or fetch) the GLB ───────────────────────────────────────────────
   const prepareModel = useCallback(async () => {
