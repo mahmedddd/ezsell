@@ -350,25 +350,27 @@ async def create_listing(
                 if is_img_match and "duplicate_image" not in fraud_flags:
                     fraud_flags.append("duplicate_image")
 
-            # 6. Category Validation (CLIP AI)
-            abs_image_path = Path(__file__).parent.parent / image_url.lstrip('/')
-            is_match, confidence, best_label = await FraudProtectionService.validate_image_category(
-                str(abs_image_path), category
-            )
+            # 6. Category Validation (CLIP AI) - Check ALL uploaded images
+            all_image_paths = []
+            if image_url: all_image_paths.append(image_url)
+            all_image_paths.extend(additional_images_list)
             
-            if not is_match:
-                # Delete the uploaded images to save space
-                if image_url:
-                    try: (Path(__file__).parent.parent / image_url.lstrip('/')).unlink()
-                    except: pass
-                for img in additional_images_list:
-                    try: (Path(__file__).parent.parent / img.lstrip('/')).unlink()
-                    except: pass
-                    
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Image-Category Mismatch! You are trying to post in '{category}', but the AI detected '{best_label}'. Please upload a correct photo."
+            for img_path in all_image_paths:
+                abs_img_path = Path(__file__).parent.parent / img_path.lstrip('/')
+                is_match, confidence, best_label = await FraudProtectionService.validate_image_category(
+                    str(abs_img_path), category
                 )
+                
+                if not is_match:
+                    # Delete ALL uploaded images to save space
+                    for to_delete in all_image_paths:
+                        try: (Path(__file__).parent.parent / to_delete.lstrip('/')).unlink()
+                        except: pass
+                        
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Image-Category Mismatch! One of your images was detected as '{best_label}', which doesn't match the '{category}' category. Please upload correct photos."
+                    )
 
         if fraud_flags:
             approval_status = "pending" if approval_status != "rejected" else "rejected"
