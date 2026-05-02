@@ -5,12 +5,17 @@ import axios from 'axios';
 // - Phone on same WiFi (opens http://192.168.x.x:8080): auto-targets http://192.168.x.x:8000
 // - Production: set VITE_BACKEND_URL=https://api.yourdomain.com in .env
 export const API_BASE_URL: string = (() => {
+  // If we are in production (running on the EC2 IP), use a relative path
+  // This allows Nginx to handle the proxying to port 8000 internally.
+  if (import.meta.env.PROD) {
+    return '/api/v1';
+  }
+  
   const explicit = import.meta.env.VITE_BACKEND_URL as string | undefined;
-  // Only honour VITE_BACKEND_URL when it points to a real non-local server
   if (explicit && !explicit.includes('localhost') && !explicit.includes('127.0.0.1')) {
     return explicit;
   }
-  // On a phone / real IP, mirror the frontend host → backend port 8000
+  
   if (typeof window !== 'undefined'
     && window.location.hostname !== 'localhost'
     && window.location.hostname !== '127.0.0.1') {
