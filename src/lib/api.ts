@@ -60,8 +60,24 @@ apiClient.interceptors.response.use(
 // Helper to get image URL
 export const getImageUrl = (imagePath: string | null | undefined): string => {
   if (!imagePath) return '/placeholder-image.jpg';
+
+  // In production, rewrite any localhost URLs stored in the DB
+  // to relative paths so Nginx can serve them correctly.
+  if (import.meta.env.PROD && imagePath.startsWith('http')) {
+    try {
+      const url = new URL(imagePath);
+      // If the stored URL points to localhost, extract just the path
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        imagePath = url.pathname; // e.g. /uploads/listings/abc.jpg
+      } else {
+        // It's a real external URL (e.g. cloud storage), return as-is
+        return imagePath;
+      }
+    } catch { /* not a valid URL, fall through */ }
+  }
+
   if (imagePath.startsWith('http')) return imagePath;
-  
+
   const v = `?v=${new Date().getTime()}`;
   if (imagePath.startsWith('/uploads')) {
     return `${API_BASE_URL}${imagePath}${v}`;
