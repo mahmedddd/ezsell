@@ -58,8 +58,7 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
   if (!imagePath) return '/placeholder-image.jpg';
   if (imagePath.startsWith('http')) return imagePath;
   if (imagePath.startsWith('/uploads')) {
-    // Let Vite proxy handle /uploads requests to avoid CORS errors
-    return imagePath;
+    return `${API_BASE_URL}${imagePath}`;
   }
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
   return `${API_BASE_URL}${cleanPath}`;
