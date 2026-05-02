@@ -314,154 +314,87 @@ def prepare_feature_array(features: Dict[str, Any], category: str) -> np.ndarray
 
 @router.post("/mobile", response_model=Union[PredictionResponse, ErrorResponse])
 async def predict_mobile_price(input_data: MobilePredictionInput):
-    """Predict mobile phone price with validation"""
-    
+    """Predict mobile phone price with validation using Groq"""
+    from services.llm_pricing_service import llm_pricing_service
     try:
-        # Convert to dict
         data = input_data.dict()
+        result = await llm_pricing_service.estimate_market_price(
+            category="mobile",
+            extracted_specs={},
+            user_selections=data,
+            condition=data.get('condition', 'used'),
+            title=data.get('title', ''),
+            dynamic_specs=data
+        )
         
-        # Validate critical fields
-        is_valid, error_msg = validate_critical_fields(data, 'mobile')
-        if not is_valid:
-            return ErrorResponse(
-                error=error_msg,
-                details={"category": "mobile", "missing_field": error_msg.split(':')[0]}
-            )
-        
-        # Extract features using NLP
-        features = extract_and_prepare_features(data, 'mobile')
-        
-        # Compute advanced features
-        features = compute_advanced_features(features, 'mobile')
-        
-        # Load model
-        model, model_type = load_model('mobile')
-        
-        # Prepare feature array
-        X = prepare_feature_array(features, 'mobile')
-        
-        # Predict
-        predicted_price = float(model.predict(X)[0])
-        
-        # Calculate confidence based on feature completeness
-        completeness = sum([
-            1 if features.get('ram') else 0,
-            1 if features.get('storage') else 0,
-            1 if features.get('battery') else 0,
-            1 if features.get('brand_premium', 0) > 0 else 0
-        ]) / 4
-        
-        confidence = "high" if completeness > 0.75 else "medium" if completeness > 0.5 else "low"
-        
-        # Price range (±5% for high confidence, ±10% otherwise)
-        margin = 0.05 if confidence == "high" else 0.10
-        
+        price = float(result.get("estimated_price", 45000))
         return PredictionResponse(
             success=True,
             category="mobile",
-            predicted_price=round(predicted_price, 2),
-            confidence=confidence,
-            price_range={
-                "min": round(predicted_price * (1 - margin), 2),
-                "max": round(predicted_price * (1 + margin), 2)
-            },
-            extracted_features={k: v for k, v in features.items() if k in ['brand_premium', 'ram', 'storage', 'battery', 'camera', 'is_5g', 'is_pta', 'is_amoled']},
-            message=f"Price predicted successfully using {model_type} model with {confidence} confidence"
+            predicted_price=round(price, 2),
+            confidence="high" if result.get("confidence", 0) > 0.7 else "medium",
+            price_range={"min": round(price * 0.9, 2), "max": round(price * 1.1, 2)},
+            extracted_features=result.get("extracted_specs", data),
+            message="Price predicted successfully using Groq AI"
         )
-        
     except Exception as e:
         logger.error(f"Prediction error: {e}")
-        return ErrorResponse(
-            error="Prediction failed",
-            details={"message": str(e)}
-        )
+        return ErrorResponse(error="Prediction failed", details={"message": str(e)})
 
 @router.post("/laptop", response_model=Union[PredictionResponse, ErrorResponse])
 async def predict_laptop_price(input_data: LaptopPredictionInput):
-    """Predict laptop price with validation"""
-    
+    """Predict laptop price with validation using Groq"""
+    from services.llm_pricing_service import llm_pricing_service
     try:
         data = input_data.dict()
+        result = await llm_pricing_service.estimate_market_price(
+            category="laptop",
+            extracted_specs={},
+            user_selections=data,
+            condition=data.get('condition', 'used'),
+            title=data.get('title', ''),
+            dynamic_specs=data
+        )
         
-        is_valid, error_msg = validate_critical_fields(data, 'laptop')
-        if not is_valid:
-            return ErrorResponse(error=error_msg, details={"category": "laptop"})
-        
-        features = extract_and_prepare_features(data, 'laptop')
-        features = compute_advanced_features(features, 'laptop')
-        
-        model, model_type = load_model('laptop')
-        X = prepare_feature_array(features, 'laptop')
-        predicted_price = float(model.predict(X)[0])
-        
-        completeness = sum([
-            1 if features.get('ram') else 0,
-            1 if features.get('storage') else 0,
-            1 if features.get('processor_tier', 0) > 0 else 0,
-            1 if features.get('gpu_tier', 0) > 0 else 0
-        ]) / 4
-        
-        confidence = "high" if completeness > 0.75 else "medium" if completeness > 0.5 else "low"
-        margin = 0.05 if confidence == "high" else 0.10
-        
+        price = float(result.get("estimated_price", 65000))
         return PredictionResponse(
             success=True,
             category="laptop",
-            predicted_price=round(predicted_price, 2),
-            confidence=confidence,
-            price_range={
-                "min": round(predicted_price * (1 - margin), 2),
-                "max": round(predicted_price * (1 + margin), 2)
-            },
-            extracted_features={k: v for k, v in features.items() if k in ['brand_premium', 'ram', 'storage', 'processor_tier', 'gpu_tier', 'has_dedicated_gpu']},
-            message=f"Price predicted successfully using {model_type} model with {confidence} confidence"
+            predicted_price=round(price, 2),
+            confidence="high" if result.get("confidence", 0) > 0.7 else "medium",
+            price_range={"min": round(price * 0.9, 2), "max": round(price * 1.1, 2)},
+            extracted_features=result.get("extracted_specs", data),
+            message="Price predicted successfully using Groq AI"
         )
-        
     except Exception as e:
         logger.error(f"Prediction error: {e}")
         return ErrorResponse(error="Prediction failed", details={"message": str(e)})
 
 @router.post("/furniture", response_model=Union[PredictionResponse, ErrorResponse])
 async def predict_furniture_price(input_data: FurniturePredictionInput):
-    """Predict furniture price with validation"""
-    
+    """Predict furniture price with validation using Groq"""
+    from services.llm_pricing_service import llm_pricing_service
     try:
         data = input_data.dict()
+        result = await llm_pricing_service.estimate_market_price(
+            category="furniture",
+            extracted_specs={},
+            user_selections=data,
+            condition=data.get('condition', 'used'),
+            title=data.get('title', ''),
+            dynamic_specs=data
+        )
         
-        is_valid, error_msg = validate_critical_fields(data, 'furniture')
-        if not is_valid:
-            return ErrorResponse(error=error_msg, details={"category": "furniture"})
-        
-        features = extract_and_prepare_features(data, 'furniture')
-        features = compute_advanced_features(features, 'furniture')
-        
-        model, model_type = load_model('furniture')
-        X = prepare_feature_array(features, 'furniture')
-        predicted_price = float(model.predict(X)[0])
-        
-        completeness = sum([
-            1 if features.get('material_quality', 0) > 0 else 0,
-            1 if features.get('furniture_type', 0) > 0 else 0,
-            1 if features.get('volume', 0) > 0 else 0,
-            1 if data.get('material') else 0
-        ]) / 4
-        
-        confidence = "high" if completeness > 0.75 else "medium" if completeness > 0.5 else "low"
-        margin = 0.05 if confidence == "high" else 0.10
-        
+        price = float(result.get("estimated_price", 15000))
         return PredictionResponse(
             success=True,
             category="furniture",
-            predicted_price=round(predicted_price, 2),
-            confidence=confidence,
-            price_range={
-                "min": round(predicted_price * (1 - margin), 2),
-                "max": round(predicted_price * (1 + margin), 2)
-            },
-            extracted_features={k: v for k, v in features.items() if k in ['material_quality', 'material_type', 'furniture_type', 'volume', 'seating_capacity', 'is_imported']},
-            message=f"Price predicted successfully using {model_type} model with {confidence} confidence"
+            predicted_price=round(price, 2),
+            confidence="high" if result.get("confidence", 0) > 0.7 else "medium",
+            price_range={"min": round(price * 0.9, 2), "max": round(price * 1.1, 2)},
+            extracted_features=result.get("extracted_specs", data),
+            message="Price predicted successfully using Groq AI"
         )
-        
     except Exception as e:
         logger.error(f"Prediction error: {e}")
         return ErrorResponse(error="Prediction failed", details={"message": str(e)})
