@@ -49,9 +49,13 @@ export default function Signup() {
       toast({ title: "Code sent! 📬", description: "Check your email for the verification code" });
       setStep(2);
     } catch (error: any) {
-      let msg = "Failed to send verification code";
-      if (error.message?.includes("Email already registered")) msg = "This email is already registered. Please login instead.";
-      else if (error.message) msg = error.message;
+      const detail = error.response?.data?.detail || error.message || "";
+      let msg = "Failed to send verification code. Please try again.";
+      if (detail.toLowerCase().includes("already registered")) {
+        msg = "This email is already registered. Try signing in with Google or use a different email.";
+      } else if (detail) {
+        msg = detail;
+      }
       toast({ title: "Failed to send code", description: msg, variant: "destructive", duration: 7000 });
     } finally { setLoading(false); }
   };
