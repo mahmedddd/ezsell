@@ -934,17 +934,11 @@ export function WebARViewer({
                 {/* Model viewer */}
                 {(step === 'model_ready' || step === 'scanning' || step === 'placed') && (proceduralUrl || tripoUrl) && (
                   <div className="flex flex-col h-full">
-
                     {/* View Mode Toggle */}
                     <div className="px-5 pt-3 pb-1 bg-gradient-to-b from-gray-50 to-gray-50/50">
                       <div className="flex bg-gray-200/50 p-1 rounded-xl items-center shadow-inner">
                         <button
-                          onClick={() => {
-                            if (viewMode !== 'fast') {
-                              setModelLoading(true);
-                              setViewMode('fast');
-                            }
-                          }}
+                          onClick={() => setViewMode('fast')}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#143109]' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
@@ -952,12 +946,7 @@ export function WebARViewer({
                           <span className="text-[9px] font-medium opacity-70 leading-none">CV Generated</span>
                         </button>
                         <button
-                          onClick={() => {
-                            if (viewMode !== 'advanced') {
-                              setModelLoading(true);
-                              setViewMode('advanced');
-                            }
-                          }}
+                          onClick={() => setViewMode('advanced')}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#143109] text-white shadow' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
@@ -1014,14 +1003,21 @@ export function WebARViewer({
                         loading="eager"
                         onLoad={() => setModelLoading(false)}
                         onError={() => setModelLoading(false)}
+                        onProgress={(e: any) => {
+                          // Only show loading if progress is significant and not yet finished
+                          if (e.detail.totalProgress < 1 && e.detail.totalProgress > 0.1) {
+                            setModelLoading(true);
+                          }
+                        }}
                         style={{
                           width: '100%',
                           height: '100%',
                           minHeight: '38vh',
                           '--poster-color': 'transparent',
                           background: 'transparent',
-                          opacity: modelLoading ? 0 : 1,
-                          transition: 'opacity 0.3s ease-in-out',
+                          opacity: modelLoading ? 0.3 : 1,
+                          filter: modelLoading ? 'blur(4px)' : 'none',
+                          transition: 'all 0.4s ease-in-out',
                         } as any}
                       >
                         {/* Custom AR button inside model-viewer slot */}
