@@ -144,9 +144,9 @@ async def get_task_status(task_id: str) -> Dict[str, Any]:
             
         task_data = data["data"]
         
-        # Tripo V2 uses "success" but backend expects "SUCCEEDED"
-        status_mapped = task_data.get("status", "")
-        if status_mapped == "success":
+        # Tripo V2 uses lowercase statuses like "success", "failed", "queued", "running"
+        status_mapped = task_data.get("status", "").upper()
+        if status_mapped == "SUCCESS":
             status_mapped = "SUCCEEDED"
             
         # Tripo V2 stores the GLB url in output.model or output.pbr_model or result.model.url
