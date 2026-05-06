@@ -850,48 +850,53 @@ export function WebARViewer({
             <div className="w-10 h-1 rounded-full bg-gray-200" />
           </div>
 
-          {/* Header */}
-          <SheetHeader className="px-5 pb-3 border-b border-gray-100 shrink-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <SheetTitle className="text-base font-bold text-gray-900 leading-tight truncate">
+          {/* Clean Header */}
+          <SheetHeader className="px-5 pt-1 pb-4 shrink-0 border-b bg-white/80 backdrop-blur-md sticky top-0 z-20">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <SheetTitle className="text-xl font-bold tracking-tight text-gray-900 line-clamp-1">
                   {listingTitle}
                 </SheetTitle>
-                <SheetDescription className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                  <Ruler className="h-3 w-3" />
-                  {mLabel(dims)}
+                <SheetDescription className="flex items-center gap-1.5 mt-0.5">
+                  <Badge variant="secondary" className="bg-[#143109]/5 text-[#143109] border-none font-semibold px-2 py-0">
+                    {cmLabel(dims)}
+                  </Badge>
                   {price && (
-                    <>
-                      <span className="mx-1 text-gray-300">·</span>
-                      <span className="text-[#143109] font-semibold">
-                        PKR {price.toLocaleString()}
-                      </span>
-                    </>
+                    <span className="text-[#143109] font-bold text-sm">
+                      PKR {price.toLocaleString()}
+                    </span>
                   )}
                 </SheetDescription>
               </div>
-              <button
-                onClick={() => setIsSheetOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {detectedObjects.length > 0 && (
+                  <Badge variant="outline" className="hidden sm:flex animate-pulse bg-green-50 text-green-700 border-green-200 gap-1 text-[10px]">
+                    <Zap className="h-2.5 w-2.5" /> AI Scanning Active
+                  </Badge>
+                )}
+                <button
+                  onClick={() => setIsSheetOpen(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-all active:scale-95"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Tab switcher */}
-            <div className="flex gap-1 mt-3">
+            <div className="flex p-1 mt-4 bg-gray-100/80 rounded-xl">
               {(['ar', 'info'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`
-                    flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all
+                    flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-200
                     ${activeTab === tab
-                      ? 'bg-[#143109] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                      ? 'bg-white text-[#143109] shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}
                   `}
                 >
-                  {tab === 'ar' ? '📱 AR View' : 'ℹ️ Details'}
+                  {tab === 'ar' ? '📱 AR View' : 'ℹ️ Product Details'}
                 </button>
               ))}
             </div>
@@ -1147,10 +1152,80 @@ export function WebARViewer({
 
 
 
-                      {/* Desktop redirect hint */}
-                      {caps.isDesktop && caps.isChecked && (
-                        <DesktopQRHint url={productPageUrl} />
-                      )}
+                      {/* QR Section / Room Intelligence */}
+                      <div className="px-5 py-6 bg-white border-t border-gray-100 flex flex-col gap-5">
+                        {/* Scan on Phone Card (Desktop only hint) */}
+                        {caps.isDesktop && caps.isChecked && (
+                          <div className="bg-gradient-to-br from-[#143109]/5 to-transparent p-5 rounded-[24px] border border-[#143109]/10 relative overflow-hidden group">
+                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-[#143109]/5 rounded-full blur-2xl group-hover:bg-[#143109]/10 transition-all duration-700" />
+                            
+                            <div className="flex flex-col items-center text-center gap-3 relative z-10">
+                              <div className="bg-[#143109] p-3 rounded-2xl shadow-lg shadow-[#143109]/20 transform group-hover:scale-110 transition-transform duration-300">
+                                <QrCode className="h-7 w-7 text-white" />
+                              </div>
+                              
+                              <div>
+                                <h4 className="text-base font-bold text-gray-900">Scan on your phone</h4>
+                                <p className="text-xs text-gray-500 mt-1 max-w-[240px] leading-relaxed">
+                                  Experience this item in your actual room at full scale. No app download required.
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className="bg-white border-gray-200 text-gray-600 text-[10px] font-semibold">ARCore</Badge>
+                                <Badge variant="outline" className="bg-white border-gray-200 text-gray-600 text-[10px] font-semibold">ARKit</Badge>
+                              </div>
+
+                              <Button
+                                variant="link"
+                                className="text-[#143109] font-bold text-sm h-auto p-0 mt-2 gap-1.5"
+                                onClick={() => window.open(productPageUrl, '_blank')}
+                              >
+                                <ExternalLink className="h-4 w-4" /> Open product link
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Room Intelligence Section (Scanning result) */}
+                        <div className="bg-gray-50/80 p-5 rounded-[24px] border border-gray-100">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Room Intelligence</h4>
+                            {tfLoading ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                            ) : (
+                              <Zap className="h-3 w-3 text-[#143109]" />
+                            )}
+                          </div>
+
+                          {detectedObjects.length > 0 ? (
+                            <div className="space-y-4">
+                              <div className="flex flex-wrap gap-2">
+                                {detectedObjects.map((obj) => (
+                                  <Badge key={obj} variant="secondary" className="bg-white border-gray-100 text-gray-700 capitalize text-[11px] px-2.5 py-1">
+                                    {obj} detected
+                                  </Badge>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-3 p-3 bg-green-500/5 rounded-xl border border-green-500/10">
+                                <div className="bg-green-500 rounded-full p-1">
+                                  <CheckCircle2 className="h-3 w-3 text-white" />
+                                </div>
+                                <p className="text-[11px] text-green-700 font-medium">
+                                  Optimized floor tracking based on {detectedObjects.length} identified anchors.
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center py-4 text-center gap-2">
+                              <Scan className="h-6 w-6 text-gray-300" />
+                              <p className="text-[11px] text-gray-400 leading-relaxed max-w-[180px]">
+                                {caps.hasCamera ? 'Analyzing floor anchors and room lighting...' : 'AR tracking ready for mobile placement.'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       {/* AR launch button (for non-desktops) */}
                       {!caps.isDesktop && caps.isSupported && step === 'model_ready' && (
