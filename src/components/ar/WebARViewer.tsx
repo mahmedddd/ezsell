@@ -851,18 +851,18 @@ export function WebARViewer({
           </div>
 
           {/* Clean Header */}
-          <SheetHeader className="px-5 pt-1 pb-4 shrink-0 border-b bg-white/80 backdrop-blur-md sticky top-0 z-20">
+          <SheetHeader className="px-5 pt-3 pb-4 shrink-0 border-b bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <SheetTitle className="text-xl font-bold tracking-tight text-gray-900 line-clamp-1">
+                <SheetTitle className="text-2xl font-black tracking-tight text-gray-900 line-clamp-1">
                   {listingTitle}
                 </SheetTitle>
-                <SheetDescription className="flex items-center gap-1.5 mt-0.5">
-                  <Badge variant="secondary" className="bg-[#143109]/5 text-[#143109] border-none font-semibold px-2 py-0">
+                <SheetDescription className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary" className="bg-[#143109]/5 text-[#143109] border-none font-bold px-2.5 py-0.5 text-xs">
                     {cmLabel(dims)}
                   </Badge>
                   {price && (
-                    <span className="text-[#143109] font-bold text-sm">
+                    <span className="text-[#143109] font-black text-base">
                       PKR {price.toLocaleString()}
                     </span>
                   )}
@@ -870,16 +870,12 @@ export function WebARViewer({
               </div>
               <div className="flex items-center gap-2">
                 {detectedObjects.length > 0 && (
-                  <Badge variant="outline" className="hidden sm:flex animate-pulse bg-green-50 text-green-700 border-green-200 gap-1 text-[10px]">
+                  <Badge variant="outline" className="hidden sm:flex animate-pulse bg-green-50 text-green-700 border-green-200 gap-1 text-[10px] font-bold">
                     <Zap className="h-2.5 w-2.5" /> AI Scanning Active
                   </Badge>
                 )}
-                <button
-                  onClick={() => setIsSheetOpen(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-all active:scale-95"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                {/* The Sheet component adds its own X button by default, so we don't need a manual one here if it's already showing up. 
+                    However, if there are two, we should remove our manual one. */}
               </div>
             </div>
 
@@ -1156,32 +1152,39 @@ export function WebARViewer({
                       <div className="px-5 py-6 bg-white border-t border-gray-100 flex flex-col gap-5">
                         {/* Scan on Phone Card (Desktop only hint) */}
                         {caps.isDesktop && caps.isChecked && (
-                          <div className="bg-gradient-to-br from-[#143109]/5 to-transparent p-5 rounded-[24px] border border-[#143109]/10 relative overflow-hidden group">
-                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-[#143109]/5 rounded-full blur-2xl group-hover:bg-[#143109]/10 transition-all duration-700" />
+                          <div className="bg-gradient-to-br from-[#143109]/5 to-transparent p-6 rounded-[32px] border border-[#143109]/10 relative overflow-hidden group">
+                            <div className="absolute -right-8 -top-8 w-40 h-40 bg-[#143109]/5 rounded-full blur-3xl group-hover:bg-[#143109]/10 transition-all duration-700" />
                             
-                            <div className="flex flex-col items-center text-center gap-3 relative z-10">
-                              <div className="bg-[#143109] p-3 rounded-2xl shadow-lg shadow-[#143109]/20 transform group-hover:scale-110 transition-transform duration-300">
-                                <QrCode className="h-7 w-7 text-white" />
+                            <div className="flex flex-col items-center text-center gap-4 relative z-10">
+                              <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#143109]/10 border border-gray-100 transform group-hover:scale-105 transition-transform duration-300">
+                                <img 
+                                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(productPageUrl)}`} 
+                                  alt="Scan to view in AR" 
+                                  className="w-32 h-32"
+                                />
                               </div>
                               
-                              <div>
-                                <h4 className="text-base font-bold text-gray-900">Scan on your phone</h4>
-                                <p className="text-xs text-gray-500 mt-1 max-w-[240px] leading-relaxed">
-                                  Experience this item in your actual room at full scale. No app download required.
+                              <div className="space-y-1">
+                                <h4 className="text-lg font-black text-gray-900">Scan to Place in Your Room</h4>
+                                <p className="text-xs text-gray-500 max-w-[280px] leading-relaxed">
+                                  Point your phone camera at this QR code to switch to mobile AR mode.
                                 </p>
                               </div>
 
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className="bg-white border-gray-200 text-gray-600 text-[10px] font-semibold">ARCore</Badge>
-                                <Badge variant="outline" className="bg-white border-gray-200 text-gray-600 text-[10px] font-semibold">ARKit</Badge>
+                              <div className="flex items-center gap-2">
+                                <div className="flex -space-x-2">
+                                  <div className="w-6 h-6 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-[10px]">🍎</div>
+                                  <div className="w-6 h-6 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-[10px]">🤖</div>
+                                </div>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">iOS & Android Compatible</span>
                               </div>
 
                               <Button
                                 variant="link"
-                                className="text-[#143109] font-bold text-sm h-auto p-0 mt-2 gap-1.5"
+                                className="text-[#143109] font-bold text-sm h-auto p-0 mt-1 gap-1.5 opacity-60 hover:opacity-100"
                                 onClick={() => window.open(productPageUrl, '_blank')}
                               >
-                                <ExternalLink className="h-4 w-4" /> Open product link
+                                <ExternalLink className="h-4 w-4" /> Copy product link
                               </Button>
                             </div>
                           </div>
