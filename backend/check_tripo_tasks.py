@@ -3,7 +3,7 @@ import asyncio
 import os
 import json
 
-TRIPO_API_KEY = "tsk_z678EsT7eicLGc4wn4_z3EgZWBXJnTrYC1A1EGNVCtU"
+TRIPO_API_KEY = "tsk_j039Y1-yYJweV9gpppvVXcaIabOiXeTMhHQza6FNOg-"
 TASKS_URL = "https://api.tripo3d.ai/v2/openapi/task"
 
 async def check_recent_tasks():
