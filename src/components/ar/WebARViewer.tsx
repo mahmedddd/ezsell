@@ -532,6 +532,14 @@ export function WebARViewer({
             setAiStage('success');
             setTripoUrl(status.local_url);
             setViewMode('advanced');
+            
+            // Auto-switch to AR tab so user sees the new model
+            setTimeout(() => {
+              setActiveTab('ar');
+              // Reset aiStage so if they go back to details tab they see the generate button again (or it might be hidden if has_ar_assets updates)
+              setAiStage('idle');
+            }, 1500);
+
             toast({
               title: "3D Model Ready",
               description: "AI generation complete! You can now view the high-quality model.",
