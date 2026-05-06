@@ -387,6 +387,17 @@ export function WebARViewer({
   const [usdzUrl, setUsdzUrl] = useState<string | null>(getFullUrl(arAssets?.model_usdz_url));
   const [viewMode, setViewMode] = useState<'fast' | 'advanced'>(arAssets?.model_glb_url ? 'advanced' : 'fast');
 
+  // Keep tripoUrl and usdzUrl in sync if arAssets updates from the parent/API
+  useEffect(() => {
+    if (arAssets?.model_glb_url) {
+      setTripoUrl(getFullUrl(arAssets.model_glb_url));
+      setViewMode('advanced');
+    }
+    if (arAssets?.model_usdz_url) {
+      setUsdzUrl(getFullUrl(arAssets.model_usdz_url));
+    }
+  }, [arAssets]);
+
   const [arStatus, setArStatus] = useState<string>('');
   const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
   const [tfLoading, setTfLoading] = useState(false);
@@ -530,7 +541,12 @@ export function WebARViewer({
           if (status.local_url) {
             setAiProgress(100);
             setAiStage('success');
-            setTripoUrl(status.local_url);
+            
+            // Apply getFullUrl and add a cache-buster to ensure the model-viewer reloads the fresh file
+            const fullUrl = getFullUrl(status.local_url);
+            const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
+            setTripoUrl(bustedUrl);
+            
             setViewMode('advanced');
             setStep('model_ready');
             
