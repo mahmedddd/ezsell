@@ -526,18 +526,22 @@ export function WebARViewer({
         if (!isMounted) return;
 
         if (status.status === 'SUCCEEDED') {
-          setAiProgress(90);
-          setAiStage('downloading');
-
           // The backend already downloaded it to local_url
           if (status.local_url) {
+            setAiProgress(100);
+            setAiStage('success');
             setTripoUrl(status.local_url);
             setViewMode('advanced');
-            setAiStage('success');
-            setAiProgress(100);
             toast({
               title: "3D Model Ready",
               description: "AI generation complete! You can now view the high-quality model.",
+            });
+          } else {
+            setAiStage('error');
+            toast({
+              title: "AI Generation Failed",
+              description: "Model generated but failed to download to server. Please try again.",
+              variant: "destructive"
             });
           }
         } else if (status.status === 'FAILED') {

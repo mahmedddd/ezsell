@@ -149,10 +149,20 @@ async def get_task_status(task_id: str) -> Dict[str, Any]:
         if status_mapped == "success":
             status_mapped = "SUCCEEDED"
             
-        # V2 stores the GLB url in output.pbr_model or result.pbr_model.url
-        pbr_url = task_data.get("output", {}).get("pbr_model")
-        if not pbr_url and "result" in task_data:
-            pbr_url = task_data["result"].get("pbr_model", {}).get("url")
+        # Tripo V2 stores the GLB url in output.model or output.pbr_model or result.model.url
+        pbr_url = None
+        output = task_data.get("output", {})
+        result = task_data.get("result", {})
+        
+        if isinstance(output, dict):
+            pbr_url = output.get("model") or output.get("pbr_model") or output.get("base_model")
+            
+        if not pbr_url and isinstance(result, dict):
+            pbr_url = (
+                result.get("model", {}).get("url") or 
+                result.get("pbr_model", {}).get("url") or 
+                result.get("base_model", {}).get("url")
+            )
             
         model_urls = {"glb": pbr_url} if pbr_url else {}
 
