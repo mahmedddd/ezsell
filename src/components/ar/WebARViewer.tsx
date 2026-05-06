@@ -411,6 +411,7 @@ export function WebARViewer({
   const [aiProgress, setAiProgress] = useState(0);
   const [aiTaskId, setAiTaskId] = useState<string | null>(null);
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+  const [modelLoading, setModelLoading] = useState(false);
 
   const modelViewerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -938,7 +939,12 @@ export function WebARViewer({
                     <div className="px-5 pt-3 pb-1 bg-gradient-to-b from-gray-50 to-gray-50/50">
                       <div className="flex bg-gray-200/50 p-1 rounded-xl items-center shadow-inner">
                         <button
-                          onClick={() => setViewMode('fast')}
+                          onClick={() => {
+                            if (viewMode !== 'fast') {
+                              setModelLoading(true);
+                              setViewMode('fast');
+                            }
+                          }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#143109]' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
@@ -946,7 +952,12 @@ export function WebARViewer({
                           <span className="text-[9px] font-medium opacity-70 leading-none">CV Generated</span>
                         </button>
                         <button
-                          onClick={() => setViewMode('advanced')}
+                          onClick={() => {
+                            if (viewMode !== 'advanced') {
+                              setModelLoading(true);
+                              setViewMode('advanced');
+                            }
+                          }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#143109] text-white shadow' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
@@ -1001,12 +1012,16 @@ export function WebARViewer({
                         camera-orbit="-30deg 75deg auto"
                         interaction-prompt="auto"
                         loading="eager"
+                        onLoad={() => setModelLoading(false)}
+                        onError={() => setModelLoading(false)}
                         style={{
                           width: '100%',
                           height: '100%',
                           minHeight: '38vh',
                           '--poster-color': 'transparent',
                           background: 'transparent',
+                          opacity: modelLoading ? 0 : 1,
+                          transition: 'opacity 0.3s ease-in-out',
                         } as any}
                       >
                         {/* Custom AR button inside model-viewer slot */}
@@ -1052,6 +1067,18 @@ export function WebARViewer({
                         {/* Loading slot */}
                         <div slot="progress-bar" style={{ display: 'none' }} />
                       </model-viewer>
+
+                      {/* Transition Loading Overlay */}
+                      {modelLoading && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/60 backdrop-blur-sm animate-in fade-in duration-300">
+                          <div className="bg-white p-4 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3">
+                            <Loader2 className="h-6 w-6 animate-spin text-[#143109]" />
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                              Loading {viewMode === 'advanced' ? '3D Model' : 'Fast View'}...
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Enriched Scanning Overlay */}
                       {step === 'scanning' && (

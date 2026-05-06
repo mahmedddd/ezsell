@@ -77,16 +77,17 @@ uploads_path.mkdir(exist_ok=True)
 static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
 
-# Custom StaticFiles class to force CORS headers on images/assets
+# Custom StaticFiles class to force CORS headers and enable efficient caching
 class CORSStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
         response = await super().get_response(path, scope)
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+        
+        # Enable browser caching for 24 hours to speed up repeated views
+        # Still uses 'must-revalidate' to ensure the client checks with the server
+        response.headers["Cache-Control"] = "public, max-age=86400, must-revalidate"
         return response
 
 # Mount static and uploads directories with the CORS-enabled class
