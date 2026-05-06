@@ -383,7 +383,7 @@ export function WebARViewer({
   const [proceduralUrl, setProceduralUrl] = useState<string | null>(null);
   
   // These stay in sync with arAssets via useEffect or direct derivation
-  const tripoUrl = getFullUrl(arAssets?.model_glb_url);
+  const [tripoUrl, setTripoUrl] = useState<string | null>(getFullUrl(arAssets?.model_glb_url));
   const [usdzUrl, setUsdzUrl] = useState<string | null>(getFullUrl(arAssets?.model_usdz_url));
   const [viewMode, setViewMode] = useState<'fast' | 'advanced'>(arAssets?.model_glb_url ? 'advanced' : 'fast');
 
@@ -565,6 +565,14 @@ export function WebARViewer({
         }
       } catch (err) {
         console.error('[WebARViewer] Polling error:', err);
+        setAiStage('error');
+        toast({
+          title: "Polling Error",
+          description: "Lost connection to the generation server. Please try again.",
+          variant: "destructive"
+        });
+        // Stop polling
+        if (isMounted) clearInterval(interval);
       }
     };
 
