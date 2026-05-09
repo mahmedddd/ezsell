@@ -223,21 +223,7 @@ def get_conversation_messages(
         )
     ).order_by(Message.created_at.asc()).all()
     
-    # Populate listing images in responses
-    response_messages = []
-    for m in messages:
-        msg_resp = MessageResponse.from_orm(m)
-        if m.listing:
-            try:
-                images = json.loads(m.listing.images)
-                if images and len(images) > 0:
-                    msg_resp.listing_image = images[0]
-            except:
-                pass
-        response_messages.append(msg_resp)
-
     # Mark all received messages from this user as read
-    # (Regardless of listing, to keep unread counts consistent with UI)
     db.query(Message).filter(
         Message.sender_id == user_id,
         Message.receiver_id == current_user.id,
@@ -245,24 +231,34 @@ def get_conversation_messages(
     ).update({"is_read": True})
     db.commit()
     
-    # Prepare response with usernames
+    # Prepare response with usernames and listing metadata
     response_messages = []
-    for msg in messages:
-        sender = db.query(User).filter(User.id == msg.sender_id).first()
-        receiver = db.query(User).filter(User.id == msg.receiver_id).first()
-        listing = db.query(Listing).filter(Listing.id == msg.listing_id).first()
+    for m in messages:
+        sender = db.query(User).filter(User.id == m.sender_id).first()
+        receiver = db.query(User).filter(User.id == m.receiver_id).first()
+        listing = db.query(Listing).filter(Listing.id == m.listing_id).first() if m.listing_id else None
+        
+        listing_image = None
+        if listing and listing.images:
+            try:
+                images = json.loads(listing.images)
+                if images and len(images) > 0:
+                    listing_image = images[0]
+            except:
+                pass
         
         response_messages.append(MessageResponse(
-            id=msg.id,
-            content=msg.content,
-            sender_id=msg.sender_id,
-            receiver_id=msg.receiver_id,
-            listing_id=msg.listing_id,
-            is_read=msg.is_read,
-            created_at=msg.created_at,
+            id=m.id,
+            content=m.content,
+            sender_id=m.sender_id,
+            receiver_id=m.receiver_id,
+            listing_id=m.listing_id,
+            is_read=m.is_read,
+            created_at=m.created_at,
             sender_username=sender.username if sender else None,
             receiver_username=receiver.username if receiver else None,
-            listing_title=listing.title if listing else None
+            listing_title=listing.title if listing else None,
+            listing_image=listing_image
         ))
     
     return response_messages
