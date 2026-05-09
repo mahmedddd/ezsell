@@ -30,7 +30,7 @@ from services.image_to_3d import start_image_to_3d_task, upload_image_to_tripo
 
 # 3D Assets (AI & Manual)
 _IMAGE_TO_3D_AVAILABLE = True
-print("✅ [AR_ASSETS] AR Assets router initialized with AI support.")
+print("OK [AR_ASSETS] AR Assets router initialized with AI support.")
 
 router = APIRouter()
 

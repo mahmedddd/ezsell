@@ -224,17 +224,18 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
 
   // Validate title in real-time
   const validateTitle = async (category: string, title: string, description: string = '', material: string = '') => {
-    if (!title || title.length < 5) {
+    if (!title || title.trim().length < 3) {
       setTitleValidation(null);
       return;
     }
 
     const cacheKey = `${category}|${title.toLowerCase()}|${material.toLowerCase()}`;
-    const cachedResult = titleValidationCache.current[cacheKey];
-    if (cachedResult && cachedResult.message !== "Validation temporarily unavailable, proceeding.") {
-      setTitleValidation(cachedResult);
-      return;
-    }
+    // Bypassing frontend cache to ensure updated backend strict rules are hit every time
+    // const cachedResult = titleValidationCache.current[cacheKey];
+    // if (cachedResult && cachedResult.message !== "Validation temporarily unavailable, proceeding.") {
+    //   setTitleValidation(cachedResult);
+    //   return;
+    // }
 
     setValidatingTitle(true);
     try {
@@ -245,7 +246,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         material
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/validate-title?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/validate-title?${params}`, {
+        cache: 'no-store'
+      });
       if (response.ok) {
         const result = await response.json();
         // ONLY cache if it's a real validation result, not our emergency fallback
@@ -551,7 +554,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
   // Trigger Smart Field extraction and Title validation
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (formData.title && formData.title.trim().length >= 5) {
+      if (formData.title && formData.title.trim().length >= 3) {
         // Wrap in async IIFE to serialize the network requests and prevent Groq 429s (concurrency limit)
         (async () => {
           // First extract fields locally

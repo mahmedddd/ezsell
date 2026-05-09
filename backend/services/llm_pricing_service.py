@@ -14,66 +14,296 @@ class LLMPricingService:
         if not self.api_key:
             print("WARNING: GROQ_API_KEY not found in environment. LLM features will be disabled.")
         self.client = Groq(api_key=self.api_key) if self.api_key else None
-        self.model = "llama-3.1-8b-instant"
+        self.model = "llama-3.3-70b-versatile"
 
     async def validate_listing_content(self, category: str, title: str, description: str) -> Dict[str, Any]:
         """
         Validates the title and extracts specs using the LLM.
+        Stage 1: Comprehensive rule-based pre-filter (always runs, even without LLM).
+        Stage 2: LLM validation for nuanced cases.
         """
-        if not self.client:
-            return {"is_valid": True, "message": "LLM validation unavailable", "missing_fields": [], "suggested_title": title, "extracted_specs": {}}
+        # NOTE: Stage 1 runs BEFORE the LLM client check intentionally —
+        # so garbage titles are always rejected even during LLM downtime/rate-limiting.
 
-        prompt = f"""You are a listing moderator for OLX Pakistan — a used goods marketplace covering mobiles, laptops, and furniture.
-Your job: decide if the listing title is specific enough to identify a real product. You are NOT a spec validator.
+        # ─────────────────────────────────────────────────────────────────────
+        # STAGE 1 — Rule-Based Pre-Filter (fast, no LLM cost)
+        # ─────────────────────────────────────────────────────────────────────
+        import re as _re
+        t = title.strip().lower()
+        t_words = t.split()
+
+        # ── 1a. Too short ────────────────────────────────────────────────────
+        if len(t) < 4:
+            return {
+                "is_valid": False,
+                "message": "Title is too short. Please provide more detail.",
+                "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+            }
+
+        # ── 1b. Generic rubbish / junk phrases (universal) ──────────────────
+        JUNK_TITLES = {
+            "phone", "mobile", "smartphone", "cell phone", "handphone",
+            "laptop", "notebook", "computer", "pc", "macbook",
+            "furniture", "item", "product", "stuff", "things", "thing",
+            "for sale", "sale", "sell", "selling", "cheap", "urgent",
+            "good condition", "good phone", "good laptop", "nice phone",
+            "nice laptop", "nice sofa", "nice furniture", "nice item",
+            "nice smartphone", "nice mobile", "nice notebook", "nice computer",
+            "great phone", "great laptop", "great item", "great deal",
+            "best deal", "best price", "deal", "urgent sale", "quick sale",
+            "used phone", "used laptop", "used item", "used furniture",
+            "old phone", "old laptop", "old furniture", "old item",
+            "new phone", "new laptop", "new item", "brand new",
+            "contact me", "call me", "whatsapp", "test", "testing",
+            "hello", "hi", "please buy", "please", "asap",
+            "gaming laptop", "gaming notebook", "gaming computer",
+            "cheap phone", "cheap laptop", "cheap mobile",
+            "good notebook", "good computer", "good mobile",
+        }
+        if t in JUNK_TITLES:
+            return {
+                "is_valid": False,
+                "message": f"'{title}' is not a valid product title. Please include the specific brand and model/type.",
+                "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+            }
+
+        # ── 1c. Gibberish / random chars detection ───────────────────────────
+        # Reject purely numeric titles
+        digits_only_title = bool(_re.match(r'^[\d\s\-]+$', t))
+        if digits_only_title:
+            return {
+                "is_valid": False,
+                "message": "Title appears to be numeric/gibberish. Please include the product name/model.",
+                "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+            }
+        # Reject titles with ≤2 words and NO recognizable word ≥4 chars
+        # This catches 'abc 123', 'xyz 99', 'aa bb', etc.
+        meaningful_words = [w for w in t_words if len(w) >= 4 and _re.match(r'^[a-zA-Z]', w)]
+        
+        # Also catch words that are >=4 chars but mean nothing
+        JUNK_WORDS = {"test", "hello", "dummy", "testing", "check", "asdf"}
+        valid_words = [w for w in meaningful_words if w not in JUNK_WORDS]
+        
+        if len(t_words) <= 2 and not valid_words:
+            return {
+                "is_valid": False,
+                "message": "Title appears to be gibberish or too vague. Please include the product name/model.",
+                "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+            }
+
+        # ── 1b-extra. Adjective + category-word combos (not in exact JUNK_TITLES) ──
+        # Catches: "Amazing Laptop", "Excellent Notebook", "Powerful Computer"
+        CATEGORY_WORDS = {"phone","mobile","smartphone","handphone","laptop","notebook","computer","tablet"}
+        ADJECTIVE_PREFIXES = {
+            "good","nice","great","excellent","perfect","amazing","awesome",
+            "best","cheap","affordable","used","new","old","fast","powerful",
+            "slim","light","heavy","beautiful","working","urgent","quick",
+        }
+        if len(t_words) == 2 and t_words[0] in ADJECTIVE_PREFIXES and t_words[1] in CATEGORY_WORDS:
+            return {
+                "is_valid": False,
+                "message": f"'{title}' is too vague. Please include the brand and model, e.g. 'Samsung Galaxy S23' or 'Dell Inspiron 15'.",
+                "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+            }
+
+        # ── 1d. Single-word brand-only (mobile/laptop) ───────────────────────
+        MOBILE_BRANDS = {
+            "samsung","apple","iphone","nokia","huawei","oppo","vivo","realme",
+            "xiaomi","redmi","tecno","infinix","itel","qmobile","sony","motorola",
+            "google","pixel","oneplus","nothing","zte","alcatel","honor"
+        }
+        LAPTOP_BRANDS = {
+            "dell","hp","lenovo","acer","asus","apple","macbook","msi","razer",
+            "alienware","microsoft","surface","lg","toshiba","gateway","medion"
+        }
+        ALL_BRANDS = MOBILE_BRANDS | LAPTOP_BRANDS
+
+        if t in ALL_BRANDS:
+            brand_title = title.strip().title()
+            if category == "mobile":
+                return {
+                    "is_valid": False,
+                    "message": f"Please add a model name after '{brand_title}', e.g. '{brand_title} Galaxy S22'",
+                    "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+                }
+            elif category == "laptop":
+                return {
+                    "is_valid": False,
+                    "message": f"Please add a model/series after '{brand_title}', e.g. '{brand_title} Inspiron 15 i7'",
+                    "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+                }
+
+        # ── 1e. Category cross-contamination check ───────────────────────────
+        MOBILE_ONLY_KEYWORDS = {
+            "galaxy","note","redmi","realme","tecno","infinix","camon","spark",
+            "phantom","reno","poco","iphone","s23","s22","s21","s20","a54",
+            "12 pro","13 pro","14 pro","15 pro","nova","y series","f series"
+        }
+        LAPTOP_ONLY_KEYWORDS = {
+            "inspiron","thinkpad","latitude","ideapad","probook","elitebook",
+            "pavilion","vivobook","zenbook","aspire","nitro","rog","tuf",
+            "macbook air","macbook pro","xps","spectre","envy","omen",
+            "legion","swift","predator","chromebook","gram"
+        }
+        FURNITURE_KEYWORDS = {
+            "sofa","couch","settee","bed","wardrobe","almirah","closet",
+            "cupboard","dresser","desk","table","chair","stool","ottoman",
+            "cabinet","shelf","shelves","bookcase","dining","recliner",
+            "futon","armchair","loveseat","sectional","bunk","cot","mattress",
+            "almirah","sideboard","hutch","credenza","console","bench"
+        }
+        MOBILE_BRAND_WORDS = {
+            "samsung","apple","iphone","nokia","huawei","oppo","vivo",
+            "realme","xiaomi","redmi","tecno","infinix","itel","qmobile",
+            "oneplus","motorola","nothing","honor","pixel","google","sony"
+        }
+        LAPTOP_BRAND_WORDS = {
+            "dell","hp","lenovo","acer","asus","msi","razer",
+            "alienware","microsoft","surface","toshiba","lg"
+        }
+
+        title_has_mobile_brand  = any(b in t for b in MOBILE_BRAND_WORDS)
+        title_has_laptop_brand  = any(b in t for b in LAPTOP_BRAND_WORDS)
+        title_has_mobile_kw     = any(k in t for k in MOBILE_ONLY_KEYWORDS)
+        title_has_laptop_kw     = any(k in t for k in LAPTOP_ONLY_KEYWORDS)
+        title_has_furniture_kw  = any(k in t for k in FURNITURE_KEYWORDS)
+
+        if category == "furniture":
+            if (title_has_mobile_brand and title_has_mobile_kw) or title_has_laptop_kw:
+                return {
+                    "is_valid": False,
+                    "message": "This looks like a mobile/laptop listing, not furniture. Please enter a furniture title like 'King Size Bed' or '5-Seater Sofa'.",
+                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
+                }
+
+        if category == "mobile":
+            if title_has_furniture_kw and not title_has_mobile_brand:
+                return {
+                    "is_valid": False,
+                    "message": "This looks like a furniture listing, not a mobile. Please enter a mobile title like 'Samsung Galaxy S23' or 'iPhone 14 Pro'.",
+                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
+                }
+            if title_has_laptop_kw and not title_has_mobile_brand:
+                return {
+                    "is_valid": False,
+                    "message": "This looks like a laptop listing. Please enter a mobile title like 'Samsung Galaxy S23 256GB'.",
+                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
+                }
+
+        if category == "laptop":
+            if title_has_furniture_kw and not title_has_laptop_brand:
+                return {
+                    "is_valid": False,
+                    "message": "This looks like a furniture listing, not a laptop. Please enter a laptop title like 'Dell XPS 15 i7 12th Gen'.",
+                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
+                }
+            if title_has_mobile_kw and title_has_mobile_brand and not title_has_laptop_brand:
+                return {
+                    "is_valid": False,
+                    "message": "This looks like a mobile listing, not a laptop. Please enter a laptop title like 'HP ProBook 450 i5 11th Gen'.",
+                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
+                }
+
+        # ── 1f. Adjective-only / meaningless modifier junk (mobile/laptop) ───
+        if category in ("mobile", "laptop"):
+            ADJECTIVE_JUNK = {
+                "good","nice","great","excellent","perfect","amazing","awesome",
+                "best","cheap","affordable","low","price","high","end","urgent",
+                "must","sell","quick","fast","powerful","slim","light","heavy",
+                "big","small","mini","max","pro","ultra","plus","used","new","old",
+            }
+            non_adj_words = [
+                w for w in t_words
+                if w not in ADJECTIVE_JUNK and w not in ALL_BRANDS and len(w) >= 2
+            ]
+            meaningful = [
+                w for w in non_adj_words
+                if _re.search(r'\d', w) or len(w) >= 3
+            ]
+            if not meaningful:
+                example = "Samsung Galaxy S23 256GB" if category == "mobile" else "Dell XPS 15 i7 12th Gen"
+                return {
+                    "is_valid": False,
+                    "message": f"Title is too vague. Please include the brand and model, e.g. '{example}'.",
+                    "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+                }
+
+        # ── 1g. Furniture-specific: no furniture keyword + all adjectives → junk
+        if category == "furniture":
+            FURNITURE_ADJECTIVE_JUNK = {
+                "good","nice","great","cheap","affordable","best","old","new",
+                "big","small","large","medium","heavy","light","wooden","metal",
+                "imported","local","handmade","modern","classic","antique",
+                "used","brand","urgent","for","sale","selling",
+            }
+            if not title_has_furniture_kw:
+                all_junk = all(w in FURNITURE_ADJECTIVE_JUNK for w in t_words if len(w) > 2)
+                if all_junk:
+                    return {
+                        "is_valid": False,
+                        "message": "Please specify the type of furniture, e.g. 'King Size Bed', 'L-Shape Sofa', '6-Seater Dining Table'.",
+                        "missing_fields": [], "suggested_title": title, "extracted_specs": {}
+                    }
+
+        # ─────────────────────────────────────────────────────────────────────
+        # STAGE 2 — LLM Validation with strict category-aware prompt
+        # ─────────────────────────────────────────────────────────────────────
+        # If LLM is unavailable, Stage 1 already caught garbage; pass through for genuine titles
+        if not self.client:
+            return {"is_valid": True, "message": "LLM validation unavailable — rule-based checks passed.", "missing_fields": [], "suggested_title": title, "extracted_specs": {}}
+
+        prompt = f"""You are a STRICT listing moderator for OLX Pakistan (mobiles, laptops, furniture).
+Your job: decide if the listing title is a REAL, SPECIFIC product in the correct category.
 
 Category: {category}
 Title: "{title}"
 Description: "{description}"
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CORE PRINCIPLE — Think like a human moderator:
-Ask yourself: "Can a buyer look at this title and know exactly WHAT product is being sold?"
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY CATEGORY-MISMATCH RULE (highest priority):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ A mobile/phone title submitted under "laptop" or "furniture" → INVALID.
+❌ A laptop title submitted under "mobile" or "furniture" → INVALID.
+❌ A furniture title submitted under "mobile" or "laptop" → INVALID.
+❌ Generic sales phrases (e.g. "for sale", "cheap item", "good condition") → INVALID in ALL categories.
+❌ Adjective-only or modifier-only titles (e.g. "Nice Sofa", "Good Phone", "Cheap Laptop") → INVALID.
+❌ Titles with no product identity (random words, brand name alone, category word alone) → INVALID.
 
-RULE 1 — MOBILES:
-✅ VALID if title contains: a brand name + ANY model identifier (number, name, letter, variant, generation).
-   - "iPhone 6s", "iPhone 7", "iPhone 7 Plus", "iPhone 12 Pro Max" → all VALID
-   - "Samsung Galaxy S22", "Samsung Galaxy S22 256GB" → both VALID
-   - "Redmi Note 13", "Redmi 14", "Redmi 14 Pro" → all VALID  
-   - "Tecno Spark 20 Pro", "Infinix Hot 40", "QMobile Noir S8" → all VALID
-   - Any brand + any model number/name = VALID
-❌ INVALID: "iPhone" alone, "Samsung" alone, "Phone", "Mobile", "Smartphone", "Used Phone"
-   — Reject ONLY if there is literally ZERO model information alongside the brand.
-   — Specs like RAM/storage/color are NEVER required. "Samsung Galaxy S22" is fully valid even without "256GB".
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALIDATION RULES BY CATEGORY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-RULE 2 — LAPTOPS:
-✅ VALID if title contains: a brand + any model/series/processor hint.
-   - "Dell Inspiron 15", "HP ProBook 450", "Lenovo ThinkPad", "MacBook Air", "MacBook Air M1"
-   - "Asus TUF A15", "Acer Aspire i5", "Dell Latitude i7 12th Gen" → all VALID
-   - A series name alone (e.g. "Lenovo ThinkPad") is VALID — model number not required.
-❌ INVALID: "Dell", "HP", "Laptop", "Gaming Laptop", "Used Laptop" — brand-only or category-only.
+RULE 1 — MOBILES (category=mobile):
+✅ VALID: Brand name + ANY model identifier (number, series name, letter, variant).
+   Examples: "iPhone 6s", "Samsung Galaxy S22", "Redmi Note 13", "Tecno Spark 20 Pro", "QMobile Noir S8"
+❌ INVALID: Brand alone ("Samsung"), category word alone ("Phone", "Mobile"), adjective phrases ("Nice Phone", "Good Smartphone"), or any laptop/furniture-related terms without a phone brand+model.
 
-RULE 3 — FURNITURE:
-✅ VALID if title names any specific furniture piece or type (brand optional).
-   - "King Size Bed", "L-Shape Sofa", "5 Seater Sofa", "Chinioti Wardrobe", "Office Chair" → all VALID
-   - "Wooden Dining Table", "6 Seater Dining Set", "Steel Almirah" → all VALID
-   - Size descriptors (King/Queen/Double/Single, 5-Seater, L-Shape etc.) make generic types VALID.
-❌ INVALID: Just "Furniture", "Item", "Sofa" alone with no further descriptor, "Chair" alone.
-   — However "Office Chair", "Dining Chair", "Gaming Chair" ARE valid (type qualifier present).
+RULE 2 — LAPTOPS (category=laptop):
+✅ VALID: Brand name + model/series name or processor hint.
+   Examples: "Dell Inspiron 15", "HP ProBook 450", "Lenovo ThinkPad", "MacBook Air M1", "Asus TUF A15 Ryzen 5"
+❌ INVALID: Brand alone ("Dell"), category word alone ("Laptop", "Gaming Laptop"), adjective phrases ("Nice Laptop", "Fast Laptop"), or any mobile/furniture-related terms without a laptop brand+model.
 
-CRITICAL OVERRIDES (apply to ALL categories):
-- IF VALID but incomplete → set is_valid=true, put improvement hints in missing_fields ONLY.
-- NEVER fail a title for lacking specs (RAM, storage, color, size). Those come from spec dropdowns.
-- NEVER fail a title just because a model isn't in your training data — if it looks like a real product name, accept it.
-- Only reject truly unidentifiable titles: brand-only, category-word-only, or gibberish.
+RULE 3 — FURNITURE (category=furniture):
+✅ VALID: Furniture TYPE clearly named, with at least ONE qualifier (size, material, style, brand, seating count).
+   Examples: "King Size Bed", "L-Shape Sofa", "5 Seater Sofa", "Chinioti Wardrobe", "Office Chair", "Wooden Dining Table", "6 Seater Dining Set"
+   — "Office Chair", "Gaming Chair", "Dining Chair" ARE valid (type qualifier present).
+   — A bare furniture word with NO qualifier ("Sofa", "Bed", "Table", "Chair") is INVALID.
+❌ INVALID: Bare type word only, adjective-only ("Nice Sofa", "Old Chair", "Big Bed"), or any mobile/laptop-related titles.
 
-Return EXCLUSIVELY this JSON (no extra text):
+CRITICAL RULES (ALL categories):
+- NEVER approve a title that is clearly from a different category.
+- NEVER approve bare adjective phrases as product titles.
+- NEVER approve pure sales language with no product name.
+- If valid but could be more specific → set is_valid=true, add improvement hints in missing_fields only.
+- Specs (RAM, storage, color, size numbers) are NEVER required to pass validation.
+
+Return EXCLUSIVELY this JSON (no extra text, no markdown):
 {{
   "is_valid": boolean,
-  "message": "Title looks good!" or brief guidance like "Please add a model name, e.g. iPhone 14 Pro",
-  "missing_fields": ["Storage", "RAM"] (informational hints only — never reject based on these),
-  "suggested_title": "same as input if valid, or improved version if vague",
-  "extracted_specs": {{}} (any specs you can extract from title/description)
+  "message": "Title looks good! Ready to predict price." or specific rejection reason,
+  "missing_fields": [] or ["Model name", "Size qualifier"] (informational hints only),
+  "suggested_title": "same as input if valid, improved version if vague",
+  "extracted_specs": {{}} (any specs extractable from title/description)
 }}
 """
 
@@ -82,7 +312,7 @@ Return EXCLUSIVELY this JSON (no extra text):
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model,
                 response_format={"type": "json_object"},
-                temperature=0.1,
+                temperature=0.0,
             )
             result = json.loads(chat_completion.choices[0].message.content)
             return result
