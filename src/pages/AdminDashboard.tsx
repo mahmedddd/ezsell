@@ -373,7 +373,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-transparent">
 
       <div className="container mx-auto px-4 py-8">
-        <Button variant="ghost" onClick={() => navigate('/')} className="mb-4 text-[#143109] hover:bg-[#143109]/10">
+        <Button variant="ghost" onClick={() => navigate('/')} className="mb-4 text-[#2E6091] hover:bg-[#2E6091]/10">
           <Home className="mr-2 h-4 w-4" />
           Back to Home
         </Button>
@@ -1042,11 +1042,11 @@ export default function AdminDashboard() {
                               setIsUserSheetOpen(true);
                             }}
                           >
-                            <div className="w-8 h-8 rounded-full bg-[#143109] text-white flex items-center justify-center text-xs font-bold group-hover:ring-2 ring-[#143109]/20 transition-all">
+                            <div className="w-8 h-8 rounded-full bg-[#2E6091] text-white flex items-center justify-center text-xs font-bold group-hover:ring-2 ring-[#2E6091]/20 transition-all">
                               {ticket.user?.username[0].toUpperCase()}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-medium text-sm group-hover:text-[#143109] transition-colors">{ticket.user?.full_name || ticket.user?.username}</span>
+                              <span className="font-medium text-sm group-hover:text-[#2E6091] transition-colors">{ticket.user?.full_name || ticket.user?.username}</span>
                               <span className="text-[10px] text-gray-500">{ticket.user?.email}</span>
                               {ticket.user?.phone && <span className="text-[10px] text-blue-600 font-medium">{ticket.user.phone}</span>}
                             </div>
@@ -1132,7 +1132,7 @@ export default function AdminDashboard() {
         <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader className="mb-6">
             <SheetTitle className="text-2xl font-bold flex items-center gap-2">
-              <UserIcon className="h-6 w-6 text-[#143109]" />
+              <UserIcon className="h-6 w-6 text-[#2E6091]" />
               User Profile
             </SheetTitle>
             <SheetDescription>
@@ -1143,7 +1143,7 @@ export default function AdminDashboard() {
           {selectedUser && (
             <div className="space-y-6">
               <div className="flex flex-col items-center p-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                <div className="w-20 h-20 bg-[#143109] text-white rounded-full flex items-center justify-center text-3xl font-bold mb-4">
+                <div className="w-20 h-20 bg-[#2E6091] text-white rounded-full flex items-center justify-center text-3xl font-bold mb-4">
                   {selectedUser.username[0].toUpperCase()}
                 </div>
                 <h3 className="text-xl font-bold">{selectedUser.full_name || selectedUser.username}</h3>
@@ -1220,7 +1220,7 @@ export default function AdminDashboard() {
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader className="mb-6">
             <SheetTitle className="text-2xl font-bold flex items-center gap-2">
-              <Package className="h-6 w-6 text-[#143109]" />
+              <Package className="h-6 w-6 text-[#2E6091]" />
               Listing Details
             </SheetTitle>
             <SheetDescription>
@@ -1268,8 +1268,8 @@ export default function AdminDashboard() {
               </div>
 
               {/* AI Analysis Section */}
-              <div className="p-5 bg-[#143109]/5 rounded-2xl border-2 border-[#143109]/10 space-y-4">
-                <h4 className="font-bold text-[#143109] flex items-center gap-2">
+              <div className="p-5 bg-[#2E6091]/5 rounded-2xl border-2 border-[#2E6091]/10 space-y-4">
+                <h4 className="font-bold text-[#2E6091] flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   AI Market Analysis
                 </h4>
@@ -1280,7 +1280,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#143109]"
+                      className="h-full bg-[#2E6091]"
                       style={{ width: selectedListing.predicted_price ? `${Math.min((selectedListing.price / selectedListing.predicted_price) * 100, 100)}%` : '0%' }}
                     />
                   </div>
@@ -1326,7 +1326,7 @@ export default function AdminDashboard() {
               <div className="pt-6 border-t flex gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 border-[#143109] text-[#143109] hover:bg-[#143109]/10"
+                  className="flex-1 border-[#2E6091] text-[#2E6091] hover:bg-[#2E6091]/10"
                   onClick={() => navigate(`/product/${selectedListing.id}`)}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
@@ -1351,7 +1351,7 @@ export default function AdminDashboard() {
       {/* Admin Chat View Sheet */}
       <Sheet open={isAdminChatOpen} onOpenChange={setIsAdminChatOpen}>
         <SheetContent className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-hidden">
-          <SheetHeader className="p-6 bg-[#143109] text-white">
+          <SheetHeader className="p-6 bg-[#2E6091] text-white">
             <SheetTitle className="text-white flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               Conversation Investigation
@@ -1375,7 +1375,7 @@ export default function AdminDashboard() {
                   <div className={`rounded-2xl px-4 py-2.5 max-w-[90%] text-sm shadow-sm transition-all hover:shadow-md ${
                     msg.sender_username === currentChatInfo?.user1 
                     ? 'bg-white border border-gray-100 text-gray-800 rounded-tl-none' 
-                    : 'bg-[#143109] text-white rounded-tr-none shadow-[#143109]/10'
+                    : 'bg-[#2E6091] text-white rounded-tr-none shadow-[#2E6091]/10'
                   }`}>
                     {(() => {
                       try {
@@ -1394,7 +1394,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="p-4 border-t bg-white">
-            <Button onClick={() => setIsAdminChatOpen(false)} className="w-full bg-[#143109] h-12 rounded-xl font-bold">
+            <Button onClick={() => setIsAdminChatOpen(false)} className="w-full bg-[#2E6091] h-12 rounded-xl font-bold">
               Dismiss View
             </Button>
           </div>

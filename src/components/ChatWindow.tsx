@@ -278,7 +278,7 @@ export function ChatWindow({
               
               <Button 
                 onClick={dismissSafetyNotice}
-                className="w-full bg-[#143109] hover:bg-[#1e4d10] text-white h-12 rounded-2xl font-bold transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full bg-[#2E6091] hover:bg-[#1E4166] text-white h-12 rounded-2xl font-bold transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0"
               >
                 I Understand
               </Button>
@@ -287,7 +287,7 @@ export function ChatWindow({
         </div>
       )}
       {/* Header */}
-      <div className="p-4 border-b bg-[#143109] text-white flex items-center justify-between">
+      <div className="p-4 border-b bg-[#2E6091] text-white flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to={`/profile/${sellerId}`} className="hover:opacity-80 transition-opacity flex items-center gap-3">
             <div className="relative">
@@ -304,7 +304,7 @@ export function ChatWindow({
                 <Avatar seed={sellerName} size={40} className="border-2 border-white/20" />
               )}
               {isOnline && (
-                <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 border-2 border-[#143109] rounded-full shadow-sm" />
+                <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 border-2 border-[#2E6091] rounded-full shadow-sm" />
               )}
             </div>
             <div className="flex flex-col">
@@ -387,10 +387,10 @@ export function ChatWindow({
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="text-xs font-semibold text-gray-900 truncate">{listingTitle}</span>
-            {listingPrice && <span className="text-[11px] text-[#143109] font-bold">Rs {listingPrice.toLocaleString()}</span>}
+            {listingPrice && <span className="text-[11px] text-[#2E6091] font-bold">Rs {listingPrice.toLocaleString()}</span>}
           </div>
         </Link>
-        <Link to={`/product/${listingId}`} className="text-[#143109] hover:text-[#1e4d10] p-2">
+        <Link to={`/product/${listingId}`} className="text-[#2E6091] hover:text-[#1E4166] p-2">
           <ExternalLink className="w-4 h-4" />
         </Link>
       </div>
@@ -399,7 +399,7 @@ export function ChatWindow({
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         {loading ? (
           <div className="flex justify-center items-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-[#143109]" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#2E6091]" />
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
@@ -427,14 +427,14 @@ export function ChatWindow({
                   <Avatar seed={isSender ? (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).username : 'YOU') : sellerName} size={32} className="mt-1" />
                   <div className={`flex flex-col ${isSender ? 'items-end' : 'items-start'} max-w-[80%]`}>
                     {isOffer ? (
-                      <div className={`rounded-2xl px-4 py-3 border-2 ${isSender ? 'border-[#143109] bg-[#143109]/5' : 'border-[#AAAE7F] bg-[#AAAE7F]/10'}`}>
+                      <div className={`rounded-2xl px-4 py-3 border-2 ${isSender ? 'border-[#2E6091] bg-[#2E6091]/5' : 'border-[#4591CB] bg-[#4591CB]/10'}`}>
                         <div className="font-semibold text-xs text-gray-500 mb-1">OFFER MADE</div>
-                        <div className="text-lg font-bold text-[#143109]">
+                        <div className="text-lg font-bold text-[#2E6091]">
                           Rs {offerVal.toLocaleString()}
                         </div>
                       </div>
                     ) : (
-                      <div className={`rounded-2xl px-4 py-2.5 shadow-sm text-sm ${isSender ? 'bg-[#143109] text-white rounded-tr-none' : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'}`}>
+                      <div className={`rounded-2xl px-4 py-2.5 shadow-sm text-sm ${isSender ? 'bg-[#2E6091] text-white rounded-tr-none' : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'}`}>
                         <p className="whitespace-pre-wrap break-words">{displayContent}</p>
                       </div>
                     )}
@@ -463,9 +463,9 @@ export function ChatWindow({
       {/* Input area */}
       <div className="p-4 border-t bg-white">
         {isOffering && (
-          <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-dashed border-[#143109]/30 flex flex-col gap-2">
+          <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-dashed border-[#2E6091]/30 flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#143109]">MAKE AN OFFER</span>
+              <span className="text-xs font-bold text-[#2E6091]">MAKE AN OFFER</span>
               <Button variant="ghost" size="sm" onClick={() => setIsOffering(false)} className="h-6 w-6 p-0 text-gray-400 hover:text-red-500">
                 <X className="h-4 w-4" />
               </Button>
@@ -478,14 +478,14 @@ export function ChatWindow({
                   value={offerAmount}
                   onChange={(e) => setOfferAmount(e.target.value)}
                   placeholder="0.00"
-                  className="pl-10 h-10 rounded-lg border-gray-200 focus:border-[#143109]"
+                  className="pl-10 h-10 rounded-lg border-gray-200 focus:border-[#2E6091]"
                   autoFocus
                 />
               </div>
               <Button
                 onClick={handleSendMessage}
                 disabled={!offerAmount || sending}
-                className="bg-[#143109] text-white rounded-lg px-4"
+                className="bg-[#2E6091] text-white rounded-lg px-4"
               >
                 Send Offer
               </Button>
@@ -498,7 +498,7 @@ export function ChatWindow({
             <Button
               variant="outline"
               onClick={() => setIsOffering(true)}
-              className="rounded-full w-10 h-10 p-0 border-[#143109]/20 text-[#143109] hover:bg-[#143109]/5 flex-shrink-0"
+              className="rounded-full w-10 h-10 p-0 border-[#2E6091]/20 text-[#2E6091] hover:bg-[#2E6091]/5 flex-shrink-0"
             >
               <span className="text-xs font-bold">Rs</span>
             </Button>
@@ -510,13 +510,13 @@ export function ChatWindow({
               onKeyDown={(e) => e.key === 'Enter' && !isOffering && handleSendMessage(e)}
               placeholder={isBlocked ? "Unblock to send messages" : "Type a message..."}
               disabled={isBlocked}
-              className="rounded-full bg-gray-100 border-none h-10 px-4 focus-visible:ring-1 focus-visible:ring-[#143109] disabled:opacity-50"
+              className="rounded-full bg-gray-100 border-none h-10 px-4 focus-visible:ring-1 focus-visible:ring-[#2E6091] disabled:opacity-50"
             />
           </div>
           <Button
             onClick={handleSendMessage}
             disabled={(!newMessage.trim() && !isOffering) || sending || isBlocked}
-            className="rounded-full w-10 h-10 p-0 bg-[#143109] hover:bg-[#1e4d10] flex-shrink-0"
+            className="rounded-full w-10 h-10 p-0 bg-[#2E6091] hover:bg-[#1E4166] flex-shrink-0"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>

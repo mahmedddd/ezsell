@@ -140,7 +140,7 @@ export default function Favorites() {
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="text-[#143109] hover:bg-[#143109]/10"
+            className="text-[#2E6091] hover:bg-[#2E6091]/10"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
@@ -148,7 +148,7 @@ export default function Favorites() {
           <Button
             variant="ghost"
             onClick={() => navigate('/')}
-            className="text-[#143109] hover:bg-[#143109]/10"
+            className="text-[#2E6091] hover:bg-[#2E6091]/10"
           >
             <Home className="mr-2 h-4 w-4" />
             Home
@@ -171,7 +171,7 @@ export default function Favorites() {
         {/* Loading State */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin text-[#143109] mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-[#2E6091] mb-4" />
             <p className="text-slate-600">Loading your saved listings...</p>
           </div>
         ) : favorites.length === 0 ? (
@@ -187,7 +187,7 @@ export default function Favorites() {
               </p>
               <Button
                 onClick={() => navigate('/listings')}
-                className="bg-[#143109] hover:bg-[#1a4a0d]"
+                className="bg-[#2E6091] hover:bg-[#1a4a0d]"
               >
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Browse Listings
@@ -206,7 +206,7 @@ export default function Favorites() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {favorites.map((listing) => (
                 <Link key={listing.id} to={`/product/${listing.id}`}>
-                  <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer h-full relative overflow-hidden border-2 border-transparent hover:border-[#143109]/20">
+                  <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer h-full relative overflow-hidden border-2 border-transparent hover:border-[#2E6091]/20">
                     {/* Remove Button */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -266,7 +266,7 @@ export default function Favorites() {
 
                       {/* Title & Category */}
                       <div className="flex justify-between items-start gap-2 mb-1">
-                        <CardTitle className="text-lg line-clamp-1 group-hover:text-[#143109] transition-colors">
+                        <CardTitle className="text-lg line-clamp-1 group-hover:text-[#2E6091] transition-colors">
                           {listing.title}
                         </CardTitle>
                         <Badge variant="secondary" className="shrink-0 capitalize">
@@ -283,7 +283,7 @@ export default function Favorites() {
                     <CardContent className="pt-0">
                       {/* Price & Condition */}
                       <div className="flex justify-between items-center mb-3">
-                        <span className="text-xl font-bold text-[#143109]">
+                        <span className="text-xl font-bold text-[#2E6091]">
                           PKR {listing.price.toLocaleString()}
                         </span>
                         <Badge variant="outline" className="shrink-0 bg-amber-50 text-amber-700 border-amber-200">

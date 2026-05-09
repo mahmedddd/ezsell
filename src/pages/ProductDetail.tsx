@@ -232,7 +232,7 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-full border-4 border-[#143109]/20 border-t-[#143109] animate-spin" />
+          <div className="w-12 h-12 rounded-full border-4 border-[#2E6091]/20 border-t-[#2E6091] animate-spin" />
           <p className="text-gray-500 text-sm">Loading…</p>
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function ProductDetail() {
         <div className="text-center">
           <ShoppingBag className="mx-auto h-12 w-12 text-gray-400 mb-3" />
           <p className="text-gray-600 font-semibold">Listing not found</p>
-          <Button onClick={() => navigate('/')} className="mt-4 bg-[#143109]">Back to Home</Button>
+          <Button onClick={() => navigate('/')} className="mt-4 bg-[#2E6091]">Back to Home</Button>
         </div>
       </div>
     );
@@ -306,7 +306,7 @@ export default function ProductDetail() {
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {allImages.map((img: string, i: number) => (
                   <button key={i} onClick={() => setSelectedImageIndex(i)}
-                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${i === selectedImageIndex ? 'border-[#143109] ring-2 ring-[#143109]/20 scale-105' : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'}`}>
+                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${i === selectedImageIndex ? 'border-[#2E6091] ring-2 ring-[#2E6091]/20 scale-105' : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'}`}>
                     <SmartImage
                       src={getImageUrl(img)!}
                       alt={`Thumb ${i + 1}`}
@@ -329,25 +329,25 @@ export default function ProductDetail() {
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-2xl md:text-3xl leading-tight">{listing.title}</CardTitle>
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      <Badge className="bg-[#143109]/10 text-[#143109] border-0">{listing.category}</Badge>
+                      <Badge className="bg-[#2E6091]/10 text-[#2E6091] border-0">{listing.category}</Badge>
                       <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
                         {listing.condition}/10 - {getConditionLabel(listing.condition)}
                       </Badge>
                       {listing.is_sold && <Badge variant="destructive">Sold</Badge>}
                     </div>
                   </div>
-                  <div className="text-3xl md:text-4xl font-extrabold text-[#143109] break-words overflow-hidden max-w-full">
+                  <div className="text-3xl md:text-4xl font-extrabold text-[#2E6091] break-words overflow-hidden max-w-full">
                     {formatCurrency(listing.price)}
                   </div>
                 </div>
                 <CardDescription className="text-sm leading-relaxed mt-2 text-gray-600">{listing.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 pt-0">
-                {listing.location && <div className="flex items-center text-sm text-gray-500 gap-2"><MapPin className="h-4 w-4 text-[#143109] shrink-0" />{listing.location}</div>}
-                <div className="flex items-center text-sm text-gray-500 gap-2"><Eye className="h-4 w-4 text-[#143109] shrink-0" />{listing.views} views</div>
+                {listing.location && <div className="flex items-center text-sm text-gray-500 gap-2"><MapPin className="h-4 w-4 text-[#2E6091] shrink-0" />{listing.location}</div>}
+                <div className="flex items-center text-sm text-gray-500 gap-2"><Eye className="h-4 w-4 text-[#2E6091] shrink-0" />{listing.views} views</div>
                 <div className="p-3 bg-gray-50 rounded-xl flex items-center gap-3 mt-2">
-                  <div className="w-9 h-9 rounded-full bg-[#143109]/10 flex items-center justify-center shrink-0">
-                    <span className="text-[#143109] font-bold text-sm">{(listing.owner?.username || 'U')[0].toUpperCase()}</span>
+                  <div className="w-9 h-9 rounded-full bg-[#2E6091]/10 flex items-center justify-center shrink-0">
+                    <span className="text-[#2E6091] font-bold text-sm">{(listing.owner?.username || 'U')[0].toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{listing.owner?.username || 'User'}{listing.owner?.full_name && ` · ${listing.owner.full_name}`}</p>
@@ -382,20 +382,20 @@ export default function ProductDetail() {
                   <div className="mt-4 p-4 bg-green-50 rounded-2xl border border-green-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-xl shadow-sm">
-                        <svg className="w-5 h-5 text-[#143109]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#2E6091]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h2.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                       </div>
                       <div>
                         <p className="text-[10px] uppercase tracking-wider font-bold text-green-700">Seller Phone</p>
-                        <p className="text-lg font-bold text-[#143109]">
+                        <p className="text-lg font-bold text-[#2E6091]">
                           {showPhone || isOwner ? listing.owner.phone : `${listing.owner.phone.substring(0, 4)}XXXXXXX`}
                         </p>
                       </div>
                     </div>
                     <Button
                       size="sm"
-                      className="bg-[#143109] hover:bg-[#1e4d10] text-white rounded-lg h-9 px-4"
+                      className="bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-lg h-9 px-4"
                       onClick={handleCallAction}
                     >
                       {showPhone || isOwner ? 'Call Now' : 'Show Contact'}
@@ -428,11 +428,11 @@ export default function ProductDetail() {
             <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
               <CardContent className="pt-4 pb-4 space-y-3">
                 {isOwner ? (
-                  <Button className="w-full bg-[#143109] hover:bg-[#1e4d10] text-white rounded-xl py-5 text-base font-semibold" onClick={() => navigate(`/edit-listing/${listing.id}`)}>
+                  <Button className="w-full bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-xl py-5 text-base font-semibold" onClick={() => navigate(`/edit-listing/${listing.id}`)}>
                     <MessageCircle className="mr-2 h-5 w-5" />Edit Listing
                   </Button>
                 ) : (
-                  <Button className="w-full bg-[#143109] hover:bg-[#1e4d10] text-white rounded-xl py-5 text-base font-semibold" disabled={listing.is_sold} onClick={() => setShowChat(true)}>
+                  <Button className="w-full bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-xl py-5 text-base font-semibold" disabled={listing.is_sold} onClick={() => setShowChat(true)}>
                     <MessageCircle className="mr-2 h-5 w-5" />{listing.is_sold ? 'Sold Out' : 'Chat with Seller'}
                   </Button>
                 )}
@@ -477,11 +477,11 @@ export default function ProductDetail() {
             <Heart className={`h-5 w-5 ${isFavorited ? 'fill-current' : ''}`} />
           </button>
           {isOwner ? (
-            <button onClick={() => navigate(`/edit-listing/${listing.id}`)} className="flex-1 flex items-center justify-center gap-2 bg-[#143109] hover:bg-[#1e4d10] active:scale-[0.98] text-white font-bold text-sm py-3 rounded-2xl transition-all shadow-lg shadow-[#143109]/20">
+            <button onClick={() => navigate(`/edit-listing/${listing.id}`)} className="flex-1 flex items-center justify-center gap-2 bg-[#2E6091] hover:bg-[#1E4166] active:scale-[0.98] text-white font-bold text-sm py-3 rounded-2xl transition-all shadow-lg shadow-[#2E6091]/20">
               <MessageCircle className="h-5 w-5" />Edit Listing
             </button>
           ) : (
-            <button disabled={listing.is_sold} onClick={() => setShowChat(true)} className="flex-1 flex items-center justify-center gap-2 bg-[#143109] hover:bg-[#1e4d10] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-sm py-3 rounded-2xl transition-all shadow-lg shadow-[#143109]/20">
+            <button disabled={listing.is_sold} onClick={() => setShowChat(true)} className="flex-1 flex items-center justify-center gap-2 bg-[#2E6091] hover:bg-[#1E4166] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-sm py-3 rounded-2xl transition-all shadow-lg shadow-[#2E6091]/20">
               <MessageCircle className="h-5 w-5" />{listing.is_sold ? 'Sold Out' : 'Chat with Seller'}
             </button>
           )}
@@ -492,8 +492,8 @@ export default function ProductDetail() {
       {similarListings.length > 0 && (
         <div className="container mx-auto px-4 py-12 max-w-6xl">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[#143109]">Similar Items You Might Like</h2>
-            <Link to="/" className="text-sm font-semibold text-[#143109] hover:underline">Explore More</Link>
+            <h2 className="text-2xl font-bold text-[#2E6091]">Similar Items You Might Like</h2>
+            <Link to="/" className="text-sm font-semibold text-[#2E6091] hover:underline">Explore More</Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {similarListings.map((rec: any, idx: number) => {
@@ -513,15 +513,15 @@ export default function ProductDetail() {
                       <div className="absolute top-2 left-2 flex flex-col gap-1">
                         <Badge className="bg-white/90 text-black text-[10px] font-bold px-1.5 py-0 border-0 shadow-sm w-fit">{rec.score > 0.8 ? 'Best Match' : rec.recommendation_type}</Badge>
                         {item.location && (
-                          <Badge className="bg-[#143109]/90 text-white text-[9px] font-bold px-1.5 py-0 border-0 shadow-sm w-fit">
+                          <Badge className="bg-[#2E6091]/90 text-white text-[9px] font-bold px-1.5 py-0 border-0 shadow-sm w-fit">
                             📍 {item.location.split(',')[0]}
                           </Badge>
                         )}
                       </div>
                     </div>
                     <CardContent className="p-2.5">
-                      <p className="text-xs font-bold text-[#143109] mb-1">PKR {item.price?.toLocaleString()}</p>
-                      <h3 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight group-hover:text-[#143109]">{item.title}</h3>
+                      <p className="text-xs font-bold text-[#2E6091] mb-1">PKR {item.price?.toLocaleString()}</p>
+                      <h3 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight group-hover:text-[#2E6091]">{item.title}</h3>
                     </CardContent>
                   </Card>
                 </Link>

@@ -62,7 +62,7 @@ export default function EditListing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc]">
       <div className="container mx-auto px-4 py-8">
-        <Button variant="ghost" onClick={() => navigate(`/product/${id}`)} className="mb-4 text-[#143109] hover:bg-[#143109]/10">
+        <Button variant="ghost" onClick={() => navigate(`/product/${id}`)} className="mb-4 text-[#2E6091] hover:bg-[#2E6091]/10">
           <Home className="mr-2 h-4 w-4" />
           Back to Listing
         </Button>

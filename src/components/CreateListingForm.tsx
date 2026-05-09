@@ -329,7 +329,7 @@ export function CreateListingForm() {
 
   return (
     <Card className="max-w-2xl mx-auto">
-      <CardHeader className="bg-gradient-to-r from-[#143109] to-[#AAAE7F] text-white">
+      <CardHeader className="bg-gradient-to-r from-[#2E6091] to-[#4591CB] text-white">
         <CardTitle className="text-2xl">Create New Listing</CardTitle>
       </CardHeader>
       <CardContent className="mt-6">
@@ -337,7 +337,7 @@ export function CreateListingForm() {
           {/* Image Upload */}
           <div className="space-y-2">
             <Label>Product Image (Required) *</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#143109] transition-colors">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#2E6091] transition-colors">
               {imagePreview ? (
                 <div className="space-y-4">
                   <img
@@ -579,7 +579,7 @@ export function CreateListingForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#143109] hover:bg-[#AAAE7F]"
+            className="w-full bg-[#2E6091] hover:bg-[#4591CB]"
             size="lg"
           >
             {loading ? (

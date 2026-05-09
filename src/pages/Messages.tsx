@@ -128,10 +128,10 @@ export default function Messages() {
 
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
-          <Button variant="ghost" onClick={() => navigate('/')} className="text-[#143109] hover:bg-[#143109]/10">
+          <Button variant="ghost" onClick={() => navigate('/')} className="text-[#2E6091] hover:bg-[#2E6091]/10">
             <Home className="mr-2 h-4 w-4" /> Back to Home
           </Button>
-          <div className="flex items-center gap-2 text-[#143109]">
+          <div className="flex items-center gap-2 text-[#2E6091]">
             <MessageCircle className="h-6 w-6" />
             <h1 className="text-2xl font-bold">Messages Dashboard</h1>
             {totalUnread > 0 && (
@@ -153,7 +153,7 @@ export default function Messages() {
 
             {loading ? (
               <div className="flex justify-center items-center flex-1">
-                <Loader2 className="h-8 w-8 animate-spin text-[#143109]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#2E6091]" />
               </div>
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-1 text-gray-400">
@@ -169,7 +169,7 @@ export default function Messages() {
                       <div
                         key={conversation.user_id}
                         onClick={() => setSelectedChat(conversation)}
-                        className={`p-4 cursor-pointer transition-all hover:bg-[#143109]/5 group relative ${isActive ? 'bg-[#143109]/10 border-l-4 border-l-[#143109]' : 'border-l-4 border-transparent'
+                        className={`p-4 cursor-pointer transition-all hover:bg-[#2E6091]/5 group relative ${isActive ? 'bg-[#2E6091]/10 border-l-4 border-l-[#2E6091]' : 'border-l-4 border-transparent'
                           }`}
                       >
                         <div className="flex gap-4 items-center">
@@ -191,7 +191,7 @@ export default function Messages() {
 
                           <div className="flex-1 min-w-0 pr-10">
                             <div className="flex justify-between items-baseline mb-0.5">
-                              <h3 className={`font-semibold truncate ${isActive ? 'text-[#143109]' : 'text-gray-900'}`}>
+                              <h3 className={`font-semibold truncate ${isActive ? 'text-[#2E6091]' : 'text-gray-900'}`}>
                                 {conversation.username}
                               </h3>
                               <span className="text-xs text-gray-400 font-medium whitespace-nowrap ml-2">
@@ -211,7 +211,7 @@ export default function Messages() {
                             </div>
 
                             {conversation.unread_count > 0 && (
-                              <Badge className="bg-[#AAAE7F] text-white mt-2 absolute top-1/2 -translate-y-1/2 right-12 shadow-sm border-0">
+                              <Badge className="bg-[#4591CB] text-white mt-2 absolute top-1/2 -translate-y-1/2 right-12 shadow-sm border-0">
                                 {conversation.unread_count}
                               </Badge>
                             )}

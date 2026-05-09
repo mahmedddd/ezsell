@@ -148,12 +148,12 @@ const Navigation = () => {
   const NavLink = ({ to, icon: Icon, label, badge }: { to: string; icon: any; label: string; badge?: number }) => (
     <Link to={to}>
       <button
-        className={`group relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${isActive(to)
-          ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
-          : "text-foreground/70 hover:text-foreground hover:bg-foreground/5"
+        className={`group relative flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${isActive(to)
+          ? "bg-gradient-to-r from-primary to-primary-light text-white shadow-lg shadow-primary/30 scale-105"
+          : "text-foreground/70 hover:text-foreground hover:bg-black/5"
           }`}
       >
-        <Icon className="w-4 h-4 flex-shrink-0" />
+        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive(to) ? 'animate-pulse' : ''}`} />
         <span className="hidden lg:inline">{label}</span>
         {badge && badge > 0 && (
           <span className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-black text-white shadow-sm ring-2 ring-white ${isActive(to) ? "bg-white text-primary" : "bg-red-500"
@@ -179,30 +179,7 @@ const Navigation = () => {
 
             {/* Left: browser-back + logo */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Browser nav (desktop only) */}
-              <div className="hidden sm:flex items-center gap-0.5 mr-1">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="h-8 w-8 flex items-center justify-center rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-all"
-                  title="Go Back"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => navigate(1)}
-                  className="h-8 w-8 flex items-center justify-center rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-all"
-                  title="Go Forward"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="h-8 w-8 flex items-center justify-center rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-all"
-                  title="Refresh"
-                >
-                  <RotateCw className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {/* Removed Browser Nav for cleaner futuristic look */}
 
               {/* Logo */}
               <Link to="/" className="flex items-center gap-2 group">
@@ -210,7 +187,7 @@ const Navigation = () => {
                   <img
                     src="/images/logo.jpg"
                     alt="EzSell"
-                    className="h-9 w-auto rounded-xl ring-2 ring-transparent group-hover:ring-primary/30 transition-all duration-200 shadow-sm"
+                    className="h-10 w-auto rounded-xl ring-2 ring-white/50 group-hover:ring-primary/40 group-hover:shadow-[0_0_15px_rgba(46,96,145,0.4)] transition-all duration-300 shadow-sm"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                       (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove("hidden");
@@ -229,14 +206,14 @@ const Navigation = () => {
 
             {/* Centre: main nav links (logged in, md+) */}
             {token && (
-              <div className="hidden md:flex items-center gap-1">
+              <div className="hidden md:flex items-center gap-1.5 bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.1)] p-1.5 rounded-full mx-2 lg:mx-6 transition-all duration-500 hover:bg-white/80 hover:shadow-[0_8px_32px_-8px_rgba(46,96,145,0.2)]">
                 <NavLink to="/" icon={Home} label="Home" />
 
                 {/* Categories dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="group flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-foreground/70 hover:text-foreground hover:bg-foreground/5 transition-all duration-200">
-                      <Grid className="w-4 h-4" />
+                    <button className="group flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-foreground/70 hover:text-foreground hover:bg-black/5 transition-all duration-300">
+                      <Grid className="w-4 h-4 group-hover:text-primary transition-colors" />
                       <span className="hidden lg:inline">Categories</span>
                     </button>
                   </DropdownMenuTrigger>
@@ -268,15 +245,15 @@ const Navigation = () => {
             )}
 
             {/* Centre-right: search (hidden on mobile, shown md+) */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-xs hidden md:block">
+            <form onSubmit={handleSearch} className="flex-1 max-w-sm hidden lg:block">
               <div className="relative group premium-input">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
                 <Input
                   type="text"
-                  placeholder="Search anything..."
+                  placeholder="Search the marketplace..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10 rounded-xl border-border/60 bg-white/70 focus:bg-white text-sm transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                  className="pl-11 h-11 rounded-full border-white/70 bg-white/60 backdrop-blur-sm focus:bg-white text-sm font-medium transition-all duration-300 focus:border-primary/50 focus:ring-4 focus:ring-primary/15 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] hover:bg-white/80"
                 />
               </div>
             </form>
@@ -286,10 +263,10 @@ const Navigation = () => {
               {/* SELL CTA */}
               <Link to="/create-listing">
                 <Button
-                  className="hidden sm:flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white font-bold px-4 h-9 rounded-xl shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 transition-all duration-200 hover:-translate-y-0.5"
+                  className="hidden sm:flex items-center gap-2 bg-gradient-to-br from-primary to-primary-light hover:from-primary-light hover:to-primary text-white font-black px-6 h-11 rounded-full shadow-[0_8px_20px_-6px_rgba(46,96,145,0.4)] hover:shadow-[0_12px_25px_-6px_rgba(46,96,145,0.5)] transition-all duration-300 hover:-translate-y-1 hover:scale-105 group border border-white/20"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span className="text-sm">Sell</span>
+                  <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                  <span className="text-sm tracking-wide">Sell</span>
                 </Button>
               </Link>
 
@@ -298,7 +275,7 @@ const Navigation = () => {
                   {/* Notification bell */}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="relative h-9 w-9 flex items-center justify-center rounded-xl text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-all">
+                      <button className="relative h-11 w-11 flex items-center justify-center rounded-full bg-white/60 border border-white/80 shadow-sm text-foreground/70 hover:text-primary hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                         <Bell className="h-5 w-5" />
                         {(pendingCount > 0 || unreadNotificationsCount > 0) && (
                           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white ring-2 ring-white shadow-sm">
@@ -377,18 +354,18 @@ const Navigation = () => {
                   {/* User menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl hover:bg-foreground/5 transition-all outline-none">
+                      <div className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-white/60 border border-white/80 shadow-sm hover:bg-white hover:shadow-md cursor-pointer transition-all duration-300 hover:-translate-y-0.5 outline-none">
                         {user?.avatar_url && !imgError && (user.avatar_url.startsWith('http') || user.avatar_url.startsWith('/uploads')) ? (
                           <img
                             src={getImageUrl(user.avatar_url)}
                             alt="Profile"
-                            className="h-7 w-7 rounded-lg object-cover shadow-sm"
+                            className="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-white"
                             onError={() => setImgError(true)}
                           />
                         ) : (
-                          <Avatar seed={user?.username || "U"} {...parseAvatarUrl(user?.avatar_url, user?.username)} size={28} className="shadow-sm" />
+                          <Avatar seed={user?.username || "U"} {...parseAvatarUrl(user?.avatar_url, user?.username)} size={32} className="shadow-sm ring-2 ring-white" />
                         )}
-                        <span className="hidden lg:inline max-w-[80px] truncate">{user?.username || "Account"}</span>
+                        <span className="hidden lg:inline max-w-[80px] truncate font-bold text-sm text-foreground/80">{user?.username || "Account"}</span>
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 rounded-2xl shadow-xl border-0 bg-white/97 backdrop-blur-xl p-1.5">

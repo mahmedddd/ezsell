@@ -97,7 +97,7 @@ export function ARViewer({ listingId, listingTitle, category }: ARViewerProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full border-[#143109] text-[#143109] hover:bg-[#143109] hover:text-white">
+        <Button variant="outline" className="w-full border-[#2E6091] text-[#2E6091] hover:bg-[#2E6091] hover:text-white">
           <Camera className="mr-2 h-5 w-5" />
           View in Your Room (AR)
         </Button>
@@ -120,7 +120,7 @@ export function ARViewer({ listingId, listingTitle, category }: ARViewerProps) {
             <CardContent>
               <div className="space-y-4">
                 <div 
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#143109] transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#2E6091] transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {roomImagePreview ? (
@@ -163,7 +163,7 @@ export function ARViewer({ listingId, listingTitle, category }: ARViewerProps) {
                   <Button 
                     onClick={handleGenerateARPreview}
                     disabled={loading}
-                    className="w-full bg-[#143109] hover:bg-[#AAAE7F]"
+                    className="w-full bg-[#2E6091] hover:bg-[#4591CB]"
                   >
                     {loading ? (
                       <>
@@ -197,7 +197,7 @@ export function ARViewer({ listingId, listingTitle, category }: ARViewerProps) {
                     <img 
                       src={`${API_BASE_URL}${arPreviewUrl}`}
                       alt="AR Preview" 
-                      className="w-full h-64 object-cover rounded-lg border-2 border-[#143109]"
+                      className="w-full h-64 object-cover rounded-lg border-2 border-[#2E6091]"
                     />
                   </div>
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">

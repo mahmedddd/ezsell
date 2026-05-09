@@ -1001,7 +1001,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
   return (
     <div className="container mx-auto py-8 px-4">
       <Card className="max-w-4xl mx-auto">
-        <CardHeader className="bg-gradient-to-r from-[#143109] to-[#AAAE7F] text-white">
+        <CardHeader className="bg-gradient-to-r from-[#2E6091] to-[#4591CB] text-white">
           <CardTitle className="text-2xl flex items-center gap-2">
             <Sparkles className="h-6 w-6" />
             {editMode ? 'Edit Listing' : 'Create New Listing'}
@@ -1227,7 +1227,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label>Product Images (Up to 7 images)</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#143109] transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#2E6091] transition-colors">
                   {imagePreviews.length > 0 ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-4">
@@ -2216,7 +2216,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
             <Button
               type="submit"
               disabled={loading || (userVerified === false)}
-              className={`w-full ${userVerified === false ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#143109] hover:bg-[#AAAE7F]'}`}
+              className={`w-full ${userVerified === false ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#2E6091] hover:bg-[#4591CB]'}`}
               size="lg"
             >
               {loading ? (
@@ -2273,7 +2273,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                           {createdListing.category}
                         </Badge>
                         <h3 className="text-xl font-bold line-clamp-2">{createdListing.title}</h3>
-                        <div className="text-3xl font-bold text-[#143109] text-center mb-6 break-words overflow-hidden max-w-full">
+                        <div className="text-3xl font-bold text-[#2E6091] text-center mb-6 break-words overflow-hidden max-w-full">
                           {formatCurrency(createdListing.price)}
                         </div>
                       </div>
@@ -2328,7 +2328,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
               <div className="flex gap-3">
                 <Button
                   onClick={() => navigate(`/product/${createdListing.id}`)}
-                  className="flex-1 bg-[#143109] hover:bg-[#AAAE7F]"
+                  className="flex-1 bg-[#2E6091] hover:bg-[#4591CB]"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Listing

@@ -342,7 +342,7 @@ export default function Dashboard() {
                           <span className="text-slate-500">No image</span>
                         )}
                         {listing.location && (
-                          <Badge className="absolute top-2 left-2 bg-white/90 text-[#143109] text-[10px] font-bold px-2 py-0.5 border-0 shadow-sm backdrop-blur-sm z-10">
+                          <Badge className="absolute top-2 left-2 bg-white/90 text-[#2E6091] text-[10px] font-bold px-2 py-0.5 border-0 shadow-sm backdrop-blur-sm z-10">
                             📍 {listing.location.split(',')[0]}
                           </Badge>
                         )}
@@ -506,7 +506,7 @@ export default function Dashboard() {
                           </Badge>
                         )}
                         {listing.location && (
-                          <Badge className="absolute top-2 left-2 bg-white/90 text-[#143109] text-[10px] font-bold px-2 py-0.5 border-0 shadow-sm backdrop-blur-sm">
+                          <Badge className="absolute top-2 left-2 bg-white/90 text-[#2E6091] text-[10px] font-bold px-2 py-0.5 border-0 shadow-sm backdrop-blur-sm">
                             📍 {listing.location.split(',')[0]}
                           </Badge>
                         )}
@@ -552,7 +552,7 @@ export default function Dashboard() {
             {analyticsLoading ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#143109] mb-4" />
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2E6091] mb-4" />
                   <p className="text-muted-foreground">Loading your insights...</p>
                 </CardContent>
               </Card>
@@ -583,7 +583,7 @@ export default function Dashboard() {
                       <CardDescription>How active you are on EZSell</CardDescription>
                     </CardHeader>
                     <CardContent className="flex items-center justify-center py-6">
-                      <div className="text-5xl font-extrabold text-[#143109]">
+                      <div className="text-5xl font-extrabold text-[#2E6091]">
                         {analytics?.engagement_score ?? 0}
                         <span className="text-xl text-muted-foreground font-normal">/100</span>
                       </div>
@@ -674,7 +674,7 @@ export default function Dashboard() {
                                 labelLine={false}
                               >
                                 {analytics.top_categories.slice(0, 5).map((_: any, i: number) => (
-                                  <Cell key={i} fill={['#143109', '#82ca9d', '#8884d8', '#ffc658', '#ff7f7f'][i % 5]} />
+                                  <Cell key={i} fill={['#2E6091', '#82ca9d', '#8884d8', '#ffc658', '#ff7f7f'][i % 5]} />
                                 ))}
                               </Pie>
                               <Tooltip formatter={(val: any, name: any) => [val, name]} />

@@ -297,7 +297,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
 
     // Selection highlight
     if (isSelected) {
-      ctx.strokeStyle = '#143109';
+      ctx.strokeStyle = '#2E6091';
       ctx.lineWidth = 4;
       ctx.setLineDash([10, 5]);
       ctx.strokeRect(-baseWidth / 2 - 5, -baseHeight / 2 - 5, baseWidth + 10, baseHeight + 10);
@@ -311,7 +311,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
         { x: baseWidth / 2, y: baseHeight / 2 },
       ];
 
-      ctx.fillStyle = '#143109';
+      ctx.fillStyle = '#2E6091';
       handles.forEach(handle => {
         ctx.fillRect(handle.x - 5, handle.y - 5, 10, 10);
       });
@@ -415,7 +415,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full bg-[#143109] hover:bg-[#AAAE7F] text-white">
+        <Button className="w-full bg-[#2E6091] hover:bg-[#4591CB] text-white">
           <Sparkles className="mr-2 h-5 w-5" />
           Realistic AR Preview
         </Button>
@@ -423,7 +423,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
       <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-[#143109]" />
+            <Sparkles className="h-6 w-6 text-[#2E6091]" />
             Realistic 3D AR Preview: {listingTitle}
           </DialogTitle>
           <DialogDescription>
@@ -448,7 +448,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
               </CardHeader>
               <CardContent>
                 <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-[#143109] transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-[#2E6091] transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {roomImagePreview ? (
@@ -778,7 +778,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
                 {recommendations.map((rec, index) => (
                   <div
                     key={index}
-                    className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-[#143109] transition-colors"
+                    className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-[#2E6091] transition-colors"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-semibold text-gray-900">{rec.title}</h4>
@@ -816,7 +816,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
               <CardContent>
                 <canvas
                   ref={canvasRef}
-                  className="w-full border-2 border-[#143109] rounded-lg"
+                  className="w-full border-2 border-[#2E6091] rounded-lg"
                   style={{ maxHeight: '600px', objectFit: 'contain' }}
                 />
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -841,7 +841,7 @@ export function RealisticARViewer({ listingId, listingTitle, category, price }: 
                     description: "Your AR preview has been generated",
                   });
                 }}
-                className="flex-1 bg-[#143109] hover:bg-[#AAAE7F]"
+                className="flex-1 bg-[#2E6091] hover:bg-[#4591CB]"
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Save Preview

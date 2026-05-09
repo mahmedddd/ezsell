@@ -209,7 +209,7 @@ export default function Profile() {
     if (loading) {
         return (
             <div className="min-h-screen bg-[#f5f5f0] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#143109]" />
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2E6091]" />
             </div>
         );
     }
@@ -226,7 +226,7 @@ export default function Profile() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc] pb-12">
             {/* Wholesome Hero Section */}
-            <div className="bg-[#143109] text-white py-16 px-4">
+            <div className="bg-[#2E6091] text-white py-16 px-4">
                 <div className="container mx-auto max-w-5xl">
                     <div className="flex flex-col md:flex-row items-center gap-8">
                         <div className="relative group/avatar">
@@ -243,7 +243,7 @@ export default function Profile() {
                                 )}
                             </div>
                             <div className="absolute -bottom-2 -right-2 bg-yellow-400 p-2 rounded-full shadow-lg">
-                                <Star className="w-5 h-5 text-[#143109] fill-current" />
+                                <Star className="w-5 h-5 text-[#2E6091] fill-current" />
                             </div>
                         </div>
                         <div className="text-center md:text-left space-y-2">
@@ -272,21 +272,21 @@ export default function Profile() {
 
             <div className="container mx-auto max-w-5xl -mt-8 px-4">
                 <Tabs defaultValue="profile" className="space-y-6">
-                    <TabsList className="bg-white/80 backdrop-blur border-2 border-[#143109]/10 p-1 rounded-2xl shadow-lg w-full md:w-auto h-auto flex flex-wrap">
-                        <TabsTrigger value="profile" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#143109] data-[state=active]:text-white">
+                    <TabsList className="bg-white/80 backdrop-blur border-2 border-[#2E6091]/10 p-1 rounded-2xl shadow-lg w-full md:w-auto h-auto flex flex-wrap">
+                        <TabsTrigger value="profile" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                             <User className="w-4 h-4 mr-2" /> {isOwnProfile ? 'My Profile' : 'User Profile'}
                         </TabsTrigger>
                         {isOwnProfile && (
                             <>
-                                <TabsTrigger value="support" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#143109] data-[state=active]:text-white">
+                                <TabsTrigger value="support" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                                     <LifeBuoy className="w-4 h-4 mr-2" /> Support Center
                                 </TabsTrigger>
-                                <TabsTrigger value="activity" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#143109] data-[state=active]:text-white">
+                                <TabsTrigger value="activity" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                                     <TrendingUp className="w-4 h-4 mr-2" /> My Journey
                                 </TabsTrigger>
                             </>
                         )}
-                        <TabsTrigger value="listings" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#143109] data-[state=active]:text-white">
+                        <TabsTrigger value="listings" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                             <Package className="w-4 h-4 mr-2" /> {isOwnProfile ? 'My Ads' : 'Active Ads'}
                         </TabsTrigger>
                     </TabsList>
@@ -297,7 +297,7 @@ export default function Profile() {
                             <CardHeader className="border-b bg-gray-50/50">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                     <div>
-                                        <CardTitle className="text-2xl font-bold text-[#143109]">
+                                        <CardTitle className="text-2xl font-bold text-[#2E6091]">
                                             {isOwnProfile ? 'Profile Maintenance' : 'User Information'}
                                         </CardTitle>
                                         <CardDescription>
@@ -307,8 +307,8 @@ export default function Profile() {
                                         </CardDescription>
                                     </div>
                                     {isOwnProfile && (
-                                        <div className="bg-[#143109]/5 rounded-2xl p-4 border border-[#143109]/10">
-                                            <p className="text-xs font-bold text-[#143109] uppercase mb-3 flex items-center gap-2">
+                                        <div className="bg-[#2E6091]/5 rounded-2xl p-4 border border-[#2E6091]/10">
+                                            <p className="text-xs font-bold text-[#2E6091] uppercase mb-3 flex items-center gap-2">
                                                 <Palette className="w-3 h-3" /> Customize Your Look
                                             </p>
                                             <div className="flex gap-2">
@@ -316,7 +316,7 @@ export default function Profile() {
                                                     <button
                                                         key={preset.id}
                                                         onClick={() => handleAvatarClick(preset.value)}
-                                                        className={`relative transition-all hover:scale-110 active:scale-95 rounded-xl overflow-hidden ring-offset-2 hover:ring-2 hover:ring-[#143109]/30 ${user?.avatar_url === preset.value ? 'ring-2 ring-[#143109]' : ''
+                                                        className={`relative transition-all hover:scale-110 active:scale-95 rounded-xl overflow-hidden ring-offset-2 hover:ring-2 hover:ring-[#2E6091]/30 ${user?.avatar_url === preset.value ? 'ring-2 ring-[#2E6091]' : ''
                                                             }`}
                                                         title={preset.label}
                                                     >
@@ -357,7 +357,7 @@ export default function Profile() {
                                                 value={user?.full_name || ''}
                                                 onChange={(e) => isOwnProfile && setUser({ ...user, full_name: e.target.value })}
                                                 disabled={!isOwnProfile}
-                                                className={`border-2 transition-all rounded-xl h-12 ${!isOwnProfile ? 'bg-gray-100/50 cursor-not-allowed' : 'focus:border-[#143109]'}`}
+                                                className={`border-2 transition-all rounded-xl h-12 ${!isOwnProfile ? 'bg-gray-100/50 cursor-not-allowed' : 'focus:border-[#2E6091]'}`}
                                                 placeholder="e.g. Ahmed Ali"
                                             />
                                         </div>
@@ -372,11 +372,11 @@ export default function Profile() {
                                                     setUser({ ...user, phone: val });
                                                 }}
                                                 disabled={!isOwnProfile}
-                                                className={`border-2 transition-all rounded-xl h-12 ${!isOwnProfile ? 'bg-gray-100/50 cursor-not-allowed' : 'focus:border-[#143109]'}`}
+                                                className={`border-2 transition-all rounded-xl h-12 ${!isOwnProfile ? 'bg-gray-100/50 cursor-not-allowed' : 'focus:border-[#2E6091]'}`}
                                                 placeholder="03XXXXXXXXX"
                                                 maxLength={11}
                                             />
-                                            {isOwnProfile && <p className="text-[11px] text-[#143109] font-medium italic">Enter 11 digits (e.g., 03018738298) for easy buyer contact!</p>}
+                                            {isOwnProfile && <p className="text-[11px] text-[#2E6091] font-medium italic">Enter 11 digits (e.g., 03018738298) for easy buyer contact!</p>}
                                         </div>
                                     </div>
 
@@ -387,7 +387,7 @@ export default function Profile() {
                                             onValueChange={(value) => isOwnProfile && setUser({ ...user, location: value })}
                                             disabled={!isOwnProfile}
                                         >
-                                            <SelectTrigger className="border-2 focus:border-[#143109] transition-all rounded-xl h-12">
+                                            <SelectTrigger className="border-2 focus:border-[#2E6091] transition-all rounded-xl h-12">
                                                 <SelectValue placeholder="Select location" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -395,7 +395,7 @@ export default function Profile() {
                                                 <SelectItem value="Rawalpindi">Rawalpindi</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <p className="text-[11px] text-[#143109] font-medium italic">Service limited to Twin Cities for maximum quality! 🚀</p>
+                                        <p className="text-[11px] text-[#2E6091] font-medium italic">Service limited to Twin Cities for maximum quality! 🚀</p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -405,14 +405,14 @@ export default function Profile() {
                                             value={user?.bio || ''}
                                             onChange={(e) => isOwnProfile && setUser({ ...user, bio: e.target.value })}
                                             disabled={!isOwnProfile}
-                                            className={`border-2 transition-all rounded-xl min-h-[120px] resize-none ${!isOwnProfile ? 'bg-gray-100/50 cursor-not-allowed' : 'focus:border-[#143109]'}`}
+                                            className={`border-2 transition-all rounded-xl min-h-[120px] resize-none ${!isOwnProfile ? 'bg-gray-100/50 cursor-not-allowed' : 'focus:border-[#2E6091]'}`}
                                             placeholder={isOwnProfile ? "Share a bit about yourself or your trading style..." : "This user hasn't shared a bio yet."}
                                         />
                                     </div>
 
                                     {isOwnProfile && (
                                         <div className="flex justify-end pt-4">
-                                            <Button type="submit" disabled={saving} className="bg-[#143109] hover:bg-[#1e4d10] text-white rounded-xl px-10 h-14 text-lg font-bold shadow-lg shadow-[#143109]/20 transition-all hover:scale-[1.02]">
+                                            <Button type="submit" disabled={saving} className="bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-xl px-10 h-14 text-lg font-bold shadow-lg shadow-[#2E6091]/20 transition-all hover:scale-[1.02]">
                                                 {saving ? 'Saving Changes...' : 'Save Profile Changes'}
                                             </Button>
                                         </div>
@@ -550,7 +550,7 @@ export default function Profile() {
                     {/* Activity/Journey Tab */}
                     <TabsContent value="activity">
                         <div className="grid md:grid-cols-3 gap-6">
-                            <Card className="col-span-1 border-0 shadow-xl rounded-3xl bg-gradient-to-br from-[#143109] to-[#2d5a18] text-white">
+                            <Card className="col-span-1 border-0 shadow-xl rounded-3xl bg-gradient-to-br from-[#2E6091] to-[#2d5a18] text-white">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2"><Award className="w-5 h-5 text-yellow-400" /> Achievement</CardTitle>
                                 </CardHeader>
@@ -629,7 +629,7 @@ export default function Profile() {
                                         {isOwnProfile && (
                                             <Button
                                                 onClick={() => navigate('/create-listing')}
-                                                className="bg-[#143109] text-white rounded-xl px-8 mt-4"
+                                                className="bg-[#2E6091] text-white rounded-xl px-8 mt-4"
                                             >
                                                 Create Your First Ad
                                             </Button>
@@ -668,7 +668,7 @@ export default function Profile() {
                                             </div>
                                             <CardContent className="p-4">
                                                 <h3 className="font-bold text-gray-900 line-clamp-1 mb-2">{listing.title}</h3>
-                                                <div className="flex items-baseline gap-1 text-[#143109] mb-4">
+                                                <div className="flex items-baseline gap-1 text-[#2E6091] mb-4">
                                                     <span className="text-[10px] font-bold uppercase opacity-60">Rs</span>
                                                     <span className="text-xl font-black">{listing.price.toLocaleString()}</span>
                                                 </div>

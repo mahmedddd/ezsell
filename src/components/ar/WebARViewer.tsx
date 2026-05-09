@@ -144,10 +144,10 @@ function ModelBuildingIndicator({ progress }: { progress: number }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-4">
       <div className="relative">
-        <div className="w-20 h-20 rounded-full border-4 border-[#143109]/20 animate-pulse bg-[#143109]/5 flex items-center justify-center">
-          <Box className="h-9 w-9 text-[#143109]" />
+        <div className="w-20 h-20 rounded-full border-4 border-[#2E6091]/20 animate-pulse bg-[#2E6091]/5 flex items-center justify-center">
+          <Box className="h-9 w-9 text-[#2E6091]" />
         </div>
-        <Loader2 className="absolute -top-1 -right-1 h-6 w-6 text-[#143109] animate-spin" />
+        <Loader2 className="absolute -top-1 -right-1 h-6 w-6 text-[#2E6091] animate-spin" />
       </div>
       <div className="text-center">
         <p className="font-semibold text-gray-900">Building 3D Model…</p>
@@ -169,7 +169,7 @@ function GestureHints() {
     <div className="grid grid-cols-3 gap-2 mt-3">
       {hints.map((h) => (
         <div key={h.action} className="flex flex-col items-center gap-1 p-2 bg-gray-50 rounded-xl">
-          <div className="text-[#143109]">{h.icon}</div>
+          <div className="text-[#2E6091]">{h.icon}</div>
           <p className="text-[10px] font-medium text-gray-700 text-center leading-tight">{h.action}</p>
           <p className="text-[9px] text-gray-400 text-center leading-tight">{h.label}</p>
         </div>
@@ -226,7 +226,7 @@ function CompatibilityBadge({ caps }: { caps: ReturnType<typeof useARSupport> })
 function DimensionPill({ dims }: { dims: FurnitureDimensions }) {
   return (
     <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm border border-gray-100">
-      <Ruler className="h-3.5 w-3.5 text-[#143109]" />
+      <Ruler className="h-3.5 w-3.5 text-[#2E6091]" />
       <span className="text-xs font-semibold text-gray-800">{cmLabel(dims)}</span>
     </div>
   );
@@ -263,20 +263,20 @@ function ScanningOverlay({ phase, hint }: { phase: ScanPhase; hint: string }) {
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-6">
       <div className="relative mb-10">
         <div className="w-40 h-40 rounded-full border-2 border-white/10 animate-ping absolute inset-0" />
-        <div className="w-40 h-40 rounded-full border-2 border-white/30 border-t-[#AAAE7F] animate-spin" />
+        <div className="w-40 h-40 rounded-full border-2 border-white/30 border-t-[#4591CB] animate-spin" />
         <div className="absolute inset-0 flex items-center justify-center">
           {phase === 'tilting' && <ArrowDownCircle className="h-12 w-12 text-white/80 animate-bounce" />}
           {phase === 'sweeping' && <Scan className="h-12 w-12 text-white/80 animate-pulse" />}
-          {phase === 'ready_to_place' && <MousePointer2 className="h-12 w-12 text-[#AAAE7F] animate-bounce" />}
+          {phase === 'ready_to_place' && <MousePointer2 className="h-12 w-12 text-[#4591CB] animate-bounce" />}
         </div>
       </div>
 
       <div className="bg-black/40 backdrop-blur-sm px-6 py-4 rounded-[24px] border border-white/5 text-center max-w-sm animate-in fade-in slide-in-from-bottom-4">
         <p className="text-white font-medium text-base mb-1.5">{hint}</p>
         <div className="flex justify-center gap-1.5 mt-2.5">
-          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'tilting' ? 'bg-[#AAAE7F] w-10' : 'bg-white/20'}`} />
-          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'sweeping' ? 'bg-[#AAAE7F] w-10' : 'bg-white/20'}`} />
-          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'ready_to_place' ? 'bg-[#AAAE7F] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'tilting' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'sweeping' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'ready_to_place' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
         </div>
       </div>
     </div>
@@ -287,9 +287,9 @@ function ScanningOverlay({ phase, hint }: { phase: ScanPhase; hint: string }) {
 function PreLaunchChecklist({ dims }: { dims: FurnitureDimensions }) {
   const floorNeeded = `${dims.w}cm × ${dims.l}cm`;
   return (
-    <div className="bg-[#143109]/5 border border-[#143109]/10 rounded-2xl p-4 mb-4">
+    <div className="bg-[#2E6091]/5 border border-[#2E6091]/10 rounded-2xl p-4 mb-4">
       <div className="flex items-center gap-2 mb-3">
-        <LayoutGrid className="h-4 w-4 text-[#143109]" />
+        <LayoutGrid className="h-4 w-4 text-[#2E6091]" />
         <span className="text-sm font-bold text-gray-900">Room Readiness</span>
       </div>
       <ul className="space-y-2">
@@ -319,9 +319,9 @@ function PostPlacementCoach({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 w-[90%] animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-[#143109] text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
+      <div className="bg-[#2E6091] text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
         <div className="bg-white/20 p-2 rounded-xl">
-          <Zap className="h-5 w-5 text-[#AAAE7F]" />
+          <Zap className="h-5 w-5 text-[#4591CB]" />
         </div>
         <div className="flex-1">
           <p className="text-sm font-bold leading-tight">Interaction Ready</p>
@@ -876,12 +876,12 @@ export function WebARViewer({
         onClick={handleOpen}
         className="
           w-full flex items-center justify-between
-          bg-gradient-to-r from-[#143109] to-[#1e4d10]
-          hover:from-[#1e4d10] hover:to-[#2a6616]
+          bg-gradient-to-r from-[#2E6091] to-[#1E4166]
+          hover:from-[#1E4166] hover:to-[#2a6616]
           active:scale-[0.98]
           text-white font-semibold
           px-4 py-3.5 rounded-2xl
-          shadow-lg shadow-[#143109]/20
+          shadow-lg shadow-[#2E6091]/20
           transition-all duration-200
           relative overflow-hidden
           group
@@ -931,11 +931,11 @@ export function WebARViewer({
                   {listingTitle}
                 </SheetTitle>
                 <SheetDescription className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="bg-[#143109]/5 text-[#143109] border-none font-bold px-2.5 py-0.5 text-xs">
+                  <Badge variant="secondary" className="bg-[#2E6091]/5 text-[#2E6091] border-none font-bold px-2.5 py-0.5 text-xs">
                     {cmLabel(dims)}
                   </Badge>
                   {price && (
-                    <span className="text-[#143109] font-black text-base">
+                    <span className="text-[#2E6091] font-black text-base">
                       PKR {price.toLocaleString()}
                     </span>
                   )}
@@ -961,7 +961,7 @@ export function WebARViewer({
                   className={`
                     flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-200
                     ${activeTab === tab
-                      ? 'bg-white text-[#143109] shadow-sm'
+                      ? 'bg-white text-[#2E6091] shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}
                   `}
                 >
@@ -996,7 +996,7 @@ export function WebARViewer({
                     </div>
                     <Button
                       onClick={() => { setStep('idle'); setProceduralUrl(null); prepareModel(); }}
-                      className="bg-[#143109] hover:bg-[#1e4d10]"
+                      className="bg-[#2E6091] hover:bg-[#1E4166]"
                     >
                       Retry
                     </Button>
@@ -1016,7 +1016,7 @@ export function WebARViewer({
                               setModelLoading(true);
                             }
                           }}
-                          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#143109]' : 'text-gray-500 hover:text-gray-700'
+                          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#2E6091]' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
                           <span className="text-[11px] font-bold">Fast View</span>
@@ -1029,7 +1029,7 @@ export function WebARViewer({
                               setModelLoading(true);
                             }
                           }}
-                          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#143109] text-white shadow' : 'text-gray-500 hover:text-gray-700'
+                          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#2E6091] text-white shadow' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
                           <span className="text-[11px] font-bold flex items-center gap-1">
@@ -1055,7 +1055,7 @@ export function WebARViewer({
                         </div>
                       )}
                       {arStatus === 'object-placed' && (
-                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-[#143109]/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-[#2E6091]/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Placed!
                         </div>
@@ -1102,7 +1102,7 @@ export function WebARViewer({
                           className="
                             absolute bottom-4 right-4
                             flex items-center gap-2
-                            bg-[#143109] hover:bg-[#1e4d10] active:scale-95
+                            bg-[#2E6091] hover:bg-[#1E4166] active:scale-95
                             text-white font-semibold text-sm
                             px-4 py-2.5 rounded-2xl
                             shadow-xl shadow-black/20
@@ -1144,7 +1144,7 @@ export function WebARViewer({
                       {modelLoading && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/60 backdrop-blur-sm animate-in fade-in duration-300">
                           <div className="bg-white p-4 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3">
-                            <Loader2 className="h-6 w-6 animate-spin text-[#143109]" />
+                            <Loader2 className="h-6 w-6 animate-spin text-[#2E6091]" />
                             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                               Loading {viewMode === 'advanced' ? '3D Model' : 'Fast View'}...
                             </p>
@@ -1204,25 +1204,25 @@ export function WebARViewer({
                             </div>
                           </div>
                           {/* Dimension scale reference card */}
-                          <div className="bg-[#143109]/5 rounded-2xl border border-[#143109]/10 p-3">
+                          <div className="bg-[#2E6091]/5 rounded-2xl border border-[#2E6091]/10 p-3">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Furniture will appear at real scale ·  Scale locked 1:1</p>
                             <div className="flex items-center justify-between">
                               <div className="text-center">
-                                <p className="text-base font-bold text-[#143109]">{dims.w}<span className="text-[10px] font-normal">cm</span></p>
+                                <p className="text-base font-bold text-[#2E6091]">{dims.w}<span className="text-[10px] font-normal">cm</span></p>
                                 <p className="text-[9px] text-gray-400 uppercase">Width</p>
                               </div>
-                              <div className="h-px flex-1 mx-2 bg-[#143109]/20 relative">
+                              <div className="h-px flex-1 mx-2 bg-[#2E6091]/20 relative">
                                 <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center">
-                                  <Ruler className="h-3.5 w-3.5 text-[#143109]/40" />
+                                  <Ruler className="h-3.5 w-3.5 text-[#2E6091]/40" />
                                 </div>
                               </div>
                               <div className="text-center">
-                                <p className="text-base font-bold text-[#143109]">{dims.l}<span className="text-[10px] font-normal">cm</span></p>
+                                <p className="text-base font-bold text-[#2E6091]">{dims.l}<span className="text-[10px] font-normal">cm</span></p>
                                 <p className="text-[9px] text-gray-400 uppercase">Depth</p>
                               </div>
-                              <div className="h-px flex-1 mx-2 bg-[#143109]/20" />
+                              <div className="h-px flex-1 mx-2 bg-[#2E6091]/20" />
                               <div className="text-center">
-                                <p className="text-base font-bold text-[#143109]">{dims.h}<span className="text-[10px] font-normal">cm</span></p>
+                                <p className="text-base font-bold text-[#2E6091]">{dims.h}<span className="text-[10px] font-normal">cm</span></p>
                                 <p className="text-[9px] text-gray-400 uppercase">Height</p>
                               </div>
                             </div>
@@ -1233,10 +1233,10 @@ export function WebARViewer({
                       {/* Placed success */}
                       {step === 'placed' && (
                         <div className="space-y-2">
-                          <div className="flex items-center gap-3 p-3 rounded-2xl border bg-[#143109]/5 border-[#143109]/20">
-                            <CheckCircle2 className="h-5 w-5 text-[#143109] shrink-0" />
+                          <div className="flex items-center gap-3 p-3 rounded-2xl border bg-[#2E6091]/5 border-[#2E6091]/20">
+                            <CheckCircle2 className="h-5 w-5 text-[#2E6091] shrink-0" />
                             <div>
-                              <p className="text-xs font-semibold text-[#143109]">Placed at true scale</p>
+                              <p className="text-xs font-semibold text-[#2E6091]">Placed at true scale</p>
                               <p className="text-[11px] text-gray-600">
                                 Drag to move · 2-finger twist to rotate · Scale locked 1:1
                               </p>
@@ -1251,11 +1251,11 @@ export function WebARViewer({
                       <div className="px-5 py-6 bg-white border-t border-gray-100 flex flex-col gap-5">
                         {/* Scan on Phone Card (Desktop only hint) */}
                         {caps.isDesktop && caps.isChecked && (
-                          <div className="bg-gradient-to-br from-[#143109]/5 to-transparent p-6 rounded-[32px] border border-[#143109]/10 relative overflow-hidden group">
-                            <div className="absolute -right-8 -top-8 w-40 h-40 bg-[#143109]/5 rounded-full blur-3xl group-hover:bg-[#143109]/10 transition-all duration-700" />
+                          <div className="bg-gradient-to-br from-[#2E6091]/5 to-transparent p-6 rounded-[32px] border border-[#2E6091]/10 relative overflow-hidden group">
+                            <div className="absolute -right-8 -top-8 w-40 h-40 bg-[#2E6091]/5 rounded-full blur-3xl group-hover:bg-[#2E6091]/10 transition-all duration-700" />
                             
                             <div className="flex flex-col items-center text-center gap-4 relative z-10">
-                              <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#143109]/10 border border-gray-100 transform group-hover:scale-105 transition-transform duration-300">
+                              <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#2E6091]/10 border border-gray-100 transform group-hover:scale-105 transition-transform duration-300">
                                 <img 
                                   src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(productPageUrl)}`} 
                                   alt="Scan to view in AR" 
@@ -1280,7 +1280,7 @@ export function WebARViewer({
 
                               <Button
                                 variant="link"
-                                className="text-[#143109] font-bold text-sm h-auto p-0 mt-1 gap-1.5 opacity-60 hover:opacity-100"
+                                className="text-[#2E6091] font-bold text-sm h-auto p-0 mt-1 gap-1.5 opacity-60 hover:opacity-100"
                                 onClick={() => window.open(productPageUrl, '_blank')}
                               >
                                 <ExternalLink className="h-4 w-4" /> Copy product link
@@ -1296,7 +1296,7 @@ export function WebARViewer({
                             {tfLoading ? (
                               <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
                             ) : (
-                              <Zap className="h-3 w-3 text-[#143109]" />
+                              <Zap className="h-3 w-3 text-[#2E6091]" />
                             )}
                           </div>
 
@@ -1335,12 +1335,12 @@ export function WebARViewer({
                           onClick={launchAR}
                           className="
                             w-full flex items-center justify-center gap-3
-                            bg-gradient-to-r from-[#143109] to-[#2a6616]
-                            hover:from-[#1e4d10] hover:to-[#336617]
+                            bg-gradient-to-r from-[#2E6091] to-[#2a6616]
+                            hover:from-[#1E4166] hover:to-[#336617]
                             active:scale-[0.98]
                             text-white font-bold text-base
                             py-4 rounded-2xl
-                            shadow-xl shadow-[#143109]/30
+                            shadow-xl shadow-[#2E6091]/30
                             transition-all duration-200
                           "
                         >
@@ -1381,12 +1381,12 @@ export function WebARViewer({
                             <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2007] to-[#1a4510] p-5 rounded-2xl">
                               {/* Sparkle shimmer background */}
                               <div className="absolute inset-0 opacity-10 pointer-events-none"
-                                style={{ backgroundImage: 'radial-gradient(circle at 20% 40%, #AAAE7F 0%, transparent 60%), radial-gradient(circle at 80% 70%, #143109 0%, transparent 50%)' }} />
+                                style={{ backgroundImage: 'radial-gradient(circle at 20% 40%, #4591CB 0%, transparent 60%), radial-gradient(circle at 80% 70%, #2E6091 0%, transparent 50%)' }} />
 
                               <div className="relative">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Sparkles className="h-4 w-4 text-[#AAAE7F]" />
-                                  <span className="text-[11px] font-bold text-[#AAAE7F] uppercase tracking-widest">Tripo AI · Photorealistic</span>
+                                  <Sparkles className="h-4 w-4 text-[#4591CB]" />
+                                  <span className="text-[11px] font-bold text-[#4591CB] uppercase tracking-widest">Tripo AI · Photorealistic</span>
                                 </div>
                                 <p className="text-white font-bold text-base mb-1">Generate True 3D Model</p>
                                 <p className="text-white/60 text-[11px] mb-3 leading-relaxed">
@@ -1401,7 +1401,7 @@ export function WebARViewer({
                                         key={idx}
                                         onClick={() => setSelectedImgIdx(idx)}
                                         className={`relative shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 transition-all snap-center ${selectedImgIdx === idx
-                                          ? 'border-[#AAAE7F] scale-105 shadow-md shadow-[#AAAE7F]/20'
+                                          ? 'border-[#4591CB] scale-105 shadow-md shadow-[#4591CB]/20'
                                           : 'border-white/10 opacity-60 hover:opacity-100'
                                           }`}
                                       >
@@ -1414,7 +1414,7 @@ export function WebARViewer({
                                           style={{ imageRendering: 'auto' }}
                                         />
                                         {selectedImgIdx === idx && (
-                                          <div className="absolute top-1 right-1 bg-[#AAAE7F] text-[#143109] rounded-full p-0.5 shadow">
+                                          <div className="absolute top-1 right-1 bg-[#4591CB] text-[#2E6091] rounded-full p-0.5 shadow">
                                             <CheckCircle2 className="w-3 h-3" />
                                           </div>
                                         )}
@@ -1431,7 +1431,7 @@ export function WebARViewer({
 
                                 <button
                                   onClick={() => startAIGeneration(false)}
-                                  className="w-full flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-xl font-bold text-sm text-[#143109] bg-[#AAAE7F] hover:bg-[#bcc08e] active:scale-[0.97] transition-all duration-150 shadow-lg shadow-black/30"
+                                  className="w-full flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-xl font-bold text-sm text-[#2E6091] bg-[#4591CB] hover:bg-[#bcc08e] active:scale-[0.97] transition-all duration-150 shadow-lg shadow-black/30"
                                 >
                                   <Sparkles className="h-4 w-4" />
                                   Generate from Selected Image
@@ -1443,9 +1443,9 @@ export function WebARViewer({
                             <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2007] to-[#1a4510] rounded-2xl p-5 animate-in fade-in zoom-in duration-300">
                               {/* Rotating orbital rings */}
                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-20">
-                                <div className="w-48 h-48 rounded-full border-2 border-[#AAAE7F] animate-spin" style={{ animationDuration: '8s' }} />
+                                <div className="w-48 h-48 rounded-full border-2 border-[#4591CB] animate-spin" style={{ animationDuration: '8s' }} />
                                 <div className="absolute w-36 h-36 rounded-full border border-white animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }} />
-                                <div className="absolute w-20 h-20 rounded-full border border-[#AAAE7F]/60 animate-spin" style={{ animationDuration: '3s' }} />
+                                <div className="absolute w-20 h-20 rounded-full border border-[#4591CB]/60 animate-spin" style={{ animationDuration: '3s' }} />
                               </div>
 
                               <div className="relative">
@@ -1453,7 +1453,7 @@ export function WebARViewer({
                                 <div className="flex items-center justify-between mb-4">
                                   <div className="flex items-center gap-2">
                                     <div className="relative">
-                                      <Loader2 className="h-5 w-5 text-[#AAAE7F] animate-spin" />
+                                      <Loader2 className="h-5 w-5 text-[#4591CB] animate-spin" />
                                     </div>
                                     <span className="text-white font-bold text-sm">
                                       {aiStage === 'generating' && 'Initializing AI...'}
@@ -1462,13 +1462,13 @@ export function WebARViewer({
                                       {aiStage === 'success' && '✨ Model Ready!'}
                                     </span>
                                   </div>
-                                  <span className="text-[#AAAE7F] font-mono font-bold text-sm">{Math.round(aiProgress)}%</span>
+                                  <span className="text-[#4591CB] font-mono font-bold text-sm">{Math.round(aiProgress)}%</span>
                                 </div>
 
                                 {/* Progress bar */}
                                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-4">
                                   <div
-                                    className="h-full bg-gradient-to-r from-[#AAAE7F] to-white rounded-full transition-all duration-500"
+                                    className="h-full bg-gradient-to-r from-[#4591CB] to-white rounded-full transition-all duration-500"
                                     style={{ width: `${aiProgress}%` }}
                                   />
                                 </div>
@@ -1490,10 +1490,10 @@ export function WebARViewer({
                                         return (
                                           <div key={s.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-300 ${active ? 'bg-white/10' : 'opacity-40'}`}>
                                             <span className="text-base leading-none">{s.icon}</span>
-                                            <span className={`text-xs font-semibold ${active ? 'text-white' : done ? 'text-[#AAAE7F]' : 'text-white/40'}`}>
+                                            <span className={`text-xs font-semibold ${active ? 'text-white' : done ? 'text-[#4591CB]' : 'text-white/40'}`}>
                                               {s.label}
                                             </span>
-                                            {done && <span className="ml-auto text-[#AAAE7F] text-xs">✓</span>}
+                                            {done && <span className="ml-auto text-[#4591CB] text-xs">✓</span>}
                                             {active && <Loader2 className="ml-auto h-3 w-3 text-white animate-spin" />}
                                           </div>
                                         );
@@ -1562,7 +1562,7 @@ export function WebARViewer({
                       { label: 'Height', val: `${dims.h} cm` },
                     ] as const).map((d) => (
                       <div key={d.label} className="text-center">
-                        <p className="text-xl font-bold text-[#143109]">{d.val}</p>
+                        <p className="text-xl font-bold text-[#2E6091]">{d.val}</p>
                         <p className="text-[10px] text-gray-500 mt-0.5">{d.label}</p>
                       </div>
                     ))}
@@ -1610,7 +1610,7 @@ export function WebARViewer({
                       {detectedObjects.map((obj) => (
                         <span
                           key={obj}
-                          className="text-xs bg-[#143109]/10 text-[#143109] font-medium px-2.5 py-1 rounded-full"
+                          className="text-xs bg-[#2E6091]/10 text-[#2E6091] font-medium px-2.5 py-1 rounded-full"
                         >
                           {obj}
                         </span>

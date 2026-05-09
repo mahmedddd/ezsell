@@ -133,7 +133,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
     ctx.fillRect(-baseWidth/2, -baseHeight/2, baseWidth, baseHeight);
 
     // Draw border
-    ctx.strokeStyle = isSelected ? '#143109' : '#666';
+    ctx.strokeStyle = isSelected ? '#2E6091' : '#666';
     ctx.lineWidth = isSelected ? 4 : 2;
     ctx.strokeRect(-baseWidth/2, -baseHeight/2, baseWidth, baseHeight);
 
@@ -256,7 +256,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full border-[#143109] text-[#143109] hover:bg-[#143109] hover:text-white">
+        <Button variant="outline" className="w-full border-[#2E6091] text-[#2E6091] hover:bg-[#2E6091] hover:text-white">
           <Camera className="mr-2 h-5 w-5" />
           3D AR Preview
         </Button>
@@ -285,7 +285,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
               </CardHeader>
               <CardContent>
                 <div 
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-[#143109] transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-[#2E6091] transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {roomImagePreview ? (
@@ -325,7 +325,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
                 {roomImagePreview && (
                   <Button 
                     onClick={() => setActiveTab('customize')}
-                    className="w-full mt-4 bg-[#143109] hover:bg-[#AAAE7F]"
+                    className="w-full mt-4 bg-[#2E6091] hover:bg-[#4591CB]"
                   >
                     Continue to Customization
                   </Button>
@@ -463,7 +463,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
               <Button 
                 onClick={() => setActiveTab('preview')}
                 disabled={placedItems.length === 0}
-                className="flex-1 bg-[#143109] hover:bg-[#AAAE7F]"
+                className="flex-1 bg-[#2E6091] hover:bg-[#4591CB]"
               >
                 Preview Result
               </Button>
@@ -480,7 +480,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
               <CardContent>
                 <canvas
                   ref={canvasRef}
-                  className="w-full border-2 border-[#143109] rounded-lg"
+                  className="w-full border-2 border-[#2E6091] rounded-lg"
                   style={{ maxHeight: '600px', objectFit: 'contain' }}
                 />
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -501,7 +501,7 @@ export function AR3DViewer({ listingId, listingTitle, category }: AR3DViewerProp
               <Button 
                 onClick={saveARPreview}
                 disabled={loading}
-                className="flex-1 bg-[#143109] hover:bg-[#AAAE7F]"
+                className="flex-1 bg-[#2E6091] hover:bg-[#4591CB]"
               >
                 {loading ? (
                   <>
