@@ -70,7 +70,6 @@ export default function Messages() {
       console.error('Failed to delete conversation:', error);
       toast({ title: 'Failed to delete conversation', variant: 'destructive' });
     }
-    }
   };
 
   const handleBlockUser = async (userId: number, username: string, e: React.MouseEvent) => {
