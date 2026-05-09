@@ -18,58 +18,10 @@ async def optimize_glb_with_draco(glb_path: str) -> bool:
     Requires: npx (comes with Node.js, already installed for npm build)
     Returns True if optimization succeeded, False if it failed (original file kept).
     """
-    try:
-        original_size = os.path.getsize(glb_path)
-        temp_path = glb_path + ".optimized.glb"
-        
-        print(f"🔧 [GLB_OPT] Optimizing {os.path.basename(glb_path)} ({original_size / 1024:.0f} KB) with Draco...")
-        
-        result = subprocess.run(
-            [
-                "npx", "--yes", "@gltf-transform/cli",
-                "optimize",
-                glb_path,
-                temp_path,
-                "--compress", "draco",  # Draco mesh compression — lossless, no visual change
-                # Note: do NOT pass --simplify here, it changes visual quality
-            ],
-            capture_output=True,
-            text=True,
-            timeout=120,  # 2 minute timeout for large models
-        )
-        
-        if result.returncode == 0 and os.path.exists(temp_path):
-            optimized_size = os.path.getsize(temp_path)
-            
-            # Only replace if the optimized file is valid and smaller
-            if optimized_size > 1024:  # Must be at least 1KB to be valid
-                shutil.move(temp_path, glb_path)
-                saving_pct = (1 - optimized_size / original_size) * 100
-                print(f"✅ [GLB_OPT] Draco compression done: {original_size / 1024:.0f} KB → {optimized_size / 1024:.0f} KB ({saving_pct:.0f}% smaller)")
-                return True
-            else:
-                os.remove(temp_path)
-                print(f"⚠️ [GLB_OPT] Optimized file too small, keeping original")
-                return False
-        else:
-            print(f"⚠️ [GLB_OPT] gltf-transform failed (rc={result.returncode}): {result.stderr[:200]}")
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-            return False
-            
-    except subprocess.TimeoutExpired:
-        print(f"⚠️ [GLB_OPT] Optimization timed out, keeping original file")
-        return False
-    except FileNotFoundError:
-        print(f"⚠️ [GLB_OPT] npx not found — skipping Draco compression")
-        return False
-    except Exception as e:
-        print(f"⚠️ [GLB_OPT] Optimization error: {e}")
-        return False
-
+    pass
 
 async def download_and_save_glb(url: str, dest_path: str) -> bool:
-    """Downloads a GLB from a URL, saves it, then applies Draco compression."""
+    """Downloads a GLB from a URL and saves it."""
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, timeout=120.0)
@@ -79,33 +31,6 @@ async def download_and_save_glb(url: str, dest_path: str) -> bool:
         
         raw_size = os.path.getsize(dest_path)
         print(f"✅ [IMAGE_TO_3D] GLB downloaded: {dest_path} ({raw_size / 1024:.0f} KB)")
-        
-        # Apply Draco compression synchronously in a thread so we don't nest event loops
-        # subprocess.run is blocking, so run_in_executor is correct here
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None,
-            lambda: subprocess.run(
-                [
-                    "npx", "--yes", "@gltf-transform/cli",
-                    "optimize", dest_path, dest_path + ".tmp.glb",
-                    "--compress", "draco",
-                ],
-                capture_output=True,
-                timeout=120
-            )
-        )
-        # Swap optimized file in if it's valid
-        tmp = dest_path + ".tmp.glb"
-        if os.path.exists(tmp) and os.path.getsize(tmp) > 1024:
-            original_kb = os.path.getsize(dest_path) / 1024
-            optimized_kb = os.path.getsize(tmp) / 1024
-            shutil.move(tmp, dest_path)
-            print(f"✅ [GLB_OPT] Draco done: {original_kb:.0f}KB → {optimized_kb:.0f}KB ({100-optimized_kb/original_kb*100:.0f}% smaller)")
-        elif os.path.exists(tmp):
-            os.remove(tmp)
-            print(f"⚠️ [GLB_OPT] Draco output invalid, keeping original")
-        
         return True
     except Exception as e:
         print(f"❌ [IMAGE_TO_3D] Failed to download GLB: {e}")
@@ -157,11 +82,7 @@ async def start_image_to_3d_task(
 
     payload = {
         "type": "image_to_model",
-        "model_version": model_version,
-        # Cap polygon count at 100k faces — fully imperceptible at AR distances (1-3m)
-        # but reduces GPU workload by 4-6x, fixing iPhone XR thermal throttling/camera crash.
-        # Tripo default is 300k-600k faces which overwhelms older iPhone GPUs during WebXR.
-        "face_limit": 100000,
+        "model_version": model_version
     }
     
     if file_token:
@@ -206,8 +127,7 @@ async def start_multiview_to_3d_task(
     payload = {
         "type": "multiview_to_model",
         "model_version": model_version,
-        "files": [{}, {}, {}, {}],  # [front, left, back, right]
-        "face_limit": 100000,  # Same cap as single-image — keeps mobile GPU load manageable
+        "files": [{}, {}, {}, {}] # [front, left, back, right]
     }
     
     if file_tokens:

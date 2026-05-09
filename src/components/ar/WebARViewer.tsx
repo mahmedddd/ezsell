@@ -11,9 +11,6 @@
  */
 
 import '@google/model-viewer';
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -396,9 +393,20 @@ export function WebARViewer({
   // Keep tripoUrl and usdzUrl in sync if arAssets updates from the parent/API
   useEffect(() => {
     if (arAssets?.model_glb_url) {
-      setTripoUrl(getFullUrl(arAssets.model_glb_url));
+      const url = getFullUrl(arAssets.model_glb_url);
+      setTripoUrl(url);
       setViewMode('advanced');
-      setModelLoading(true);
+      // Preload the GLB in the background so it's in browser cache when sheet opens
+      if (url) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'fetch';
+        link.href = url;
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+        // Remove after 30s — it will have loaded by then
+        setTimeout(() => link.parentNode?.removeChild(link), 30000);
+      }
     }
     if (arAssets?.model_usdz_url) {
       setUsdzUrl(getFullUrl(arAssets.model_usdz_url));
@@ -419,7 +427,6 @@ export function WebARViewer({
   const [aiTaskId, setAiTaskId] = useState<string | null>(null);
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
   const [modelLoading, setModelLoading] = useState(false);
-  const [iosUsdzGenerating, setIosUsdzGenerating] = useState(false);
 
   const modelViewerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -560,9 +567,11 @@ export function WebARViewer({
             setAiStage('success');
             
             const fullUrl = getFullUrl(status.local_url);
+            // Append a cache-buster so model-viewer fetches the new file, not a stale cache
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
             setTripoUrl(bustedUrl);
-            setModelLoading(true);
+            // Do NOT set modelLoading=true here — let model-viewer's progress event handle it
+            // so there's no artificial delay and the model appears as soon as it parses
             
             setViewMode('advanced');
             setStep('model_ready');
@@ -570,15 +579,15 @@ export function WebARViewer({
             // Auto-switch to AR tab so user sees the new model immediately
             setActiveTab('ar');
             
-            // Reset aiStage after a tiny delay so the UI cleans up nicely
-            setTimeout(() => setAiStage('idle'), 500);
+            // Reset aiStage after a short delay so the UI cleans up nicely
+            setTimeout(() => setAiStage('idle'), 800);
             
             // Notify parent to refresh assets
             onModelGenerated?.();
 
             toast({
-              title: "3D Model Ready",
-              description: "AI generation complete! You can now view the high-quality model.",
+              title: "✨ 3D Model Ready!",
+              description: "AI generation complete — your model is loading now.",
             });
           } else {
             setAiStage('error');
@@ -655,73 +664,96 @@ export function WebARViewer({
 
 
   // ── model-viewer event handlers ───────────────────────────────────────────
+  // IMPORTANT: depend on `isSheetOpen`, NOT `modelViewerRef.current`.
+  // Refs don't trigger React re-renders, so using the ref as a dep causes
+  // the listeners to never attach after the sheet mounts. isSheetOpen flips
+  // true exactly when the sheet (and model-viewer inside it) mounts.
   useEffect(() => {
-    const mv = modelViewerRef.current;
-    if (!mv) return;
+    if (!isSheetOpen) return; // model-viewer not mounted yet
 
-    const onARStatus = (e: any) => {
-      const status: string = e.detail?.status ?? '';
-      setArStatus(status);
+    // Small rAF delay to let model-viewer fully mount into the DOM
+    let rafId: number;
+    let safetyTimer: ReturnType<typeof setTimeout>;
 
-      if (status === 'session-started') {
-        setStep('scanning');
-        setScanPhase('tilting');
-        setScanDuration(0);
-        triggerHaptic('success');
-      }
+    rafId = requestAnimationFrame(() => {
+      const mv = modelViewerRef.current;
+      if (!mv) return;
 
-      if (status === 'object-placed') {
-        setStep('placed');
-        setShowCoach(true);
-        triggerHaptic('success');
-      }
+      const onARStatus = (e: any) => {
+        const status: string = e.detail?.status ?? '';
+        setArStatus(status);
 
-      if (status === 'not-presenting') {
-        setStep('model_ready');
-        setScanPhase('tilting');
-      }
+        if (status === 'session-started') {
+          setStep('scanning');
+          setScanPhase('tilting');
+          setScanDuration(0);
+          triggerHaptic('success');
+        }
 
-      if (status === 'failed') {
-        setStep('error');
-        triggerHaptic('error');
-        toast({
-          title: 'AR Failed',
-          description: 'Could not start AR. Ensure camera access is granted.',
-          variant: 'destructive',
-        });
-      }
-    };
+        if (status === 'object-placed') {
+          setStep('placed');
+          setShowCoach(true);
+          triggerHaptic('success');
+        }
 
-    const onProgress = (e: any) => {
-      const p = e.detail?.totalProgress ?? 0;
-      setBuildProgress(Math.round(p * 100));
-      
-      // Update model loading state
-      if (p < 1 && p > 0.1) {
-        setModelLoading(true);
-      }
-    };
+        if (status === 'not-presenting') {
+          setStep('model_ready');
+          setScanPhase('tilting');
+        }
 
-    const onLoad = () => {
-      setModelLoading(false);
-    };
+        if (status === 'failed') {
+          setStep('error');
+          triggerHaptic('error');
+          toast({
+            title: 'AR Failed',
+            description: 'Could not start AR. Ensure camera access is granted.',
+            variant: 'destructive',
+          });
+        }
+      };
 
-    const onError = () => {
-      setModelLoading(false);
-    };
+      const onProgress = (e: any) => {
+        const p = e.detail?.totalProgress ?? 0;
+        setBuildProgress(Math.round(p * 100));
+        if (p > 0 && p < 1) {
+          setModelLoading(true);
+          // Reset safety timer on every progress tick
+          clearTimeout(safetyTimer);
+          safetyTimer = setTimeout(() => setModelLoading(false), 6000);
+        }
+      };
 
-    mv.addEventListener('ar-status', onARStatus);
-    mv.addEventListener('progress', onProgress);
-    mv.addEventListener('load', onLoad);
-    mv.addEventListener('error', onError);
-    
+      const onLoad = () => {
+        clearTimeout(safetyTimer);
+        setModelLoading(false);
+      };
+
+      const onError = () => {
+        clearTimeout(safetyTimer);
+        setModelLoading(false);
+      };
+
+      mv.addEventListener('ar-status', onARStatus);
+      mv.addEventListener('progress', onProgress);
+      mv.addEventListener('load', onLoad);
+      mv.addEventListener('error', onError);
+
+      // Safety net: if load event never fires within 8s, clear the spinner
+      safetyTimer = setTimeout(() => setModelLoading(false), 8000);
+
+      return () => {
+        mv.removeEventListener('ar-status', onARStatus);
+        mv.removeEventListener('progress', onProgress);
+        mv.removeEventListener('load', onLoad);
+        mv.removeEventListener('error', onError);
+        clearTimeout(safetyTimer);
+      };
+    });
+
     return () => {
-      mv.removeEventListener('ar-status', onARStatus);
-      mv.removeEventListener('progress', onProgress);
-      mv.removeEventListener('load', onLoad);
-      mv.removeEventListener('error', onError);
+      cancelAnimationFrame(rafId);
     };
-  }, [modelViewerRef.current, toast]);
+  }, [isSheetOpen, toast]);
 
   // ── TF.js room-object detection (runs once camera access is obtained) ─────
   const runObjectDetection = useCallback(async () => {
@@ -813,73 +845,10 @@ export function WebARViewer({
     return "";
   };
 
-  // ── AR launch ────────────────────────────────────────────────────────────────
-  const launchAR = async () => {
+  // ── AR launch: directly invoke model-viewer's activateAR ──────────────────
+  const launchAR = () => {
     const mv = modelViewerRef.current;
     if (!mv) return;
-
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAdvanced = viewMode === 'advanced' && tripoUrl;
-
-    // On iOS with the advanced Tripo model: generate USDZ client-side and launch
-    // Quick Look (Apple's native ARKit renderer — works on ALL iPhones, no crashes).
-    // WebXR on iOS fails on iPhone XR and earlier because WebGL + AR is too heavy.
-    if (isIOS && isAdvanced) {
-      try {
-        setIosUsdzGenerating(true);
-        toast({
-          title: 'Preparing AR…',
-          description: 'Optimising model for your iPhone. This takes a moment.',
-        });
-
-        // 1. Fetch the GLB
-        const resp = await fetch(tripoUrl);
-        const glbBuffer = await resp.arrayBuffer();
-
-        // 2. Parse with three.js GLTFLoader
-        const gltf = await new Promise<any>((resolve, reject) => {
-          const loader = new GLTFLoader();
-          loader.parse(glbBuffer, '', resolve, reject);
-        });
-
-        // 3. Export as USDZ using three.js USDZExporter
-        const exporter = new USDZExporter();
-        const usdzBuffer = await exporter.parseAsync(gltf.scene);
-        const usdzBlob = new Blob([usdzBuffer], { type: 'model/vnd.usdz+zip' });
-        const usdzObjectUrl = URL.createObjectURL(usdzBlob);
-
-        // 4. Trigger iOS Quick Look via native <a rel="ar"> — Apple's optimised AR path
-        const anchor = document.createElement('a');
-        anchor.rel = 'ar';
-        anchor.href = usdzObjectUrl;
-        // Quick Look needs a child element
-        const img = document.createElement('img');
-        anchor.appendChild(img);
-        document.body.appendChild(anchor);
-        anchor.click();
-
-        // Cleanup after a delay
-        setTimeout(() => {
-          document.body.removeChild(anchor);
-          URL.revokeObjectURL(usdzObjectUrl);
-        }, 5000);
-
-      } catch (err) {
-        console.warn('[WebARViewer] iOS USDZ generation failed, falling back to WebXR:', err);
-        toast({
-          title: 'Falling back to WebXR',
-          description: 'USDZ generation failed. Launching standard AR instead.',
-          variant: 'destructive',
-        });
-        // Fall back to regular activateAR if USDZ export fails
-        try { mv.activateAR(); } catch {}
-      } finally {
-        setIosUsdzGenerating(false);
-      }
-      return;
-    }
-
-    // Android / desktop / procedural model — use standard WebXR / Scene Viewer
     try {
       mv.activateAR();
     } catch {
@@ -1364,8 +1333,7 @@ export function WebARViewer({
                       {!caps.isDesktop && caps.isSupported && step === 'model_ready' && (
                         <button
                           onClick={launchAR}
-                          disabled={iosUsdzGenerating}
-                          className={`
+                          className="
                             w-full flex items-center justify-center gap-3
                             bg-gradient-to-r from-[#143109] to-[#2a6616]
                             hover:from-[#1e4d10] hover:to-[#336617]
@@ -1374,21 +1342,11 @@ export function WebARViewer({
                             py-4 rounded-2xl
                             shadow-xl shadow-[#143109]/30
                             transition-all duration-200
-                            disabled:opacity-70 disabled:cursor-not-allowed
-                          `}
+                          "
                         >
-                          {iosUsdzGenerating ? (
-                            <>
-                              <Loader2 className="h-5 w-5 animate-spin" />
-                              Optimising for iPhone…
-                            </>
-                          ) : (
-                            <>
-                              <Camera className="h-5 w-5" />
-                              Launch AR in Your Room
-                              <ChevronRight className="h-5 w-5 opacity-80" />
-                            </>
-                          )}
+                          <Camera className="h-5 w-5" />
+                          Launch AR in Your Room
+                          <ChevronRight className="h-5 w-5 opacity-80" />
                         </button>
                       )}
 

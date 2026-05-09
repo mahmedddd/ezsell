@@ -85,9 +85,9 @@ class CORSStaticFiles(StaticFiles):
         response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "*"
         
-        # Enable browser caching for 24 hours to speed up repeated views
-        # Still uses 'must-revalidate' to ensure the client checks with the server
-        response.headers["Cache-Control"] = "public, max-age=86400, must-revalidate"
+        # Aggressively cache static uploads for a year to fix late loading
+        # 3D models and images are heavy, they should be loaded from disk cache instantly
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
 
 # Mount static and uploads directories with the CORS-enabled class
