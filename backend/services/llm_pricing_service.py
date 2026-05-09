@@ -357,33 +357,38 @@ Condition (1=worst, 10=brand new): {condition}
 Raw cleaned prices (PKR, outliers removed): {market_data['prices']}
 =====================================
 
-Your task — find the TRUE current market price for this exact item in Pakistan:
+Your task — formulate a highly accurate, trustworthy (90%+ accuracy) pricing prediction.
 
-STEP 1 — Price Validation:
-- If real PKR prices were extracted above, use them as the ground truth anchor.
-- Apply IQR logic mentally: reject any price that is more than 2x or less than 0.4x the median.
-- If a listing says "Rs 5,000" for an iPhone 13 — that is FAKE. Discard such outliers.
+STEP 1 — Product Research (Mental Check):
+- Identify the exact product model.
+- Determine its original LAUNCH YEAR.
+- Determine its ORIGINAL NEW PRICE or CURRENT NEW MARKET PRICE in Pakistan (PKR).
 
-STEP 2 — Simulate realistic OLX listings:
-- Based on valid OLX data + your knowledge of the Pakistani used market, simulate 3–5 plausible current listings.
-- For mobiles: account for PTA status, box/warranty, storage variant pricing.
-- For laptops: account for generation, RAM, SSD vs HDD, GPU.
-- For furniture: account for material quality, brand (Interwood vs local), size.
+STEP 2 — Market Price Validation:
+- Use the provided extracted OLX prices as ground truth for the current USED market.
+- Discard extreme outliers (e.g., Rs 5,000 for an iPhone 13).
+- Compare the new price vs the used market average to gauge typical depreciation based on age.
 
-STEP 3 — Compute final price:
-- Average your simulated listings.
-- Apply condition adjustment: condition 10 = 95% of new price, condition 7 = 65%, condition 5 = 50%, condition 3 = 35%.
-- State your confidence (0.0 to 1.0) based on how consistent the pricing signals are.
+STEP 3 — Apply Precise Condition Depreciation:
+- The user specified the condition as {condition} out of 10.
+- Condition 9-10 (Like New/Open Box): minimal depreciation from current market rate.
+- Condition 7-8 (Good/Minor wear): standard used market rate.
+- Condition 4-6 (Average/Scratches): 15-30% below standard used rate.
+- Condition 1-3 (Poor/Needs Repair): 40-60% below standard used rate.
+- Calculate the FINAL CONDITION-ADJUSTED PRICE.
 
 Return EXCLUSIVELY this JSON:
 {{
+  "launch_year": integer (estimated, e.g. 2021),
+  "new_market_price": integer (estimated original/current new price in PKR),
   "simulated_market_data": [
     {{"listing": "OLX-style ad description", "price": 55000}},
     {{"listing": "OLX-style ad description", "price": 58000}}
   ],
-  "estimated_price": integer (final fair market price in PKR before condition multiplier — backend applies condition),
+  "base_used_price": integer (average standard used price in PKR before condition),
+  "estimated_price": integer (the FINAL condition-adjusted fair market price in PKR),
   "confidence": float (0.0 to 1.0),
-  "reasoning": "concise explanation: what OLX prices you found, how you averaged, what adjustments you made"
+  "reasoning": "Explain the launch year, original price, used market average, and exactly how condition {condition}/10 influenced the final price."
 }}
 """
         try:

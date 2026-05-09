@@ -1720,6 +1720,23 @@ async def predict_price(request: PricePredictionRequest):
         reasoning = llm_result.get("reasoning", "Historical data utilized")
         data_source = "ML Model"
         
+        import re
+        
+        def extract_condition_value(cond_val_input):
+            try:
+                cond_str = str(cond_val_input)
+                match = re.search(r'^(\d+)', cond_str)
+                val = int(match.group(1)) if match else 5
+                return max(1, min(10, val))
+            except Exception:
+                return 5
+                
+        def get_condition_multiplier(cond_val):
+            if cond_val >= 9: return 0.95
+            elif cond_val >= 7: return 0.80
+            elif cond_val >= 4: return 0.60
+            else: return 0.40
+
         # Handle Laptop category
         if category == 'laptop':
             # 1. Get base reference price (Market data or ML Model)
@@ -1739,30 +1756,23 @@ async def predict_price(request: PricePredictionRequest):
             base_ml_price = market_price if market_price else ml_predicted
             ml_price_final = base_ml_price  # Store unadjusted for metadata
             
-            # 2. Blend with LLM Price (Undisturbed Blend)
+            # 2. Condition Multiplier applied to ML price
+            cond_val = extract_condition_value(request.condition)
+            adjusted_ml_price = base_ml_price * get_condition_multiplier(cond_val)
+            
+            # 3. Blend with LLM Price (LLM is ALREADY condition adjusted)
             if llm_price > 0:
                 if llm_conf > 0.6:
-                    # High confidence LLM - weigh it more
-                    predicted_price = (llm_price * 0.7) + (base_ml_price * 0.3)
+                    predicted_price = (llm_price * 0.7) + (adjusted_ml_price * 0.3)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (base_ml_price * 0.7)
+                    predicted_price = (llm_price * 0.3) + (adjusted_ml_price * 0.7)
                     data_source = "ML Model + LLM Blend"
             else:
-                predicted_price = base_ml_price
+                predicted_price = adjusted_ml_price
                 data_source = "Enhanced ML Model"
 
-            # 3. Apply Condition Multiplier (Condition 1-10)
-            try:
-                cond_val = int(request.condition) if str(request.condition).isdigit() else 5
-                cond_val = max(1, min(10, cond_val))
-            except (ValueError, TypeError):
-                cond_val = 5
-            condition_multiplier = 0.10 + (cond_val / 10) * 0.90
-            predicted_price = predicted_price * condition_multiplier
-            
             # 4. FINAL STRUCTURAL ADJUSTMENTS (Checkboxes)
-            # This ensures checkboxes have a visible impact on the final calculated price
             predicted_price, adjustments = apply_laptop_price_adjustments(predicted_price, request_data, tier or 'mid')
             
             adjustment_text = " | ".join(adjustments) if adjustments else "Standard Specs"
@@ -1793,26 +1803,21 @@ async def predict_price(request: PricePredictionRequest):
             base_ml_price = market_price if market_price else ml_predicted
             ml_price_final = base_ml_price  # Store unadjusted for metadata
             
-            # 2. Blend with LLM Price
+            # 2. Condition Multiplier applied to ML price
+            cond_val = extract_condition_value(request.condition)
+            adjusted_ml_price = base_ml_price * get_condition_multiplier(cond_val)
+            
+            # 3. Blend with LLM Price
             if llm_price > 0:
                 if llm_conf > 0.6:
-                    predicted_price = (llm_price * 0.7) + (base_ml_price * 0.3)
+                    predicted_price = (llm_price * 0.7) + (adjusted_ml_price * 0.3)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (base_ml_price * 0.7)
+                    predicted_price = (llm_price * 0.3) + (adjusted_ml_price * 0.7)
                     data_source = "ML Model + LLM Blend"
             else:
-                predicted_price = base_ml_price
+                predicted_price = adjusted_ml_price
                 data_source = "Enhanced ML Model"
-            
-            # 3. Apply Condition Multiplier
-            try:
-                cond_val = int(request.condition) if str(request.condition).isdigit() else 5
-                cond_val = max(1, min(10, cond_val))
-            except (ValueError, TypeError):
-                cond_val = 5
-            condition_multiplier = 0.10 + (cond_val / 10) * 0.90
-            predicted_price = predicted_price * condition_multiplier
             
             # 4. FINAL STRUCTURAL ADJUSTMENTS (PTA, 5G, display, etc)
             predicted_price, adjustments = apply_mobile_price_adjustments(predicted_price, request_data)
@@ -1849,26 +1854,21 @@ async def predict_price(request: PricePredictionRequest):
             base_ml_price = market_price if market_price else ml_predicted
             ml_price_final = base_ml_price  # Store unadjusted for metadata
             
-            # 2. Blend with LLM
+            # 2. Condition Multiplier applied to ML price
+            cond_val = extract_condition_value(request.condition)
+            adjusted_ml_price = base_ml_price * get_condition_multiplier(cond_val)
+            
+            # 3. Blend with LLM Price
             if llm_price > 0:
                 if llm_conf > 0.7:
-                    predicted_price = (llm_price * 0.8) + (base_ml_price * 0.2)
+                    predicted_price = (llm_price * 0.8) + (adjusted_ml_price * 0.2)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.4) + (base_ml_price * 0.6)
+                    predicted_price = (llm_price * 0.4) + (adjusted_ml_price * 0.6)
                     data_source = "ML Model + LLM Blend"
             else:
-                predicted_price = base_ml_price
+                predicted_price = adjusted_ml_price
                 data_source = "ML Model"
-            
-            # 3. Apply Condition Multiplier
-            try:
-                cond_val = int(request.condition) if str(request.condition).isdigit() else 5
-                cond_val = max(1, min(10, cond_val))
-            except (ValueError, TypeError):
-                cond_val = 5
-            condition_multiplier = 0.20 + (cond_val / 10) * 0.80
-            predicted_price = predicted_price * condition_multiplier
             
             # 4. FINAL STRUCTURAL ADJUSTMENTS (Imported, Handmade, etc)
             predicted_price, adjustments = apply_furniture_price_adjustments(predicted_price, request_data)
