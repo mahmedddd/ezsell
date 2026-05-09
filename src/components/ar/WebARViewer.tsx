@@ -525,12 +525,15 @@ export function WebARViewer({
       setAiTaskId(task_id);
       setAiStage('polling');
       setAiProgress(15);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[WebARViewer] AI Start failed:', err);
       setAiStage('error');
+      
+      const errorMessage = err?.response?.data?.detail || err?.message || "Could not start AI generation. Please try again later.";
+      
       toast({
         title: "AI Generation Failed",
-        description: "Could not start AI generation. Please try again later.",
+        description: errorMessage,
         variant: "destructive"
       });
     }

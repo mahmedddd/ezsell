@@ -31,6 +31,8 @@ async def upload_image_to_tripo(file_path: str) -> str:
         with open(file_path, "rb") as f:
             files = {"file": f}
             response = await client.post(url, headers=headers, files=files)
+            if response.status_code in [402, 403] or (response.status_code == 200 and response.json().get("code") == 10006):
+                raise Exception("Insufficient Tripo AI credits or invalid API key. Please top up your account.")
             response.raise_for_status()
             data = response.json()
             if data.get("code") != 0:
@@ -73,8 +75,8 @@ async def start_image_to_3d_task(
 
     async with httpx.AsyncClient() as client:
         response = await client.post(f"{TRIPO_V2_BASE_URL}/task", json=payload, headers=headers)
-        if response.status_code == 402 or (response.status_code == 200 and response.json().get("code") == 10006):
-            raise Exception("Insufficient Tripo AI credits. Please top up your account.")
+        if response.status_code in [402, 403] or (response.status_code == 200 and response.json().get("code") == 10006):
+            raise Exception("Insufficient Tripo AI credits or invalid API key. Please top up your account.")
         response.raise_for_status()
         data = response.json()
         if data.get("code") != 0:
@@ -119,6 +121,8 @@ async def start_multiview_to_3d_task(
 
     async with httpx.AsyncClient() as client:
         response = await client.post(f"{TRIPO_V2_BASE_URL}/task", json=payload, headers=headers)
+        if response.status_code in [402, 403] or (response.status_code == 200 and response.json().get("code") == 10006):
+            raise Exception("Insufficient Tripo AI credits or invalid API key. Please top up your account.")
         response.raise_for_status()
         data = response.json()
         if data.get("code") != 0:
