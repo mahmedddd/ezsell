@@ -197,17 +197,20 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       }
     };
 
-    if (dynamicDropdownCache.current[cacheKey]) {
-      const cached = dynamicDropdownCache.current[cacheKey];
-      setDropdownOptions(cached);
-      setManualOverride(false);
-      syncPrepopulations(cached);
-      return;
-    }
+    // Temporarily bypassing cache to ensure live scraped results always show during testing
+    // if (dynamicDropdownCache.current[cacheKey]) {
+    //   const cached = dynamicDropdownCache.current[cacheKey];
+    //   setDropdownOptions(cached);
+    //   setManualOverride(false);
+    //   syncPrepopulations(cached);
+    //   return;
+    // }
 
     try {
       const params = new URLSearchParams({ category, title });
-      const response = await fetch(`${API_BASE_URL}/api/v1/dynamic-dropdowns?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/dynamic-dropdowns?${params}`, {
+        cache: 'no-store'
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.dropdowns) {

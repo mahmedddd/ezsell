@@ -108,8 +108,9 @@ Title: "{title}"
 Description: "{description}"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IMPORTANT INSTRUCTION REGARDING "EXISTENCE":
-Do NOT reject future, unreleased, or unrecognized model numbers if the format is structurally valid (e.g. "iPhone 17", "Samsung S25", "PS6"). Assume the user is selling a newly released item, a clone, or a pre-release. If it has a Brand + Number/Word, it IS VALID.
+IMPORTANT INSTRUCTION REGARDING "EXISTENCE" & TYPOS:
+Do NOT reject future, unreleased, or unrecognized model numbers if the format is structurally valid (e.g. "iPhone 17", "Samsung S25"). Assume the user is selling a newly released item or a pre-release. 
+HOWEVER, you MUST reject incomplete words, typos, or single dangling letters (e.g., reject "iphone 17 p" and ask them to specify if they mean "Pro" or "Plus").
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
