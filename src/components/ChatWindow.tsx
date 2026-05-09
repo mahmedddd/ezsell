@@ -124,6 +124,8 @@ export function ChatWindow({
         variant: "destructive"
       });
     }
+  };
+
   const handleBlockToggle = async () => {
     setBlocking(true);
     try {
