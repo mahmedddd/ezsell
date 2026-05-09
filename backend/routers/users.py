@@ -707,6 +707,7 @@ def get_all_reports_admin(
         result.append({
             "id": r.id,
             "reporter_username": reporter.username if reporter else "Unknown",
+            "reporter_id": r.reporter_id,
             "reported_username": reported.username if reported else "Unknown",
             "reported_id": r.reported_id,
             "reason": r.reason,

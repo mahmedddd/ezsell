@@ -68,7 +68,20 @@ export function ChatWindow({
   const [imgError, setImgError] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [showSafetyNotice, setShowSafetyNotice] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const isDismissed = localStorage.getItem('ezsell_safety_notice_dismissed');
+    if (!isDismissed) {
+      setShowSafetyNotice(true);
+    }
+  }, []);
+
+  const dismissSafetyNotice = () => {
+    localStorage.setItem('ezsell_safety_notice_dismissed', 'true');
+    setShowSafetyNotice(false);
+  };
 
   useEffect(() => {
     loadMessages();
@@ -224,7 +237,46 @@ export function ChatWindow({
   };
 
   return (
-    <div className={`flex flex-col bg-white border shadow-xl overflow-hidden ${inline ? 'h-full w-full' : 'fixed bottom-4 right-4 w-[380px] h-[550px] z-50 rounded-lg'}`}>
+    <div className={`flex flex-col bg-white border shadow-xl overflow-hidden relative ${inline ? 'h-full w-full' : 'fixed bottom-4 right-4 w-[380px] h-[550px] z-50 rounded-lg'}`}>
+      {showSafetyNotice && (
+        <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-[4px] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[320px] overflow-hidden animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500">
+            <div className="bg-gradient-to-br from-orange-400 to-red-500 p-6 flex justify-center">
+              <div className="bg-white/20 p-4 rounded-full backdrop-blur-md">
+                <ShieldAlert className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="text-center">
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Safety First!</h3>
+                <p className="text-xs text-gray-500 font-medium mt-1 uppercase tracking-widest">Essential Caution Guidelines</p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 font-bold text-xs">01</div>
+                  <p className="text-[13px] text-gray-700 leading-relaxed font-medium">Meet in <b>public, well-lit places</b> like shopping malls or cafes.</p>
+                </div>
+                <div className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 font-bold text-xs">02</div>
+                  <p className="text-[13px] text-gray-700 leading-relaxed font-medium">Try to <b>bring a friend</b> with you when meeting a seller or buyer.</p>
+                </div>
+                <div className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 font-bold text-xs">03</div>
+                  <p className="text-[13px] text-gray-700 leading-relaxed font-medium">Verify the item and <b>confirm payment</b> before handing over goods.</p>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={dismissSafetyNotice}
+                className="w-full bg-[#143109] hover:bg-[#1e4d10] text-white h-12 rounded-2xl font-bold transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0"
+              >
+                I Understand
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="p-4 border-b bg-[#143109] text-white flex items-center justify-between">
         <div className="flex items-center gap-3">

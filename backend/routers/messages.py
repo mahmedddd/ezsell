@@ -11,6 +11,7 @@ import json
 from models.database import get_db, Message, User, Listing, BlockedUser
 from schemas.schemas import MessageCreate, MessageResponse, ConversationResponse
 from core.security import get_current_user
+from .users import get_current_admin_user
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -384,3 +385,44 @@ def delete_conversation(
     db.commit()
     
     return {"message": f"Successfully deleted {deleted_count} messages in conversation"}
+
+@router.get("/admin/conversation/{user1_id}/{user2_id}", response_model=List[MessageResponse])
+def get_conversation_admin(
+    user1_id: int,
+    user2_id: int,
+    listing_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_admin_user)
+):
+    """Get conversation between two users (admin only)"""
+    query = db.query(Message).filter(
+        or_(
+            and_(Message.sender_id == user1_id, Message.receiver_id == user2_id),
+            and_(Message.sender_id == user2_id, Message.receiver_id == user1_id)
+        )
+    )
+    
+    if listing_id:
+        query = query.filter(Message.listing_id == listing_id)
+        
+    messages = query.order_by(Message.created_at.asc()).all()
+    
+    result = []
+    for m in messages:
+        sender = db.query(User).filter(User.id == m.sender_id).first()
+        receiver = db.query(User).filter(User.id == m.receiver_id).first()
+        listing = db.query(Listing).filter(Listing.id == m.listing_id).first() if m.listing_id else None
+        
+        result.append(MessageResponse(
+            id=m.id,
+            content=m.content,
+            sender_id=m.sender_id,
+            receiver_id=m.receiver_id,
+            listing_id=m.listing_id,
+            is_read=m.is_read,
+            created_at=m.created_at,
+            sender_username=sender.username if sender else "Unknown",
+            receiver_username=receiver.username if receiver else "Unknown",
+            listing_title=listing.title if listing else None
+        ))
+    return result

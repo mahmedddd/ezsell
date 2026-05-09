@@ -584,6 +584,11 @@ export const adminService = {
     const response = await apiClient.patch(`/admin/reports/${reportId}`, { status });
     return response.data;
   },
+
+  async getAdminConversation(user1Id: number, user2Id: number) {
+    const response = await apiClient.get(`/messages/admin/conversation/${user1Id}/${user2Id}`);
+    return response.data;
+  },
 };
 
 // Google Auth Service
