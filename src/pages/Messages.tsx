@@ -127,13 +127,13 @@ export default function Messages() {
       <div className="container mx-auto px-4 py-8 flex-1 flex flex-col h-[calc(100vh-80px)]">
 
         {/* Header Section */}
-        <div className="flex justify-between items-center mb-6">
-          <Button variant="ghost" onClick={() => navigate('/')} className="text-[#2E6091] hover:bg-[#2E6091]/10">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <Button variant="ghost" onClick={() => navigate('/')} className="text-[#2E6091] hover:bg-[#2E6091]/10 -ml-4">
             <Home className="mr-2 h-4 w-4" /> Back to Home
           </Button>
           <div className="flex items-center gap-2 text-[#2E6091]">
-            <MessageCircle className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">Messages Dashboard</h1>
+            <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8" />
+            <h1 className="text-xl sm:text-2xl font-bold">Messages Dashboard</h1>
             {totalUnread > 0 && (
               <Badge className="bg-red-500 text-white ml-2">
                 {totalUnread} New
@@ -146,7 +146,7 @@ export default function Messages() {
         <Card className="flex-1 flex overflow-hidden shadow-2xl rounded-2xl border-0 bg-white/90 backdrop-blur">
 
           {/* Left Pane: Conversation List */}
-          <div className="w-full md:w-[350px] lg:w-[400px] border-r border-gray-100 flex flex-col bg-gray-50/50">
+          <div className={`${selectedChat ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] lg:w-[400px] border-r border-gray-100 flex-col bg-gray-50/50`}>
             <div className="p-4 border-b border-gray-100 bg-white">
               <h2 className="font-semibold text-lg text-gray-800">Inbox</h2>
             </div>
@@ -269,7 +269,7 @@ export default function Messages() {
           </div>
 
           {/* Right Pane: Chat Window / Empty State */}
-          <div className="hidden md:flex flex-1 flex-col bg-white">
+          <div className={`${selectedChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-white relative`}>
             {selectedChat ? (
               <ChatWindow
                 listingId={selectedChat.listing_id || 0}

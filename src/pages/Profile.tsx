@@ -272,21 +272,21 @@ export default function Profile() {
 
             <div className="container mx-auto max-w-5xl -mt-8 px-4">
                 <Tabs defaultValue="profile" className="space-y-6">
-                    <TabsList className="bg-white/80 backdrop-blur border-2 border-[#2E6091]/10 p-1 rounded-2xl shadow-lg w-full md:w-auto h-auto flex flex-wrap">
-                        <TabsTrigger value="profile" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
+                    <TabsList className="bg-white/80 backdrop-blur border-2 border-[#2E6091]/10 p-1 rounded-2xl shadow-lg w-full md:w-auto h-auto flex overflow-x-auto justify-start hide-scrollbar">
+                        <TabsTrigger value="profile" className="rounded-xl px-4 sm:px-6 py-2 sm:py-3 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                             <User className="w-4 h-4 mr-2" /> {isOwnProfile ? 'My Profile' : 'User Profile'}
                         </TabsTrigger>
                         {isOwnProfile && (
                             <>
-                                <TabsTrigger value="support" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
+                                <TabsTrigger value="support" className="rounded-xl px-4 sm:px-6 py-2 sm:py-3 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                                     <LifeBuoy className="w-4 h-4 mr-2" /> Support Center
                                 </TabsTrigger>
-                                <TabsTrigger value="activity" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
+                                <TabsTrigger value="activity" className="rounded-xl px-4 sm:px-6 py-2 sm:py-3 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                                     <TrendingUp className="w-4 h-4 mr-2" /> My Journey
                                 </TabsTrigger>
                             </>
                         )}
-                        <TabsTrigger value="listings" className="rounded-xl px-6 py-3 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
+                        <TabsTrigger value="listings" className="rounded-xl px-4 sm:px-6 py-2 sm:py-3 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-[#2E6091] data-[state=active]:text-white">
                             <Package className="w-4 h-4 mr-2" /> {isOwnProfile ? 'My Ads' : 'Active Ads'}
                         </TabsTrigger>
                     </TabsList>
@@ -550,7 +550,7 @@ export default function Profile() {
                     {/* Activity/Journey Tab */}
                     <TabsContent value="activity">
                         <div className="grid md:grid-cols-3 gap-6">
-                            <Card className="col-span-1 border-0 shadow-xl rounded-3xl bg-gradient-to-br from-[#2E6091] to-[#2d5a18] text-white">
+                            <Card className="col-span-1 border-0 shadow-xl rounded-3xl bg-gradient-to-br from-[#2E6091] to-[#4591CB] text-white">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2"><Award className="w-5 h-5 text-yellow-400" /> Achievement</CardTitle>
                                 </CardHeader>
