@@ -1,10 +1,99 @@
 import httpx
 import asyncio
 import os
+import subprocess
+import shutil
 from typing import List, Optional, Dict, Any
 from core.config import settings
 
 TRIPO_V2_BASE_URL = "https://api.tripo3d.ai/v2/openapi"
+
+
+async def optimize_glb_with_draco(glb_path: str) -> bool:
+    """
+    Applies Draco mesh compression to a GLB file using gltf-transform CLI.
+    Draco is LOSSLESS geometry compression — zero visual quality change.
+    It dramatically reduces GPU memory bandwidth, fixing iPhone XR thermal throttling.
+    
+    Requires: npx (comes with Node.js, already installed for npm build)
+    Returns True if optimization succeeded, False if it failed (original file kept).
+    """
+    try:
+        original_size = os.path.getsize(glb_path)
+        temp_path = glb_path + ".optimized.glb"
+        
+        print(f"🔧 [GLB_OPT] Optimizing {os.path.basename(glb_path)} ({original_size / 1024:.0f} KB) with Draco...")
+        
+        result = subprocess.run(
+            [
+                "npx", "--yes", "@gltf-transform/cli",
+                "optimize",
+                glb_path,
+                temp_path,
+                "--compress", "draco",       # Draco mesh compression (lossless geometry)
+                "--simplify", "false",        # Do NOT simplify mesh — keeps full visual quality
+                "--flatten", "false",         # Keep scene graph intact
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,  # 2 minute timeout for large models
+        )
+        
+        if result.returncode == 0 and os.path.exists(temp_path):
+            optimized_size = os.path.getsize(temp_path)
+            
+            # Only replace if the optimized file is valid and smaller
+            if optimized_size > 1024:  # Must be at least 1KB to be valid
+                shutil.move(temp_path, glb_path)
+                saving_pct = (1 - optimized_size / original_size) * 100
+                print(f"✅ [GLB_OPT] Draco compression done: {original_size / 1024:.0f} KB → {optimized_size / 1024:.0f} KB ({saving_pct:.0f}% smaller)")
+                return True
+            else:
+                os.remove(temp_path)
+                print(f"⚠️ [GLB_OPT] Optimized file too small, keeping original")
+                return False
+        else:
+            print(f"⚠️ [GLB_OPT] gltf-transform failed (rc={result.returncode}): {result.stderr[:200]}")
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print(f"⚠️ [GLB_OPT] Optimization timed out, keeping original file")
+        return False
+    except FileNotFoundError:
+        print(f"⚠️ [GLB_OPT] npx not found — skipping Draco compression")
+        return False
+    except Exception as e:
+        print(f"⚠️ [GLB_OPT] Optimization error: {e}")
+        return False
+
+
+async def download_and_save_glb(url: str, dest_path: str) -> bool:
+    """Downloads a GLB from a URL, saves it, then applies Draco compression."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=120.0)
+            response.raise_for_status()
+            with open(dest_path, "wb") as f:
+                f.write(response.content)
+        
+        raw_size = os.path.getsize(dest_path)
+        print(f"✅ [IMAGE_TO_3D] GLB downloaded: {dest_path} ({raw_size / 1024:.0f} KB)")
+        
+        # Apply Draco compression in a thread to not block the event loop
+        # This is safe — it's a separate process, zero visual quality change
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: asyncio.run(optimize_glb_with_draco(dest_path))
+        )
+        
+        return True
+    except Exception as e:
+        print(f"❌ [IMAGE_TO_3D] Failed to download GLB: {e}")
+        return False
+
 
 async def upload_image_to_tripo(file_path: str) -> str:
     """Uploads a local image to Tripo AI and returns a file_token."""

@@ -1037,7 +1037,7 @@ export function WebARViewer({
                         ar-scale="fixed"
                         camera-controls
                         touch-action="pan-y"
-                        shadow-intensity={2.8}
+                        shadow-intensity={(viewMode === 'advanced') ? 1.5 : 2.8}
                         shadow-softness={0}
                         environment-image="neutral"
                         exposure={1.2}
@@ -1047,6 +1047,8 @@ export function WebARViewer({
                         camera-orbit="-30deg 75deg auto"
                         interaction-prompt="auto"
                         loading="eager"
+                        reveal="auto"
+                        draco-decoder-base-path="https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
                         style={{
                           width: '100%',
                           height: '100%',
