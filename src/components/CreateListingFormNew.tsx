@@ -107,33 +107,46 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     color: '',
   });
 
-  const getDropdownSchemaKey = (key: string, category: string) => {
-    let schemaKey = key.toLowerCase()
+  const getDropdownSchemaKey = (key: string, category: string): string => {
+    const k = key.toLowerCase()
       .replace(/\s+/g, '_')
-      .replace(/[()]/g, '')
-      .replace(/gb/g, '')
-      .replace(/mp/g, '')
-      .trim();
+      .replace(/[()\/\-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/gb$/g, '')
+      .replace(/mp$/g, '')
+      .trim()
+      .replace(/_+$/g, '');
 
-    // Specific mapping overrides
-    if (schemaKey.includes('ram')) return 'ram';
-    if (schemaKey.includes('storage') || schemaKey.includes('rom')) {
+    // === MOBILE + LAPTOP ===
+    if (k.includes('ram') || k.includes('memory') && !k.includes('storage')) return 'ram';
+    if (k.includes('storage') || k.includes('rom') || k.includes('ssd') || k.includes('disk') || k.includes('hdd')) {
       return category === 'furniture' ? 'has_storage' : 'storage';
     }
-    if (schemaKey.includes('camera')) return 'camera';
-    if (schemaKey.includes('processor')) return 'processor';
-    if (schemaKey.includes('brand')) {
+    if (k.includes('camera') || k.includes('megapixel') || k.includes('mp')) return 'camera';
+    if (k.includes('processor') || k.includes('cpu') || k.includes('chipset')) return 'processor';
+    if (k.includes('gpu') || k.includes('graphic') || k.includes('video_card')) return 'gpu';
+    if (k.includes('generation') || k.includes('gen')) return 'generation';
+    if (k.includes('battery')) return 'battery';
+    if (k.includes('screen') || k.includes('display') || (k.includes('size') && category !== 'furniture')) return 'screen_size';
+    if (k.includes('color') || k.includes('colour') || k.includes('finish') || k.includes('variant')) return 'color';
+    if (k.includes('brand')) {
       return category === 'furniture' ? 'furniture_brand' : 'brand';
     }
-    if (schemaKey.includes('material')) return 'material';
-    if (schemaKey.includes('mattress')) return 'has_mattress';
-    if (schemaKey.includes('capacity') || schemaKey.includes('seats')) return 'seating_capacity';
-    if (schemaKey.includes('type')) return 'furniture_type';
-    if (schemaKey.includes('size') && category === 'furniture') return 'furniture_subtype';
-    if (schemaKey.includes('color') || schemaKey.includes('finish')) return 'color';
 
-    return schemaKey;
+    // === FURNITURE ===
+    if (k.includes('material') || k.includes('upholstery') || k.includes('fabric')) return 'material';
+    if (k.includes('mattress')) return 'has_mattress';
+    if (k.includes('seating') || k.includes('capacity') || k.includes('seats') || k.includes('seater')) return 'seating_capacity';
+    if (k.includes('style') || k.includes('design')) return 'furniture_type';
+    if (k.includes('door') || k.includes('compartment') || k.includes('subtype')) return 'furniture_subtype';
+    if (k.includes('frame')) return 'material'; // frame material → material
+    if (k === 'size' && category === 'furniture') return 'furniture_subtype';
+    if (k.includes('chair') || k.includes('seat_type') || k.includes('type')) return 'furniture_type';
+    if (k.includes('mirror') || k.includes('shelf') || k.includes('shelv')) return 'furniture_subtype';
+
+    return k;
   };
+
 
   // Cache for LLM responses to prevent hammering the 70B model rate limit on every keystroke
   const titleValidationCache = useRef<Record<string, any>>({});
@@ -148,17 +161,18 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     const syncPrepopulations = (dropdowns: any) => {
       const initialSelections: Record<string, string> = {};
       const formDataUpdates: Record<string, any> = {};
-      const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size'];
+      const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size', 'battery', 'generation'];
       const booleanFields = ['has_mattress', 'has_storage', 'is_imported', 'is_handmade', 'is_antique'];
+      const stringFields = ['color', 'brand', 'furniture_brand', 'processor', 'gpu', 'material', 'furniture_type', 'furniture_subtype'];
 
       Object.entries(dropdowns).forEach(([key, options]: [string, any]) => {
         const lowerTitle = title.toLowerCase();
         const schemaKey = getDropdownSchemaKey(key, category);
         const foundOption = options.find((opt: string) => lowerTitle.includes(opt.toLowerCase()));
 
-        // Use found option from title, OR auto-select the first option for material fields
-        // so that formData.material is never empty when AI dropdowns are loaded
-        const selectedOption = foundOption || (schemaKey === 'material' && options.length > 0 ? options[0] : null);
+        // Auto-select: prefer title match, then first option for string fields that must have a value
+        const autoSelectFirst = stringFields.includes(schemaKey) || schemaKey === 'material';
+        const selectedOption = foundOption || (autoSelectFirst && options.length > 0 ? options[0] : null);
 
         if (selectedOption) {
           initialSelections[key] = selectedOption;
@@ -170,6 +184,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
           } else if (booleanFields.includes(schemaKey)) {
             val = selectedOption.toLowerCase().includes('yes') || selectedOption.toLowerCase().includes('included') || selectedOption.toLowerCase().includes('true');
           }
+          // string fields: val stays as the raw string
           formDataUpdates[schemaKey] = val;
         }
       });
@@ -369,6 +384,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         has_mattress: !!existingData.has_mattress,
         mattress_type: existingData.mattress_type || 'standard',
         furniture_brand: existingData.furniture_brand || 'none',
+        color: existingData.color || '',
       });
 
       // 4. Load existing images as previews
@@ -900,6 +916,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         has_mattress: formData.has_mattress,
         mattress_type: formData.mattress_type || undefined,
         furniture_brand: formData.furniture_brand || undefined,
+        color: formData.color || undefined,
       };
 
       console.log('Prepared listing data for API:', listingData);
@@ -1365,7 +1382,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                     {Object.entries(dropdownOptions).map(([key, options]: [string, any]) => {
                       const schemaKey = getDropdownSchemaKey(key, formData.category);
 
-                      const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size'];
+                      const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size', 'battery', 'generation'];
                       const booleanFields = ['has_mattress', 'has_storage', 'is_imported', 'is_handmade', 'is_antique'];
                       // For display, use the selection state (raw string from LLM)
                       const displayValue = dynamicDropdownSelections[key] || '';

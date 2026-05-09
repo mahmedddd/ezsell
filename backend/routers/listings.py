@@ -210,6 +210,7 @@ async def create_listing(
     has_mattress: bool = Form(False),
     mattress_type: Optional[str] = Form(None),
     furniture_brand: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
     predicted_price: Optional[float] = Form(None),
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -392,6 +393,7 @@ async def create_listing(
             has_mattress=has_mattress if category == "furniture" else False,
             mattress_type=mattress_type if category == "furniture" else None,
             images=images_json,
+            color=color,
             owner_id=user.id,
             approval_status=approval_status,
             predicted_price=predicted_price,
@@ -719,6 +721,7 @@ def get_my_listings(
             "material": l.material,
             "furniture_subtype": l.furniture_subtype,
             "furniture_brand": l.furniture_brand,
+            "color": l.color,
             "is_sliding_door": bool(l.is_sliding_door) if l.is_sliding_door is not None else False,
             "has_mattress": bool(l.has_mattress) if l.has_mattress is not None else False,
             "mattress_type": l.mattress_type,

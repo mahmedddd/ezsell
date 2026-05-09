@@ -103,12 +103,70 @@ Return EXCLUSIVELY this JSON (no extra text):
             return {"is_valid": True, "message": "Validation temporarily unavailable, proceeding.", "missing_fields": [], "suggested_title": title, "extracted_specs": {}}
 
 
+    async def _fetch_web_specs(self, title: str, category: str) -> str:
+        """
+        Searches multiple authoritative + Pakistan-specific sources for real specs.
+        Runs all queries in parallel for speed.
+        """
+        loop = asyncio.get_event_loop()
+
+        if category == "mobile":
+            queries = [
+                f'site:gsmarena.com "{title}" specifications',
+                f'"{title}" specifications RAM storage color Pakistan',
+                f'site:phoneworld.com.pk "{title}" specifications',
+                f'site:mobilecity.pk "{title}" RAM storage specifications',
+            ]
+        elif category == "laptop":
+            queries = [
+                f'site:notebookcheck.net "{title}" review specifications',
+                f'"{title}" laptop RAM storage processor specifications Pakistan',
+                f'site:pakref.com "{title}" specifications',
+            ]
+        elif category == "furniture":
+            # No web spec lookup needed for furniture (LLM structured prompts are better)
+            return ""
+        else:
+            return ""
+
+        async def search_one(q: str) -> List[str]:
+            try:
+                def _run():
+                    with DDGS() as ddgs:
+                        return list(ddgs.text(q, max_results=3))
+                results = await loop.run_in_executor(None, _run)
+                out = []
+                for r in results:
+                    body = r.get("body", "")
+                    if body:
+                        out.append(f"[{r.get('title','')}] {body}")
+                return out
+            except Exception as e:
+                print(f"Web spec search error for '{q}': {e}")
+                return []
+
+        # Run all queries in parallel
+        all_results = await asyncio.gather(*[search_one(q) for q in queries])
+        snippets: List[str] = []
+        for result_list in all_results:
+            snippets.extend(result_list)
+
+        return "\n".join(snippets[:8])  # Top 8 snippets as context
+
+
     async def generate_relevant_dropdowns(self, category: str, title: str) -> Dict[str, List[str]]:
         """
         Generates contextual dropdown options based on what the user is typing.
+        For mobiles/laptops: first fetches real specs from the web, then grounds LLM on those facts.
+        For furniture: uses structured LLM prompts.
         """
         if not self.client or len(title.strip()) < 3:
             return {}
+
+        # --- Web-grounded spec fetching for mobile and laptop ---
+        web_context = ""
+        if category in ("mobile", "laptop"):
+            web_context = await self._fetch_web_specs(title, category)
 
         # For furniture, detect the type from the title to give targeted guidance
         furniture_type_hint = ""
@@ -192,23 +250,38 @@ Return EXCLUSIVELY this JSON (no extra text):
             "furniture": furniture_type_hint,
         }.get(category, "Provide the most relevant configuration options for this product.")
 
+        # Build grounding context section for the prompt
+        grounding_section = ""
+        if web_context:
+            grounding_section = f"""
+REAL SPECS FROM THE WEB (use these as your PRIMARY source — they are ground truth):
+---
+{web_context}
+---
+Extract the exact RAM variants, Storage variants, and Colors from the above web data.
+Only include options that are explicitly mentioned in the web data above.
+"""
+        else:
+            grounding_section = (
+                "No web data available. Use your training knowledge, but be conservative — "
+                "only include specs you are highly confident about for this exact model."
+            )
 
         prompt = f"""You are an expert product database for the Pakistani mobile/tech/furniture market.
 Category: {category}
 Product Title: "{title}"
+
+{grounding_section}
 
 Task: Return ONLY the exact configuration variants that this SPECIFIC product model was officially released with.
 
 {category_guidance}
 
 STRICT RULES — VIOLATIONS ARE NOT ALLOWED:
-1. You MUST look up the REAL, OFFICIAL specs for this exact product model from your training data.
-2. Do NOT use generic values. Do NOT copy from examples. Do NOT invent variants.
-3. For mobile phones: list ONLY the RAM and Storage options that this exact model ships with globally OR in Pakistan. For example:
-   - Samsung Galaxy A56 ships with: 6 GB and 12 GB RAM. NOT 8 GB.
-   - Samsung Galaxy A35 ships with: 8 GB and 12 GB RAM.
-   - iPhone 15 ships with: 6 GB RAM (fixed, not a user choice).
-4. If you are unsure about a specific value, OMIT IT rather than guess.
+1. If web data is provided above, use IT as the ONLY source of truth. Do NOT override it with your training data.
+2. Do NOT invent variants. Do NOT copy from examples. Do NOT add variants not found in the web data.
+3. If the web data clearly states only '6 GB' and '12 GB' RAM exist, list ONLY those two. NOT '8 GB'.
+4. If you are unsure about a specific value and it is NOT in the web data, OMIT IT.
 5. Max 6 options per key. Only include keys that are genuinely configurable for buyers.
 
 Return EXCLUSIVELY a valid JSON object like this (replace with REAL values for "{title}"):
@@ -231,6 +304,7 @@ Return EXCLUSIVELY a valid JSON object like this (replace with REAL values for "
         except Exception as e:
             print(f"LLM Dropdown Gen Error: {e}")
             return {}
+
 
     async def fetch_online_market_prices(self, title: str, category: str = "") -> Dict[str, Any]:
         """
