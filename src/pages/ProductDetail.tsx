@@ -404,6 +404,7 @@ export default function ProductDetail() {
                 allImageUrls={allImages.map((img: string) => getImageUrl(img)).filter((u: string | null): u is string => !!u)}
                 arAssets={arAssets}
                 dimensionsCm={arAssets?.dimensions_cm ?? null}
+                onModelGenerated={() => fetchListing(listing.id)}
               />
             )}
 

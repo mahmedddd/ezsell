@@ -94,6 +94,8 @@ export interface WebARViewerProps {
   arAssets?: ARAssets | null;
   /** override dimensions from listing detail page */
   dimensionsCm?: FurnitureDimensions | null;
+  /** Callback fired when AI generation completes successfully to trigger parent data refresh */
+  onModelGenerated?: () => void;
 }
 
 type ARStep =
@@ -373,6 +375,7 @@ export function WebARViewer({
   allImageUrls,
   arAssets,
   dimensionsCm,
+  onModelGenerated,
 }: WebARViewerProps) {
   const { toast } = useToast();
   const caps = useARSupport();
@@ -561,6 +564,9 @@ export function WebARViewer({
             
             // Reset aiStage after a tiny delay so the UI cleans up nicely
             setTimeout(() => setAiStage('idle'), 500);
+            
+            // Notify parent to refresh assets
+            onModelGenerated?.();
 
             toast({
               title: "3D Model Ready",
@@ -986,6 +992,7 @@ export function WebARViewer({
 
                       {/* ── model-viewer element ── */}
                       <model-viewer
+                        key={`mv-${viewMode}-${tripoUrl}-${proceduralUrl}`}
                         ref={modelViewerRef as any}
                         src={(viewMode === 'advanced' && tripoUrl) ? tripoUrl : proceduralUrl || undefined}
                         ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
