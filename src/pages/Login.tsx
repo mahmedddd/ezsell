@@ -58,44 +58,38 @@ export default function Login() {
             Buy and sell mobiles, laptops, furniture and more — safely, quickly, and for free.
           </p>
 
-          <div className="mt-10 grid grid-cols-2 gap-3 text-left">
+          <div className="mt-10 space-y-2.5">
             {[
               {
-                icon: "🤖",
-                title: "AI Price Guard",
-                sub: "Know your item's real market value before listing — no guesswork.",
-                gradient: "from-violet-500/20 to-purple-500/10",
-                border: "border-violet-400/25",
+                icon: "✦",
+                title: "Smart Price Prediction",
+                sub: "AI tells you the exact market price before you list.",
               },
               {
-                icon: "🪄",
-                title: "AR Live View",
-                sub: "Buyers see your furniture in their room before buying — sells 3× faster.",
-                gradient: "from-cyan-500/20 to-blue-500/10",
-                border: "border-cyan-400/25",
+                icon: "◈",
+                title: "AR Room Preview",
+                sub: "Buyers place your item in their room — sells faster.",
               },
               {
-                icon: "⚡",
-                title: "Sell in 24 hrs",
-                sub: "Smart pricing + verified buyers = offers arrive the same day.",
-                gradient: "from-amber-500/20 to-orange-500/10",
-                border: "border-amber-400/25",
+                icon: "◉",
+                title: "Offers Within Hours",
+                sub: "Verified buyers are always browsing, day and night.",
               },
               {
-                icon: "🛡️",
-                title: "100% Free & Safe",
-                sub: "Verified sellers, fraud detection, and zero hidden fees — always.",
-                gradient: "from-emerald-500/20 to-green-500/10",
-                border: "border-emerald-400/25",
+                icon: "◎",
+                title: "Zero Fees. Always.",
+                sub: "List, sell, and chat — completely free, no hidden cost.",
               },
-            ].map(({ icon, title, sub, gradient, border }) => (
+            ].map(({ icon, title, sub }) => (
               <div
                 key={title}
-                className={`bg-gradient-to-br ${gradient} backdrop-blur-sm rounded-2xl p-3.5 border ${border} hover:scale-[1.03] transition-transform duration-200 cursor-default`}
+                className="flex items-start gap-3 bg-white/8 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/12 hover:bg-white/12 transition-colors duration-200 cursor-default"
               >
-                <div className="text-xl mb-1.5">{icon}</div>
-                <div className="text-sm font-bold text-white leading-tight">{title}</div>
-                <div className="text-[11px] text-white/55 font-medium mt-1 leading-snug">{sub}</div>
+                <span className="text-white/70 text-lg font-light mt-0.5 leading-none select-none">{icon}</span>
+                <div>
+                  <div className="text-sm font-semibold text-white leading-tight">{title}</div>
+                  <div className="text-xs text-white/50 mt-0.5 leading-snug">{sub}</div>
+                </div>
               </div>
             ))}
           </div>
