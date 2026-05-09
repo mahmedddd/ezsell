@@ -471,11 +471,17 @@ def get_listings(
     from datetime import timedelta
     expiry_limit = datetime.utcnow() - timedelta(days=30)
 
+    # Auto-deactivate expired listings
+    db.query(Listing).filter(
+        Listing.created_at < expiry_limit,
+        Listing.is_active == True
+    ).update({"is_active": False}, synchronize_session=False)
+    db.commit()
+
     query = db.query(Listing).filter(
         Listing.is_sold == False,
         Listing.approval_status == "approved",
-        Listing.is_active == True,
-        Listing.created_at >= expiry_limit
+        Listing.is_active == True
     )
     
     if category:
@@ -575,12 +581,17 @@ def get_listing(
             detail="Listing not found or not yet approved"
         )
     
-    # Increment view count only for approved listings, and only for non-owners
-    is_owner = user and listing.owner_id == user.id
-    if listing.approval_status == "approved" and not is_owner:
-        listing.views += 1
+    # Auto-deactivate if expired
+    from datetime import timedelta
+    if listing.is_active and listing.created_at < (datetime.utcnow() - timedelta(days=30)):
+        listing.is_active = False
         db.commit()
         db.refresh(listing)
+    
+    # Increment view count for each tap/view
+    listing.views = (listing.views or 0) + 1
+    db.commit()
+    db.refresh(listing)
     
     return listing
 
