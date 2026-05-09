@@ -114,7 +114,7 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [analyticsData, usersData, allListingsData, pendingData, ticketsData] = await Promise.all([
+      const [analyticsData, usersData, allListingsData, pendingData, ticketsData, reportsData] = await Promise.all([
         adminService.getAnalytics(),
         adminService.getUsers({ limit: 50 }),
         adminService.getAllListings({ limit: 200 }),
