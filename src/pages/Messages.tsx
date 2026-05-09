@@ -123,8 +123,8 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc] flex flex-col">
-      <div className="container mx-auto px-4 py-8 flex-1 flex flex-col h-[calc(100vh-80px)]">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dc] flex flex-col pb-[80px] md:pb-0">
+      <div className="container mx-auto px-4 pt-4 pb-2 md:py-8 flex-1 flex flex-col h-[calc(100dvh-100px)] md:h-[calc(100vh-80px)] max-h-[calc(100dvh-90px)] md:max-h-none">
 
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">

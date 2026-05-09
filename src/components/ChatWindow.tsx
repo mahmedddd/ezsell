@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, X, Loader2, Check, CheckCheck, ExternalLink, MoreVertical, ShieldAlert, Ban, Trash2 } from 'lucide-react';
+import { Send, X, ChevronLeft, Loader2, Check, CheckCheck, ExternalLink, MoreVertical, ShieldAlert, Ban, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -246,7 +246,7 @@ export function ChatWindow({
   };
 
   return (
-    <div className={`flex flex-col bg-white border shadow-xl overflow-hidden relative ${inline ? 'h-full w-full' : 'fixed bottom-0 sm:bottom-4 right-0 sm:right-4 w-full sm:w-[380px] h-[100dvh] sm:h-[550px] z-50 sm:rounded-lg'}`}>
+    <div className={`flex flex-col bg-white border shadow-xl overflow-hidden relative ${inline ? 'h-full w-full' : 'fixed bottom-0 sm:bottom-4 right-0 sm:right-4 w-full sm:w-[380px] h-[100dvh] sm:h-[550px] z-[60] sm:z-50 sm:rounded-lg'}`}>
       {showSafetyNotice && (
         <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-[4px] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[320px] overflow-hidden animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500">
@@ -288,7 +288,12 @@ export function ChatWindow({
       )}
       {/* Header */}
       <div className="p-4 border-b bg-[#2E6091] text-white flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {inline && (
+            <Button variant="ghost" size="icon" onClick={onClose} className="md:hidden text-white hover:bg-white/20 h-8 w-8 -ml-2 rounded-xl">
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          )}
           <Link to={`/profile/${sellerId}`} className="hover:opacity-80 transition-opacity flex items-center gap-3">
             <div className="relative">
               {sellerAvatar && !imgError ? (
