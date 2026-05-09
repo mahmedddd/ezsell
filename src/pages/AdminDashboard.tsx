@@ -818,7 +818,51 @@ export default function AdminDashboard() {
                           })()}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {listing.title}
+                          <div className="flex flex-col">
+                            <span>{listing.title}</span>
+                            {listing.is_featured && <span className="text-[10px] text-yellow-600 font-bold uppercase">Featured</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell>PKR {listing.price.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{listing.category}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={listing.is_sold ? "secondary" : "default"}>
+                              {listing.is_sold ? 'Sold' : 'Available'}
+                            </Badge>
+                            {(listing as any).approval_status && (listing as any).approval_status !== 'approved' && (
+                              <Badge
+                                variant="outline"
+                                className={
+                                  (listing as any).approval_status === 'pending'
+                                    ? 'border-yellow-400 text-yellow-700 bg-yellow-50'
+                                    : 'border-red-400 text-red-700 bg-red-50'
+                                }
+                              >
+                                {(listing as any).approval_status === 'pending' ? '⏳ Pending' : '❌ Rejected'}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3 text-green-600" />
+                            {listing.views || 0}
+                          </div>
+                        </TableCell>
+                        <TableCell>{new Date(listing.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setDeleteDialog({ open: true, type: 'listing', id: listing.id, name: listing.title })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -919,60 +963,8 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-                          <div className="flex flex-col">
-                            <span>{listing.title}</span>
-                            {listing.is_featured && <span className="text-[10px] text-yellow-600 font-bold uppercase">Featured</span>}
-                          </div>
-                        </TableCell>
-                        <TableCell>PKR {listing.price.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{listing.category}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            <Badge variant={listing.is_sold ? "secondary" : "default"}>
-                              {listing.is_sold ? 'Sold' : 'Available'}
-                            </Badge>
-                            {(listing as any).approval_status && (listing as any).approval_status !== 'approved' && (
-                              <Badge
-                                variant="outline"
-                                className={
-                                  (listing as any).approval_status === 'pending'
-                                    ? 'border-yellow-400 text-yellow-700 bg-yellow-50'
-                                    : 'border-red-400 text-red-700 bg-red-50'
-                                }
-                              >
-                                {(listing as any).approval_status === 'pending' ? '⏳ Pending' : '❌ Rejected'}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3 text-green-600" />
-                            {listing.views || 0}
-                          </div>
-                        </TableCell>
-                        <TableCell>{new Date(listing.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setDeleteDialog({ open: true, type: 'listing', id: listing.id, name: listing.title })}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+
+
 
         {/* Support & Bug Reports Management */}
         <Card>
