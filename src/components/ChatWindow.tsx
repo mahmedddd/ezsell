@@ -43,6 +43,8 @@ interface ChatWindowProps {
   sellerAvatar?: string;
   listingImage?: string;
   listingPrice?: number;
+  /** When true, always show the safety guidelines overlay (e.g. opened via Show Contact) */
+  forceShowGuidelines?: boolean;
 }
 
 export function ChatWindow({
@@ -58,6 +60,7 @@ export function ChatWindow({
   sellerAvatar,
   listingImage,
   listingPrice,
+  forceShowGuidelines = false,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -72,11 +75,16 @@ export function ChatWindow({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const isDismissed = localStorage.getItem('ezsell_safety_notice_dismissed');
-    if (!isDismissed) {
+    // Always show if opened via Show Contact; otherwise only show once (localStorage gate)
+    if (forceShowGuidelines) {
       setShowSafetyNotice(true);
+    } else {
+      const isDismissed = localStorage.getItem('ezsell_safety_notice_dismissed');
+      if (!isDismissed) {
+        setShowSafetyNotice(true);
+      }
     }
-  }, []);
+  }, [forceShowGuidelines]);
 
   const dismissSafetyNotice = () => {
     localStorage.setItem('ezsell_safety_notice_dismissed', 'true');

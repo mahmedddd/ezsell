@@ -24,6 +24,7 @@ export default function ProductDetail() {
   const [similarListings, setSimilarListings] = useState<any[]>([]);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
+  const [openedViaContact, setOpenedViaContact] = useState(false);
   const { toast } = useToast();
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -190,7 +191,8 @@ export default function ProductDetail() {
         const data = await listingService.trackCall(listing.id);
         if (data.phone) {
           setShowPhone(true);
-          setShowChat(true); // Automatically open chat window
+          setShowChat(true);
+          setOpenedViaContact(true); // flag: always show guidelines
 
           // Track call/message activity
           await analyticsService.trackActivity({
@@ -208,7 +210,8 @@ export default function ProductDetail() {
         console.error('Failed to track call:', error);
         // Fallback to showing phone even if notification fails, to not block the user
         setShowPhone(true);
-        setShowChat(true); // Also open chat here to be helpful
+        setShowChat(true);
+        setOpenedViaContact(true); // flag: always show guidelines
       }
     } else {
       window.location.href = `tel:${listing.owner.phone}`;
@@ -536,9 +539,10 @@ export default function ProductDetail() {
           sellerId={listing.owner_id}
           sellerName={listing.owner?.username || 'Seller'}
           currentUserId={currentUser.id}
-          onClose={() => setShowChat(false)}
+          onClose={() => { setShowChat(false); setOpenedViaContact(false); }}
           listingImage={listing.images && listing.images.length > 0 ? listing.images[0] : undefined}
           listingPrice={listing.price}
+          forceShowGuidelines={openedViaContact}
         />
       )}
     </div>
