@@ -37,6 +37,19 @@ def get_user_by_username(db: Session, username: str):
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+def get_user_by_phone(db: Session, phone: str):
+    """Return user with this phone number, or None if not taken."""
+    if not phone:
+        return None
+    # Normalise: strip spaces/dashes so +92-300-1234567 == +923001234567
+    import re as _re
+    normalised = _re.sub(r'[\s\-]', '', phone.strip())
+    return db.query(User).filter(
+        User.phone.isnot(None),
+        User.phone != '',
+        User.phone == normalised
+    ).first()
+
 def get_current_admin_user(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
     """Verify that the current user is an admin"""
     user = get_user_by_username(db, username=current_user.username)
@@ -187,6 +200,14 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Check if phone number is already taken
+    if user.phone:
+        import re as _re
+        normalised_phone = _re.sub(r'[\s\-]', '', user.phone.strip())
+        existing_phone_user = get_user_by_phone(db, phone=normalised_phone)
+        if existing_phone_user:
+            raise HTTPException(status_code=400, detail="This phone number is already registered with another account")
+    
     # Hash password and create new user in database
     print(f"Registration - hashing password of length: {len(user.password)}")
     hashed_password = get_password_hash(user.password)
@@ -328,7 +349,19 @@ def update_user_profile(
     if "location" in profile_data:
         user.location = profile_data["location"]
     if "phone" in profile_data:
-        user.phone = profile_data["phone"]
+        new_phone = profile_data["phone"]
+        if new_phone:  # only check non-empty phone numbers
+            import re as _re
+            normalised_phone = _re.sub(r'[\s\-]', '', str(new_phone).strip())
+            existing = get_user_by_phone(db, phone=normalised_phone)
+            if existing and existing.id != user.id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="This phone number is already linked to another account"
+                )
+            user.phone = normalised_phone
+        else:
+            user.phone = new_phone
     
     db.commit()
     db.refresh(user)
