@@ -540,9 +540,10 @@ export default function ProductDetail() {
           sellerName={listing.owner?.username || 'Seller'}
           currentUserId={currentUser.id}
           onClose={() => { setShowChat(false); setOpenedViaContact(false); }}
-          listingImage={listing.images && listing.images.length > 0 ? listing.images[0] : undefined}
+          listingImage={allImages && allImages.length > 0 ? allImages[0] : undefined}
           listingPrice={listing.price}
           forceShowGuidelines={openedViaContact}
+          sellerAvatar={listing.owner?.avatar_url}
         />
       )}
     </div>

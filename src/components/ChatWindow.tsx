@@ -14,6 +14,7 @@ import {
 } from "./ui/dropdown-menu";
 import { toast } from './ui/use-toast';
 import { messageService, authService, getImageUrl } from '../lib/api.ts';
+import { SmartImage } from './ui/SmartImage';
 
 interface Message {
   id: number;
@@ -291,11 +292,13 @@ export function ChatWindow({
           <Link to={`/profile/${sellerId}`} className="hover:opacity-80 transition-opacity flex items-center gap-3">
             <div className="relative">
               {sellerAvatar && !imgError ? (
-                <img
-                  src={getImageUrl(sellerAvatar)}
+                <SmartImage
+                  src={getImageUrl(sellerAvatar)!}
                   alt={sellerName}
                   className="w-10 h-10 rounded-xl object-cover border-2 border-white/20"
+                  wrapperClassName="w-10 h-10 shrink-0"
                   onError={() => setImgError(true)}
+                  priority="lazy"
                 />
               ) : (
                 <Avatar seed={sellerName} size={40} className="border-2 border-white/20" />
@@ -371,10 +374,12 @@ export function ChatWindow({
         <Link to={`/product/${listingId}`} className="flex items-center gap-3 flex-1 hover:bg-gray-100 p-1 rounded-lg transition-colors overflow-hidden">
           <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
             {listingImage ? (
-              <img
-                src={getImageUrl(listingImage)}
+              <SmartImage
+                src={getImageUrl(listingImage)!}
                 alt={listingTitle}
                 className="w-full h-full object-cover"
+                wrapperClassName="w-full h-full"
+                priority="lazy"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">No img</div>
