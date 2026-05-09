@@ -246,7 +246,7 @@ export function ChatWindow({
   };
 
   return (
-    <div className={`flex flex-col bg-white border shadow-xl overflow-hidden relative ${inline ? 'h-full w-full' : 'fixed bottom-4 right-4 w-[380px] h-[550px] z-50 rounded-lg'}`}>
+    <div className={`flex flex-col bg-white border shadow-xl overflow-hidden relative ${inline ? 'h-full w-full' : 'fixed bottom-0 sm:bottom-4 right-0 sm:right-4 w-full sm:w-[380px] h-[100dvh] sm:h-[550px] z-50 sm:rounded-lg'}`}>
       {showSafetyNotice && (
         <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-[4px] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[320px] overflow-hidden animate-in fade-in zoom-in slide-in-from-bottom-8 duration-500">
