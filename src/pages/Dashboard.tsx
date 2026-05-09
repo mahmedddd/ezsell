@@ -10,6 +10,7 @@ import { Plus, Edit, Trash2, Package, Home, Heart, BarChart3, RefreshCw, Eye, Ey
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { formatCurrency } from '../lib/utils.ts';
+import { SmartImage } from '@/components/ui/SmartImage';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
@@ -330,7 +331,13 @@ export default function Dashboard() {
                     <CardHeader>
                       <div className="aspect-video bg-slate-200 rounded-md mb-4 flex items-center justify-center relative overflow-hidden">
                         {getListingImage(listing) && getImageUrl(getListingImage(listing)!) ? (
-                          <img src={getImageUrl(getListingImage(listing)!)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
+                          <SmartImage
+                            src={getImageUrl(getListingImage(listing)!)!}
+                            alt={listing.title}
+                            className="w-full h-full object-cover rounded-md"
+                            wrapperClassName="w-full h-full"
+                            priority="lazy"
+                          />
                         ) : (
                           <span className="text-slate-500">No image</span>
                         )}
@@ -483,7 +490,13 @@ export default function Dashboard() {
                     <CardHeader>
                       <div className="aspect-video bg-slate-200 rounded-md mb-4 flex items-center justify-center relative">
                         {getListingImage(listing) && getImageUrl(getListingImage(listing)!) ? (
-                          <img src={getImageUrl(getListingImage(listing)!)!} alt={listing.title} className="w-full h-full object-cover rounded-md" />
+                          <SmartImage
+                            src={getImageUrl(getListingImage(listing)!)!}
+                            alt={listing.title}
+                            className="w-full h-full object-cover rounded-md"
+                            wrapperClassName="w-full h-full"
+                            priority="lazy"
+                          />
                         ) : (
                           <span className="text-slate-500">No image</span>
                         )}

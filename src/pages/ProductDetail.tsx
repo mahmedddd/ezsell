@@ -8,6 +8,7 @@ import { Home, MapPin, Eye, MessageCircle, Heart, ChevronLeft, ChevronRight, Sha
 import { useToast } from '@/components/ui/use-toast';
 import { ChatWindow } from '@/components/ChatWindow';
 import { formatCurrency } from '../lib/utils.ts';
+import { SmartImage } from '@/components/ui/SmartImage';
 // ── New unified AR entry-point ──────────────────────────────────────────────
 import { WebARViewer } from '@/components/ar/WebARViewer';
 
@@ -276,7 +277,13 @@ export default function ProductDetail() {
           <div className="space-y-3">
             <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden shadow-lg">
               {mainImgUrl ? (
-                <img src={mainImgUrl} alt={`${listing.title} – image ${selectedImageIndex + 1}`} className="w-full h-full object-cover" fetchPriority="high" loading="eager" />
+                <SmartImage
+                  src={mainImgUrl}
+                  alt={`${listing.title} – image ${selectedImageIndex + 1}`}
+                  className="w-full h-full object-cover"
+                  wrapperClassName="w-full h-full"
+                  priority="eager"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ShoppingBag className="h-16 w-16 text-gray-300" />
@@ -297,7 +304,13 @@ export default function ProductDetail() {
                 {allImages.map((img: string, i: number) => (
                   <button key={i} onClick={() => setSelectedImageIndex(i)}
                     className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${i === selectedImageIndex ? 'border-[#143109] ring-2 ring-[#143109]/20 scale-105' : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'}`}>
-                    <img src={getImageUrl(img)!} alt={`Thumb ${i + 1}`} className="w-full h-full object-cover" />
+                    <SmartImage
+                      src={getImageUrl(img)!}
+                      alt={`Thumb ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      wrapperClassName="w-full h-full"
+                      priority="lazy"
+                    />
                   </button>
                 ))}
               </div>
