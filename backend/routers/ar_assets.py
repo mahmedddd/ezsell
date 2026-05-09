@@ -290,20 +290,21 @@ async def generate_3d_ai(
             abs_p = get_abs_path(image_url)
             if abs_p and os.path.exists(abs_p):
                 try:
+                    file_size_kb = os.path.getsize(abs_p) / 1024
+                    print(f"✅ [AR_ASSETS] Uploading full-res image to Tripo: {abs_p} ({file_size_kb:.1f} KB)")
                     token = await upload_image_to_tripo(abs_p)
                     task_id = await start_image_to_3d_task(file_token=token)
                 except Exception as e:
-                    if "credits" in str(e).lower():
+                    if "credits" in str(e).lower() or "api key" in str(e).lower():
                         raise HTTPException(status_code=402, detail=str(e))
                     raise e
             else:
-                # Use the actual IP so Tripo's server can reach your laptop
-                server_ip = "192.168.18.106" 
-                full_url = image_url if image_url.startswith("http") else f"http://{server_ip}:8000{image_url}"
+                print(f"⚠️ [AR_ASSETS] Local file not found, falling back to URL: {image_url}")
+                full_url = image_url if image_url.startswith("http") else f"http://ezsell.hopto.org{image_url}"
                 try:
                     task_id = await start_image_to_3d_task(image_url=full_url)
                 except Exception as e:
-                    if "credits" in str(e).lower():
+                    if "credits" in str(e).lower() or "api key" in str(e).lower():
                         raise HTTPException(status_code=402, detail=str(e))
                     raise e
             

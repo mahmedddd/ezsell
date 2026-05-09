@@ -1357,17 +1357,24 @@ export function WebARViewer({
 
                                 {/* Image Selector UI */}
                                 {(allImageUrls && allImageUrls.length > 0) ? (
-                                  <div className="flex gap-2 overflow-x-auto pb-3 mb-1 -mx-2 px-2 snap-x" style={{ scrollbarWidth: 'none' }}>
+                                  <div className="flex gap-2.5 overflow-x-auto pb-3 mb-1 -mx-2 px-2 snap-x" style={{ scrollbarWidth: 'none' }}>
                                     {allImageUrls.map((imgUrl, idx) => (
                                       <button
                                         key={idx}
                                         onClick={() => setSelectedImgIdx(idx)}
-                                        className={`relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all snap-center ${selectedImgIdx === idx
+                                        className={`relative shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 transition-all snap-center ${selectedImgIdx === idx
                                           ? 'border-[#AAAE7F] scale-105 shadow-md shadow-[#AAAE7F]/20'
                                           : 'border-white/10 opacity-60 hover:opacity-100'
                                           }`}
                                       >
-                                        <img src={getFullUrl(imgUrl) || imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                                        <img
+                                          src={getFullUrl(imgUrl) || imgUrl}
+                                          alt={`Image ${idx + 1}`}
+                                          className="w-full h-full object-cover"
+                                          loading="eager"
+                                          decoding="sync"
+                                          style={{ imageRendering: 'auto' }}
+                                        />
                                         {selectedImgIdx === idx && (
                                           <div className="absolute top-1 right-1 bg-[#AAAE7F] text-[#143109] rounded-full p-0.5 shadow">
                                             <CheckCircle2 className="w-3 h-3" />
