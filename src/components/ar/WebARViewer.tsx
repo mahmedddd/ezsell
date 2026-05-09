@@ -11,6 +11,9 @@
  */
 
 import '@google/model-viewer';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -416,6 +419,7 @@ export function WebARViewer({
   const [aiTaskId, setAiTaskId] = useState<string | null>(null);
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
   const [modelLoading, setModelLoading] = useState(false);
+  const [iosUsdzGenerating, setIosUsdzGenerating] = useState(false);
 
   const modelViewerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -809,10 +813,73 @@ export function WebARViewer({
     return "";
   };
 
-  // ── AR launch: directly invoke model-viewer's activateAR ──────────────────
-  const launchAR = () => {
+  // ── AR launch ────────────────────────────────────────────────────────────────
+  const launchAR = async () => {
     const mv = modelViewerRef.current;
     if (!mv) return;
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAdvanced = viewMode === 'advanced' && tripoUrl;
+
+    // On iOS with the advanced Tripo model: generate USDZ client-side and launch
+    // Quick Look (Apple's native ARKit renderer — works on ALL iPhones, no crashes).
+    // WebXR on iOS fails on iPhone XR and earlier because WebGL + AR is too heavy.
+    if (isIOS && isAdvanced) {
+      try {
+        setIosUsdzGenerating(true);
+        toast({
+          title: 'Preparing AR…',
+          description: 'Optimising model for your iPhone. This takes a moment.',
+        });
+
+        // 1. Fetch the GLB
+        const resp = await fetch(tripoUrl);
+        const glbBuffer = await resp.arrayBuffer();
+
+        // 2. Parse with three.js GLTFLoader
+        const gltf = await new Promise<any>((resolve, reject) => {
+          const loader = new GLTFLoader();
+          loader.parse(glbBuffer, '', resolve, reject);
+        });
+
+        // 3. Export as USDZ using three.js USDZExporter
+        const exporter = new USDZExporter();
+        const usdzBuffer = await exporter.parseAsync(gltf.scene);
+        const usdzBlob = new Blob([usdzBuffer], { type: 'model/vnd.usdz+zip' });
+        const usdzObjectUrl = URL.createObjectURL(usdzBlob);
+
+        // 4. Trigger iOS Quick Look via native <a rel="ar"> — Apple's optimised AR path
+        const anchor = document.createElement('a');
+        anchor.rel = 'ar';
+        anchor.href = usdzObjectUrl;
+        // Quick Look needs a child element
+        const img = document.createElement('img');
+        anchor.appendChild(img);
+        document.body.appendChild(anchor);
+        anchor.click();
+
+        // Cleanup after a delay
+        setTimeout(() => {
+          document.body.removeChild(anchor);
+          URL.revokeObjectURL(usdzObjectUrl);
+        }, 5000);
+
+      } catch (err) {
+        console.warn('[WebARViewer] iOS USDZ generation failed, falling back to WebXR:', err);
+        toast({
+          title: 'Falling back to WebXR',
+          description: 'USDZ generation failed. Launching standard AR instead.',
+          variant: 'destructive',
+        });
+        // Fall back to regular activateAR if USDZ export fails
+        try { mv.activateAR(); } catch {}
+      } finally {
+        setIosUsdzGenerating(false);
+      }
+      return;
+    }
+
+    // Android / desktop / procedural model — use standard WebXR / Scene Viewer
     try {
       mv.activateAR();
     } catch {
@@ -1297,7 +1364,8 @@ export function WebARViewer({
                       {!caps.isDesktop && caps.isSupported && step === 'model_ready' && (
                         <button
                           onClick={launchAR}
-                          className="
+                          disabled={iosUsdzGenerating}
+                          className={`
                             w-full flex items-center justify-center gap-3
                             bg-gradient-to-r from-[#143109] to-[#2a6616]
                             hover:from-[#1e4d10] hover:to-[#336617]
@@ -1306,11 +1374,21 @@ export function WebARViewer({
                             py-4 rounded-2xl
                             shadow-xl shadow-[#143109]/30
                             transition-all duration-200
-                          "
+                            disabled:opacity-70 disabled:cursor-not-allowed
+                          `}
                         >
-                          <Camera className="h-5 w-5" />
-                          Launch AR in Your Room
-                          <ChevronRight className="h-5 w-5 opacity-80" />
+                          {iosUsdzGenerating ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              Optimising for iPhone…
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="h-5 w-5" />
+                              Launch AR in Your Room
+                              <ChevronRight className="h-5 w-5 opacity-80" />
+                            </>
+                          )}
                         </button>
                       )}
 
