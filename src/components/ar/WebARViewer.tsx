@@ -595,12 +595,15 @@ export function WebARViewer({
           // Still processing
           setAiProgress(15 + (status.progress || 0) * 0.7);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('[WebARViewer] Polling error:', err);
         setAiStage('error');
+        
+        const errorMessage = err?.response?.data?.detail || err?.message || "Lost connection to the generation server. Please try again.";
+        
         toast({
           title: "Polling Error",
-          description: "Lost connection to the generation server. Please try again.",
+          description: errorMessage,
           variant: "destructive"
         });
         // Stop polling

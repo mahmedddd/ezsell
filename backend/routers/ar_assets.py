@@ -339,8 +339,8 @@ async def poll_3d_ai_status(
     
     listing = _get_listing_or_404(listing_id, db)
     user = get_user_by_username(db, current_user.username)
-    if not user or (listing.owner_id != user.id and not user.is_admin):
-        raise HTTPException(status_code=403, detail="Not authorised")
+    if not user:
+        raise HTTPException(status_code=403, detail="User not found")
 
     try:
         status_data = await get_task_status(task_id)
