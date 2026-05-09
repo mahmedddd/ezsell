@@ -103,31 +103,153 @@ Return EXCLUSIVELY this JSON (no extra text):
             return {"is_valid": True, "message": "Validation temporarily unavailable, proceeding.", "missing_fields": [], "suggested_title": title, "extracted_specs": {}}
 
 
+    async def _scrape_gsmarena_specs(self, title: str) -> Dict[str, List[str]]:
+        """
+        Stage 1: Search GSMArena directly to find the device page URL.
+        Stage 2: Fetch + parse the actual spec table from that GSMArena page.
+        Returns a structured dict: {'RAM': [...], 'Storage': [...], 'Color': [...]}
+        """
+        import httpx
+        import re
+        import urllib.parse
+
+        gsmarena_url = None
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        }
+
+        # --- Stage 1: Find GSMArena URL ---
+        try:
+            search_url = f'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={urllib.parse.quote_plus(title)}'
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                search_res = await client.get(search_url, headers=headers)
+                links = re.findall(r'href="(.*?\.php)"', search_res.text)
+                
+                # Filter to valid device pages (e.g. samsung_galaxy_a56-13603.php)
+                for link in links:
+                    if re.match(r'^[a-zA-Z0-9_-]+-\d+\.php$', link):
+                        gsmarena_url = f"https://www.gsmarena.com/{link}"
+                        break
+        except Exception as e:
+            print(f"GSMArena direct search failed: {e}")
+
+        if not gsmarena_url:
+            print(f"No GSMArena URL found for '{title}'")
+            return {}
+
+        # --- Stage 2: Fetch and parse the spec table ---
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+            }
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                response = await client.get(gsmarena_url, headers=headers)
+                html = response.text
+
+            specs: Dict[str, List[str]] = {}
+
+            # --- Parse RAM & Storage from internalmemory ---
+            memory_match = re.search(
+                r'data-spec="internalmemory"[^>]*>(.*?)</td>',
+                html, re.IGNORECASE | re.DOTALL
+            )
+            if memory_match:
+                raw = memory_match.group(1)
+                
+                # Find all GB/TB values before "RAM"
+                ram_vals = re.findall(r'(\d+)\s*GB\s*RAM', raw, re.IGNORECASE)
+                if ram_vals:
+                    specs["RAM"] = sorted(list(set([f"{v} GB" for v in ram_vals if 2 <= int(v) <= 24])), key=lambda x: int(re.search(r'\d+', x).group()))
+
+                # Extract storage: it's typically the first GB/TB value in each pair, e.g. "128GB 6GB RAM"
+                # So we look for numbers followed by GB or TB that are NOT immediately followed by RAM
+                # Alternatively, just find all GB/TB values and filter out the RAM ones
+                all_gb_tb = re.findall(r'(\d+)\s*(GB|TB)', raw, re.IGNORECASE)
+                storage_set = set()
+                for v, unit in all_gb_tb:
+                    val = int(v)
+                    if unit.upper() == 'GB' and val >= 16 and val not in [2,3,4,6,8,12,16,24]: # typical storage vs RAM disambiguation
+                        storage_set.add(f"{val} GB")
+                    elif unit.upper() == 'TB':
+                        storage_set.add(f"{val} TB")
+                    elif unit.upper() == 'GB' and val == 16 and "16GB RAM" not in raw.upper():
+                        storage_set.add("16 GB")
+                        
+                # More robust fallback: split by comma, extract first size as storage, second as RAM
+                parts = raw.split(',')
+                for p in parts:
+                    sizes = re.findall(r'(\d+)\s*(GB|TB)', p, re.IGNORECASE)
+                    if len(sizes) >= 2:
+                        s_val, s_unit = sizes[0]
+                        storage_set.add(f"{s_val} {s_unit.upper()}")
+                        
+                if storage_set:
+                    # Sort storage values properly
+                    def storage_sort_key(x):
+                        num = int(re.search(r'\d+', x).group())
+                        return num * 1024 if 'TB' in x else num
+                    specs["Storage"] = sorted(list(storage_set), key=storage_sort_key)
+
+            # --- Parse Colors ---
+            # GSMArena format: Colors  White, Blue, Violet etc (inside <td>)
+            color_match = re.search(
+                r'Colors?.*?<td[^>]*>(.*?)</td>',
+                html, re.IGNORECASE | re.DOTALL
+            )
+            if color_match:
+                raw = re.sub(r'<[^>]+>', ' ', color_match.group(1))  # strip HTML tags
+                raw = re.sub(r'\s+', ' ', raw).strip()
+                # Split on commas or semicolons
+                colors = [c.strip() for c in re.split(r'[,;]', raw) if c.strip() and len(c.strip()) > 2]
+                if colors:
+                    specs["Color"] = colors[:8]  # max 8 colors
+
+            print(f"GSMArena scraped specs for '{title}': {specs}")
+            return specs
+
+        except Exception as e:
+            print(f"GSMArena scrape failed for '{title}': {e}")
+            return {}
+
     async def _fetch_web_specs(self, title: str, category: str) -> str:
         """
-        Searches multiple authoritative + Pakistan-specific sources for real specs.
-        Runs all queries in parallel for speed.
+        For mobile: tries GSMArena scraping first (returns structured JSON string).
+        For laptop: uses DuckDuckGo parallel search snippets.
+        Returns a string context for LLM grounding.
         """
-        loop = asyncio.get_event_loop()
+        if category == "mobile":
+            scraped = await self._scrape_gsmarena_specs(title)
+            if scraped:
+                # Convert to a clear, structured string the LLM can parse exactly
+                parts = []
+                for key, vals in scraped.items():
+                    parts.append(f"{key}: {', '.join(vals)}")
+                return "OFFICIAL SPECS FROM GSMARENA:\n" + "\n".join(parts)
+            # Fallback: DDG snippets
+            return await self._ddg_snippets(title, category)
 
+        elif category == "laptop":
+            return await self._ddg_snippets(title, category)
+
+        return ""
+
+    async def _ddg_snippets(self, title: str, category: str) -> str:
+        """Fallback: parallel DuckDuckGo searches for spec snippets."""
+        loop = asyncio.get_event_loop()
         if category == "mobile":
             queries = [
-                f'site:gsmarena.com "{title}" specifications',
                 f'"{title}" specifications RAM storage color Pakistan',
                 f'site:phoneworld.com.pk "{title}" specifications',
-                f'site:mobilecity.pk "{title}" RAM storage specifications',
             ]
-        elif category == "laptop":
+        else:
             queries = [
                 f'site:notebookcheck.net "{title}" review specifications',
                 f'"{title}" laptop RAM storage processor specifications Pakistan',
-                f'site:pakref.com "{title}" specifications',
             ]
-        elif category == "furniture":
-            # No web spec lookup needed for furniture (LLM structured prompts are better)
-            return ""
-        else:
-            return ""
 
         async def search_one(q: str) -> List[str]:
             try:
@@ -135,23 +257,16 @@ Return EXCLUSIVELY this JSON (no extra text):
                     with DDGS() as ddgs:
                         return list(ddgs.text(q, max_results=3))
                 results = await loop.run_in_executor(None, _run)
-                out = []
-                for r in results:
-                    body = r.get("body", "")
-                    if body:
-                        out.append(f"[{r.get('title','')}] {body}")
-                return out
+                return [f"[{r.get('title','')}] {r.get('body','')}" for r in results if r.get('body')]
             except Exception as e:
-                print(f"Web spec search error for '{q}': {e}")
+                print(f"DDG fallback error: {e}")
                 return []
 
-        # Run all queries in parallel
         all_results = await asyncio.gather(*[search_one(q) for q in queries])
         snippets: List[str] = []
-        for result_list in all_results:
-            snippets.extend(result_list)
-
-        return "\n".join(snippets[:8])  # Top 8 snippets as context
+        for r in all_results:
+            snippets.extend(r)
+        return "\n".join(snippets[:6])
 
 
     async def generate_relevant_dropdowns(self, category: str, title: str) -> Dict[str, List[str]]:
@@ -232,12 +347,19 @@ Return EXCLUSIVELY this JSON (no extra text):
                 "Also add any other relevant specification fields for this specific furniture item."
             )
 
+        # --- For mobile: if GSMArena scrape was successful, bypass LLM entirely ---
+        if category == "mobile" and web_context.startswith("OFFICIAL SPECS FROM GSMARENA:"):
+            scraped = await self._scrape_gsmarena_specs(title)
+            if scraped and any(scraped.values()):
+                print(f"Returning GSMArena data directly (no LLM needed): {scraped}")
+                return scraped
+
         category_guidance = {
             "mobile": (
                 "You MUST include these exact keys: 'RAM', 'Storage', 'Color'.\n"
-                "- RAM: actual RAM options this specific model ships with (e.g. '6 GB', '8 GB', '12 GB').\n"
-                "- Storage: actual storage options (e.g. '128 GB', '256 GB', '512 GB').\n"
-                "- Color: colors this exact model came in (e.g. 'Black', 'Blue', 'Gold')."
+                "- RAM: actual RAM options this specific model ships with (e.g. '8 GB', '12 GB').\n"
+                "- Storage: actual storage options (e.g. '128 GB', '256 GB').\n"
+                "- Color: the FULL official color names for this model (e.g. 'Awesome Navy', 'Awesome Iceblue')."
             ),
             "laptop": (
                 "You MUST include these keys: 'Processor', 'RAM', 'Storage', 'GPU', 'Generation'.\n"
@@ -248,9 +370,12 @@ Return EXCLUSIVELY this JSON (no extra text):
                 "- Generation: e.g. '10th Gen', '11th Gen', '12th Gen', '13th Gen'."
             ),
             "furniture": furniture_type_hint,
+
+
         }.get(category, "Provide the most relevant configuration options for this product.")
 
         # Build grounding context section for the prompt
+
         grounding_section = ""
         if web_context:
             grounding_section = f"""
@@ -258,13 +383,13 @@ REAL SPECS FROM THE WEB (use these as your PRIMARY source — they are ground tr
 ---
 {web_context}
 ---
-Extract the exact RAM variants, Storage variants, and Colors from the above web data.
-Only include options that are explicitly mentioned in the web data above.
+Copy the RAM, Storage, and Color values EXACTLY as they appear above. Do NOT paraphrase. Do NOT add extras.
 """
         else:
             grounding_section = (
-                "No web data available. Use your training knowledge, but be conservative — "
-                "only include specs you are highly confident about for this exact model."
+                "No web data available. Use your training knowledge carefully — "
+                "only include specs you are 100% certain about for this exact model. "
+                "Use FULL official color names (e.g. 'Awesome Navy', not just 'Navy')."
             )
 
         prompt = f"""You are an expert product database for the Pakistani mobile/tech/furniture market.
@@ -277,18 +402,18 @@ Task: Return ONLY the exact configuration variants that this SPECIFIC product mo
 
 {category_guidance}
 
-STRICT RULES — VIOLATIONS ARE NOT ALLOWED:
-1. If web data is provided above, use IT as the ONLY source of truth. Do NOT override it with your training data.
-2. Do NOT invent variants. Do NOT copy from examples. Do NOT add variants not found in the web data.
-3. If the web data clearly states only '6 GB' and '12 GB' RAM exist, list ONLY those two. NOT '8 GB'.
-4. If you are unsure about a specific value and it is NOT in the web data, OMIT IT.
-5. Max 6 options per key. Only include keys that are genuinely configurable for buyers.
+STRICT RULES:
+1. If web data is provided above, copy it VERBATIM — do NOT modify, combine, or add to it.
+2. Do NOT invent variants. Do NOT add options not in the web data.
+3. For Color: always use the FULL official marketing name (e.g. 'Awesome Navy', 'Phantom Black', 'Sierra Blue') — never shorten to just 'Navy' or 'Black'.
+4. Max 8 options per key.
 
-Return EXCLUSIVELY a valid JSON object like this (replace with REAL values for "{title}"):
+Return EXCLUSIVELY a valid JSON object:
 {{
   "dropdowns": {{
-    "KEY_1": ["REAL_VALUE_1", "REAL_VALUE_2"],
-    "KEY_2": ["REAL_VALUE_A", "REAL_VALUE_B"]
+    "RAM": ["8 GB", "12 GB"],
+    "Storage": ["128 GB", "256 GB"],
+    "Color": ["Awesome Navy", "Awesome Iceblue"]
   }}
 }}
 """
@@ -297,13 +422,14 @@ Return EXCLUSIVELY a valid JSON object like this (replace with REAL values for "
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model,
                 response_format={"type": "json_object"},
-                temperature=0.1,
+                temperature=0.0,  # Zero temperature = fully deterministic, no creativity
             )
             result = json.loads(chat_completion.choices[0].message.content)
             return result.get("dropdowns", {})
         except Exception as e:
             print(f"LLM Dropdown Gen Error: {e}")
             return {}
+
 
 
     async def fetch_online_market_prices(self, title: str, category: str = "") -> Dict[str, Any]:

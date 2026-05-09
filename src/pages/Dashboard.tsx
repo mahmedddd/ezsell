@@ -335,7 +335,7 @@ export default function Dashboard() {
                             src={getImageUrl(getListingImage(listing)!)!}
                             alt={listing.title}
                             className="w-full h-full object-cover rounded-md"
-                            wrapperClassName="w-full h-full"
+                            wrapperClassName="absolute inset-0"
                             priority="lazy"
                           />
                         ) : (
@@ -494,7 +494,7 @@ export default function Dashboard() {
                             src={getImageUrl(getListingImage(listing)!)!}
                             alt={listing.title}
                             className="w-full h-full object-cover rounded-md"
-                            wrapperClassName="w-full h-full"
+                            wrapperClassName="absolute inset-0"
                             priority="lazy"
                           />
                         ) : (

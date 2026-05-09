@@ -260,6 +260,7 @@ export default function Favorites() {
                             src={getListingImage(listing)!}
                             alt={listing.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            wrapperClassName="absolute inset-0"
                           />
                         ) : (
                           <span className="text-slate-400">No image</span>
@@ -285,7 +286,7 @@ export default function Favorites() {
                     <CardContent className="pt-0">
                       {/* Price & Condition */}
                       <div className="flex justify-between items-center mb-3">
-                        <span className="text-xl font-black text-slate-900 tracking-tighter">
+                        <span className="text-xl font-black text-[#2E6091] tracking-tighter">
                           {formatCurrency(listing.price)}
                         </span>
                         <Badge variant="outline" className="shrink-0 bg-amber-50 text-amber-700 border-amber-200">
