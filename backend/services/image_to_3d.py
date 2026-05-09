@@ -30,9 +30,8 @@ async def optimize_glb_with_draco(glb_path: str) -> bool:
                 "optimize",
                 glb_path,
                 temp_path,
-                "--compress", "draco",       # Draco mesh compression (lossless geometry)
-                "--simplify", "false",        # Do NOT simplify mesh — keeps full visual quality
-                "--flatten", "false",         # Keep scene graph intact
+                "--compress", "draco",  # Draco mesh compression — lossless, no visual change
+                # Note: do NOT pass --simplify here, it changes visual quality
             ],
             capture_output=True,
             text=True,
@@ -81,13 +80,31 @@ async def download_and_save_glb(url: str, dest_path: str) -> bool:
         raw_size = os.path.getsize(dest_path)
         print(f"✅ [IMAGE_TO_3D] GLB downloaded: {dest_path} ({raw_size / 1024:.0f} KB)")
         
-        # Apply Draco compression in a thread to not block the event loop
-        # This is safe — it's a separate process, zero visual quality change
+        # Apply Draco compression synchronously in a thread so we don't nest event loops
+        # subprocess.run is blocking, so run_in_executor is correct here
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None,
-            lambda: asyncio.run(optimize_glb_with_draco(dest_path))
+            lambda: subprocess.run(
+                [
+                    "npx", "--yes", "@gltf-transform/cli",
+                    "optimize", dest_path, dest_path + ".tmp.glb",
+                    "--compress", "draco",
+                ],
+                capture_output=True,
+                timeout=120
+            )
         )
+        # Swap optimized file in if it's valid
+        tmp = dest_path + ".tmp.glb"
+        if os.path.exists(tmp) and os.path.getsize(tmp) > 1024:
+            original_kb = os.path.getsize(dest_path) / 1024
+            optimized_kb = os.path.getsize(tmp) / 1024
+            shutil.move(tmp, dest_path)
+            print(f"✅ [GLB_OPT] Draco done: {original_kb:.0f}KB → {optimized_kb:.0f}KB ({100-optimized_kb/original_kb*100:.0f}% smaller)")
+        elif os.path.exists(tmp):
+            os.remove(tmp)
+            print(f"⚠️ [GLB_OPT] Draco output invalid, keeping original")
         
         return True
     except Exception as e:
@@ -140,7 +157,11 @@ async def start_image_to_3d_task(
 
     payload = {
         "type": "image_to_model",
-        "model_version": model_version
+        "model_version": model_version,
+        # Cap polygon count at 100k faces — fully imperceptible at AR distances (1-3m)
+        # but reduces GPU workload by 4-6x, fixing iPhone XR thermal throttling/camera crash.
+        # Tripo default is 300k-600k faces which overwhelms older iPhone GPUs during WebXR.
+        "face_limit": 100000,
     }
     
     if file_token:
@@ -185,7 +206,8 @@ async def start_multiview_to_3d_task(
     payload = {
         "type": "multiview_to_model",
         "model_version": model_version,
-        "files": [{}, {}, {}, {}] # [front, left, back, right]
+        "files": [{}, {}, {}, {}],  # [front, left, back, right]
+        "face_limit": 100000,  # Same cap as single-image — keeps mobile GPU load manageable
     }
     
     if file_tokens:
