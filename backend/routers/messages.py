@@ -8,7 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 import json
 
-from models.database import get_db, Message, User, Listing
+from models.database import get_db, Message, User, Listing, BlockedUser
 from schemas.schemas import MessageCreate, MessageResponse, ConversationResponse
 from core.security import get_current_user
 
@@ -38,6 +38,20 @@ def send_message(
         listing = db.query(Listing).filter(Listing.id == message.listing_id).first()
         if not listing:
             raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Check if blocked
+    block_exists = db.query(BlockedUser).filter(
+        or_(
+            and_(BlockedUser.blocker_id == current_user.id, BlockedUser.blocked_id == message.receiver_id),
+            and_(BlockedUser.blocker_id == message.receiver_id, BlockedUser.blocked_id == current_user.id)
+        )
+    ).first()
+    
+    if block_exists:
+        raise HTTPException(
+            status_code=403, 
+            detail="Cannot send message. One of the users has blocked the other."
+        )
     
     # Create message
     db_message = Message(

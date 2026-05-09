@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
 import { toast } from './ui/use-toast';
-import { messageService, getImageUrl } from '../lib/api.ts';
+import { messageService, authService, getImageUrl } from '../lib/api.ts';
 
 interface Message {
   id: number;
@@ -66,14 +66,26 @@ export function ChatWindow({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadMessages();
+    checkBlockedStatus();
     setImgError(false);
     const interval = setInterval(loadMessages, 3000); // Poll every 3 seconds
     return () => clearInterval(interval);
   }, [listingId, sellerId]);
+
+  const checkBlockedStatus = async () => {
+    try {
+      const data = await authService.getBlockedStatus(sellerId);
+      setIsBlocked(data.is_blocked);
+    } catch (error) {
+      console.error('Failed to check blocked status:', error);
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -109,6 +121,54 @@ export function ChatWindow({
       toast({
         title: "Error",
         description: "Could not delete conversation.",
+        variant: "destructive"
+      });
+    }
+  const handleBlockToggle = async () => {
+    setBlocking(true);
+    try {
+      if (isBlocked) {
+        await authService.unblockUser(sellerId);
+        setIsBlocked(false);
+        toast({
+          title: "User Unblocked",
+          description: "You can now send and receive messages.",
+        });
+      } else {
+        await authService.blockUser(sellerId);
+        setIsBlocked(true);
+        toast({
+          title: "User Blocked",
+          description: "You will no longer receive messages from this user.",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle block:', error);
+      toast({
+        title: "Error",
+        description: "Could not update block status.",
+        variant: "destructive"
+      });
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  const handleReport = async () => {
+    const reason = prompt("Please enter the reason for reporting this user:");
+    if (!reason) return;
+
+    try {
+      await authService.reportUser(sellerId, reason);
+      toast({
+        title: "User Reported",
+        description: "Your report has been submitted to admin.",
+      });
+    } catch (error) {
+      console.error('Failed to report user:', error);
+      toast({
+        title: "Error",
+        description: "Could not submit report.",
         variant: "destructive"
       });
     }
@@ -203,25 +263,20 @@ export function ChatWindow({
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem 
                 className="text-gray-700 cursor-pointer"
+                disabled={blocking}
                 onClick={(e) => {
                   e.stopPropagation();
-                  toast({
-                    title: "User Blocked",
-                    description: "You will no longer receive messages from this user.",
-                  });
+                  handleBlockToggle();
                 }}
               >
-                <Ban className="mr-2 h-4 w-4" />
-                <span>Block User</span>
+                <Ban className={`mr-2 h-4 w-4 ${isBlocked ? 'text-green-600' : 'text-red-600'}`} />
+                <span>{isBlocked ? 'Unblock User' : 'Block User'}</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-gray-700 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  toast({
-                    title: "User Reported",
-                    description: "This user has been reported to our moderation team.",
-                  });
+                  handleReport();
                 }}
               >
                 <ShieldAlert className="mr-2 h-4 w-4" />
@@ -326,6 +381,14 @@ export function ChatWindow({
                 </div>
               );
             })}
+
+            {isBlocked && (
+              <div className="flex justify-center my-4">
+                <div className="bg-red-50 text-red-600 px-4 py-2 rounded-full text-xs font-medium border border-red-100">
+                  You have blocked this user
+                </div>
+              </div>
+            )}
           </div>
         )}
       </ScrollArea>
@@ -378,13 +441,14 @@ export function ChatWindow({
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !isOffering && handleSendMessage(e)}
-              placeholder="Type a message..."
-              className="rounded-full bg-gray-100 border-none h-10 px-4 focus-visible:ring-1 focus-visible:ring-[#143109]"
+              placeholder={isBlocked ? "Unblock to send messages" : "Type a message..."}
+              disabled={isBlocked}
+              className="rounded-full bg-gray-100 border-none h-10 px-4 focus-visible:ring-1 focus-visible:ring-[#143109] disabled:opacity-50"
             />
           </div>
           <Button
             onClick={handleSendMessage}
-            disabled={(!newMessage.trim() && !isOffering) || sending}
+            disabled={(!newMessage.trim() && !isOffering) || sending || isBlocked}
             className="rounded-full w-10 h-10 p-0 bg-[#143109] hover:bg-[#1e4d10] flex-shrink-0"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

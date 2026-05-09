@@ -280,5 +280,24 @@ class Notification(Base):
     # Relationships
     user = relationship("User", backref="notifications")
 
+class BlockedUser(Base):
+    __tablename__ = "blocked_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    blocker_id = Column(Integer, ForeignKey("users.id"))
+    blocked_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class UserReport(Base):
+    __tablename__ = "user_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    reporter_id = Column(Integer, ForeignKey("users.id"))
+    reported_id = Column(Integer, ForeignKey("users.id"))
+    reason = Column(String)
+    description = Column(Text, nullable=True)
+    status = Column(String, default="pending")  # 'pending', 'resolved', 'ignored'
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Create all tables
 Base.metadata.create_all(bind=engine)

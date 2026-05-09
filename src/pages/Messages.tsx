@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { messageService, getImageUrl } from '../lib/api.ts';
+import { messageService, authService, getImageUrl } from '../lib/api.ts';
 import { toast } from '@/components/ui/use-toast';
 import Avatar from '@/components/ui/avatar';
 import { ChatWindow } from '@/components/ChatWindow';
@@ -69,6 +69,33 @@ export default function Messages() {
     } catch (error) {
       console.error('Failed to delete conversation:', error);
       toast({ title: 'Failed to delete conversation', variant: 'destructive' });
+    }
+    }
+  };
+
+  const handleBlockUser = async (userId: number, username: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Are you sure you want to block ${username}?`)) return;
+    try {
+      await authService.blockUser(userId);
+      toast({ title: `Blocked @${username}` });
+      loadConversations();
+    } catch (error) {
+      console.error('Failed to block user:', error);
+      toast({ title: 'Failed to block user', variant: 'destructive' });
+    }
+  };
+
+  const handleReportUser = async (userId: number, username: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const reason = prompt(`Enter reason for reporting @${username}:`);
+    if (!reason) return;
+    try {
+      await authService.reportUser(userId, reason);
+      toast({ title: `Reported @${username}` });
+    } catch (error) {
+      console.error('Failed to report user:', error);
+      toast({ title: 'Failed to report user', variant: 'destructive' });
     }
   };
 
@@ -208,26 +235,14 @@ export default function Messages() {
                             <DropdownMenuContent align="end" className="w-40">
                               <DropdownMenuItem 
                                 className="text-gray-700 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toast({
-                                    title: "User Blocked",
-                                    description: "You will no longer receive messages from this user.",
-                                  });
-                                }}
+                                onClick={(e) => handleBlockUser(conversation.user_id, conversation.username, e as any)}
                               >
-                                <Ban className="mr-2 h-4 w-4" />
+                                <Ban className="mr-2 h-4 w-4 text-red-600" />
                                 <span>Block User</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-gray-700 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toast({
-                                    title: "User Reported",
-                                    description: "This user has been reported to our moderation team.",
-                                  });
-                                }}
+                                onClick={(e) => handleReportUser(conversation.user_id, conversation.username, e as any)}
                               >
                                 <ShieldAlert className="mr-2 h-4 w-4" />
                                 <span>Report User</span>

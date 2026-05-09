@@ -92,6 +92,7 @@ export default function AdminDashboard() {
   const [allListings, setAllListings] = useState<Listing[]>([]); // for charts (includes pending/rejected)
   const [pendingListings, setPendingListings] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [searchUser, setSearchUser] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: 'user' | 'listing'; id: number; name: string }>({
@@ -119,6 +120,7 @@ export default function AdminDashboard() {
         adminService.getAllListings({ limit: 200 }),
         adminService.getPendingListings(),
         supportService.getAllTickets(),
+        adminService.getReports(),
       ]);
 
       setAnalytics(analyticsData);
@@ -127,6 +129,7 @@ export default function AdminDashboard() {
       setAllListings(allListingsData); // charts
       setPendingListings(pendingData);
       setTickets(ticketsData);
+      setReports(reportsData);
     } catch (error: any) {
       if (error.message === 'Admin access required') {
         toast({
@@ -258,6 +261,23 @@ export default function AdminDashboard() {
       toast({
         title: 'Update Failed',
         description: 'Could not update ticket status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdateReportStatus = async (reportId: number, status: string) => {
+    try {
+      await adminService.updateReportStatus(reportId, status);
+      toast({
+        title: 'Report Updated',
+        description: `Status changed to ${status}`,
+      });
+      fetchData();
+    } catch (error) {
+      toast({
+        title: 'Update Failed',
+        description: 'Could not update report status',
         variant: 'destructive',
       });
     }
@@ -404,13 +424,13 @@ export default function AdminDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Support Requests</CardTitle>
-                <LifeBuoy className="h-4 w-4 text-orange-600" />
+                <CardTitle className="text-sm font-medium">User Reports</CardTitle>
+                <ShieldAlert className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{tickets.length}</div>
+                <div className="text-2xl font-bold">{reports.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  {tickets.filter(t => t.status === 'open').length} new tickets
+                  {reports.filter(r => r.status === 'pending').length} pending review
                 </p>
               </CardContent>
             </Card>
@@ -798,6 +818,107 @@ export default function AdminDashboard() {
                           })()}
                         </TableCell>
                         <TableCell className="font-medium">
+                          {listing.title}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Reports Section */}
+        <Card className="mb-8 border-l-4 border-l-red-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-red-600" />
+              User Reports & Safety
+            </CardTitle>
+            <CardDescription>Review reports filed by users against other members</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Reporter</TableHead>
+                    <TableHead>Reported User</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reports.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No user reports found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    reports.map((report) => (
+                      <TableRow key={report.id}>
+                        <TableCell className="font-medium text-blue-600">@{report.reporter_username}</TableCell>
+                        <TableCell className="font-bold text-red-600">@{report.reported_username}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">
+                            {report.reason}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-xs">{report.description}</TableCell>
+                        <TableCell>
+                          <Badge variant={report.status === 'pending' ? 'destructive' : 'default'}>
+                            {report.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            {report.status === 'pending' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                  onClick={() => handleUpdateReportStatus(report.id, 'resolved')}
+                                >
+                                  Resolve
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-gray-500 border-gray-200 hover:bg-gray-50"
+                                  onClick={() => handleUpdateReportStatus(report.id, 'ignored')}
+                                >
+                                  Ignore
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              title="Ban User"
+                              onClick={() => {
+                                const user = users.find(u => u.id === report.reported_id);
+                                if (user) handleToggleUserActive(user);
+                              }}
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
                           <div className="flex flex-col">
                             <span>{listing.title}</span>
                             {listing.is_featured && <span className="text-[10px] text-yellow-600 font-bold uppercase">Featured</span>}

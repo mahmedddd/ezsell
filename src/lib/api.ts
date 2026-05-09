@@ -184,6 +184,26 @@ export const authService = {
     const response = await apiClient.get(`/user-profile/${idOrUsername}`);
     return response.data;
   },
+
+  async blockUser(userId: number) {
+    const response = await apiClient.post(`/block/${userId}`);
+    return response.data;
+  },
+
+  async unblockUser(userId: number) {
+    const response = await apiClient.post(`/unblock/${userId}`);
+    return response.data;
+  },
+
+  async getBlockedStatus(userId: number) {
+    const response = await apiClient.get(`/blocked-status/${userId}`);
+    return response.data;
+  },
+
+  async reportUser(userId: number, reason: string, description: string = '') {
+    const response = await apiClient.post(`/report/${userId}`, { reason, description });
+    return response.data;
+  },
 };
 
 // Listing Service
@@ -552,6 +572,16 @@ export const adminService = {
 
   async getAllListings(params?: { limit?: number }) {
     const response = await apiClient.get('/admin/all-listings', { params });
+    return response.data;
+  },
+
+  async getReports() {
+    const response = await apiClient.get('/admin/reports');
+    return response.data;
+  },
+
+  async updateReportStatus(reportId: number, status: string) {
+    const response = await apiClient.patch(`/admin/reports/${reportId}`, { status });
     return response.data;
   },
 };

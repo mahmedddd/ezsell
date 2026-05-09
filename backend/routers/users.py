@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import bcrypt
 
-from models.database import get_db, User, EmailVerification, PasswordReset
+from models.database import get_db, User, EmailVerification, PasswordReset, BlockedUser, UserReport
 from schemas.schemas import UserCreate, UserResponse, UserLogin, Token
 from core.security import create_access_token, get_current_user
 from core.email_service import email_service
@@ -601,3 +601,133 @@ def toggle_user_active_admin(
     db.commit()
     db.refresh(user)
     return {"message": f"User {user.username} is now {'active' if user.is_active else 'inactive'}", "is_active": user.is_active}
+
+# ============= BLOCKING & REPORTING =============
+
+@router.post("/block/{user_id}")
+def block_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user_token = Depends(get_current_user)
+):
+    """Block a user"""
+    current_user = get_user_by_username(db, current_user_token.username)
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="You cannot block yourself")
+        
+    # Check if already blocked
+    existing = db.query(BlockedUser).filter(
+        BlockedUser.blocker_id == current_user.id,
+        BlockedUser.blocked_id == user_id
+    ).first()
+    
+    if existing:
+        return {"message": "User already blocked"}
+        
+    new_block = BlockedUser(blocker_id=current_user.id, blocked_id=user_id)
+    db.add(new_block)
+    db.commit()
+    
+    return {"message": "User blocked successfully"}
+
+@router.post("/unblock/{user_id}")
+def unblock_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user_token = Depends(get_current_user)
+):
+    """Unblock a user"""
+    current_user = get_user_by_username(db, current_user_token.username)
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    db.query(BlockedUser).filter(
+        BlockedUser.blocker_id == current_user.id,
+        BlockedUser.blocked_id == user_id
+    ).delete()
+    
+    db.commit()
+    return {"message": "User unblocked successfully"}
+
+@router.get("/blocked-status/{user_id}")
+def get_blocked_status(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user_token = Depends(get_current_user)
+):
+    """Check if a user is blocked by current user"""
+    current_user = get_user_by_username(db, current_user_token.username)
+    if not current_user:
+        return {"is_blocked": False}
+        
+    is_blocked = db.query(BlockedUser).filter(
+        BlockedUser.blocker_id == current_user.id,
+        BlockedUser.blocked_id == user_id
+    ).first() is not None
+    
+    return {"is_blocked": is_blocked}
+
+@router.post("/report/{user_id}")
+def report_user(
+    user_id: int,
+    report_data: dict,
+    db: Session = Depends(get_db),
+    current_user_token = Depends(get_current_user)
+):
+    """Report a user"""
+    current_user = get_user_by_username(db, current_user_token.username)
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    new_report = UserReport(
+        reporter_id=current_user.id,
+        reported_id=user_id,
+        reason=report_data.get("reason", "No reason provided"),
+        description=report_data.get("description", "")
+    )
+    db.add(new_report)
+    db.commit()
+    
+    return {"message": "User reported successfully"}
+
+@router.get("/admin/reports")
+def get_all_reports_admin(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get all user reports (admin only)"""
+    reports = db.query(UserReport).all()
+    result = []
+    for r in reports:
+        reporter = db.query(User).filter(User.id == r.reporter_id).first()
+        reported = db.query(User).filter(User.id == r.reported_id).first()
+        result.append({
+            "id": r.id,
+            "reporter_username": reporter.username if reporter else "Unknown",
+            "reported_username": reported.username if reported else "Unknown",
+            "reported_id": r.reported_id,
+            "reason": r.reason,
+            "description": r.description,
+            "status": r.status,
+            "created_at": r.created_at.isoformat() if r.created_at else None
+        })
+    return result
+
+@router.patch("/admin/reports/{report_id}")
+def update_report_status_admin(
+    report_id: int,
+    status_data: dict,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Update report status (admin only)"""
+    report = db.query(UserReport).filter(UserReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    report.status = status_data.get("status", report.status)
+    db.commit()
+    return {"message": "Report status updated"}
