@@ -373,6 +373,20 @@ def update_user_profile(
     db.refresh(user)
     return user
 
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_current_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete current user's profile (used for cancelling incomplete registration)"""
+    user = get_user_by_username(db, username=current_user.username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(user)
+    db.commit()
+    return None
+
 @router.post("/request-password-reset")
 async def request_password_reset(request: dict, db: Session = Depends(get_db)):
     """

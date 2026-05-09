@@ -115,7 +115,7 @@ export default function Signup() {
           <img src="/images/logo.jpg" alt="EzSell" className="h-24 w-auto rounded-3xl shadow-2xl ring-4 ring-white/20 mx-auto mb-8 animate-float"
             onError={e => { e.currentTarget.style.display = "none"; }} />
           <h2 className="text-3xl font-black text-white mb-4 leading-tight">Join EzSell Today</h2>
-          <p className="text-white/70 text-base leading-relaxed">Start selling in minutes. Reach thousands of buyers in Twin Cities for free.</p>
+          <p className="text-white/70 text-base leading-relaxed">Start selling in minutes. Reach thousands of buyers in Twin Cities — sell with confidence, and believe without any doubts.</p>
           {/* Step progress visual */}
           <div className="mt-10 space-y-3">
             {STEPS.map((s, i) => (

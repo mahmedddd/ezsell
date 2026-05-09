@@ -55,7 +55,7 @@ export default function Login() {
             Pakistan's Smartest Marketplace
           </h2>
           <p className="text-white/70 text-base leading-relaxed">
-            Buy and sell mobiles, laptops, furniture and more — safely, quickly, and for free.
+            Buy and sell mobiles, laptops, furniture and more — sell with confidence, and believe without any doubts.
           </p>
 
           <div className="mt-10 grid grid-cols-2 gap-3">

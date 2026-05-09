@@ -22,8 +22,8 @@ export default function CompleteProfile() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!phone.trim()) {
-            toast({ title: "Phone number required", variant: "destructive" });
+        if (!phone.trim() || phone.length !== 11) {
+            toast({ title: "Valid phone number required", description: "Please enter exactly 11 digits (e.g., 03xxxxxxxxx).", variant: "destructive" });
             return;
         }
 
@@ -55,11 +55,29 @@ export default function CompleteProfile() {
         }
     };
 
+    const handleBackToLogin = async () => {
+        if (token) {
+            try {
+                await fetch(`${API_BASE_URL}/api/v1/me`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+            } catch (err) {
+                console.error("Failed to delete incomplete profile:", err);
+            }
+        }
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        navigate("/login", { replace: true });
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(68,30%,97%)] to-[hsl(50,25%,95%)] p-6">
             <div className="w-full max-w-md animate-scale-in">
-            <button onClick={() => navigate("/")} className="mb-6 flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="w-4 h-4" /> Back to Home
+            <button onClick={handleBackToLogin} className="mb-6 flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary hover:bg-white/50 px-3 py-1.5 rounded-lg transition-all border border-transparent hover:border-primary/20 w-fit">
+                <ArrowLeft className="w-4 h-4" /> Back to Login
             </button>
             <div className="bg-white rounded-3xl shadow-[var(--shadow-xl)] border border-border/50 overflow-hidden">
                     {/* Header */}
