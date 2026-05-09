@@ -85,6 +85,8 @@
     overflow-x: hidden;
     max-width: 100%;
     width: 100vw;
+    /* Prevents layout shift when scrollbar disappears (Radix UI Select/Dialog) */
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -98,6 +100,11 @@
     max-width: 100%;
     word-wrap: break-word;
     overflow-wrap: break-word;
+  }
+
+  /* Fix for Radix UI adding padding-right to body on scroll lock, causing jumpy layout */
+  body[data-radix-scroll-lock] {
+    padding-right: 0px !important;
   }
 
   #root {
