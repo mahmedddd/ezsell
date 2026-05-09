@@ -2273,7 +2273,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                           {createdListing.category}
                         </Badge>
                         <h3 className="text-xl font-bold line-clamp-2">{createdListing.title}</h3>
-                        <div className="text-3xl font-bold text-[#2E6091] text-center mb-6 break-words overflow-hidden max-w-full">
+                        <div className="text-3xl font-bold text-slate-900 text-center mb-6 break-words overflow-hidden max-w-full">
                           {formatCurrency(createdListing.price)}
                         </div>
                       </div>

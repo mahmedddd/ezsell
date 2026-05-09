@@ -58,16 +58,44 @@ export default function Login() {
             Buy and sell mobiles, laptops, furniture and more — safely, quickly, and for free.
           </p>
 
-          <div className="mt-10 grid grid-cols-2 gap-4 text-center">
+          <div className="mt-10 grid grid-cols-2 gap-3 text-left">
             {[
-              { n: "5K+", l: "Active Listings" },
-              { n: "100%", l: "Verified Sellers" },
-              { n: "24/7", l: "Support" },
-              { n: "Free", l: "To Use" },
-            ].map(({ n, l }) => (
-              <div key={l} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/15">
-                <div className="text-2xl font-black text-white">{n}</div>
-                <div className="text-xs text-white/60 font-medium mt-0.5">{l}</div>
+              {
+                icon: "🤖",
+                title: "AI Price Guard",
+                sub: "Know your item's real market value before listing — no guesswork.",
+                gradient: "from-violet-500/20 to-purple-500/10",
+                border: "border-violet-400/25",
+              },
+              {
+                icon: "🪄",
+                title: "AR Live View",
+                sub: "Buyers see your furniture in their room before buying — sells 3× faster.",
+                gradient: "from-cyan-500/20 to-blue-500/10",
+                border: "border-cyan-400/25",
+              },
+              {
+                icon: "⚡",
+                title: "Sell in 24 hrs",
+                sub: "Smart pricing + verified buyers = offers arrive the same day.",
+                gradient: "from-amber-500/20 to-orange-500/10",
+                border: "border-amber-400/25",
+              },
+              {
+                icon: "🛡️",
+                title: "100% Free & Safe",
+                sub: "Verified sellers, fraud detection, and zero hidden fees — always.",
+                gradient: "from-emerald-500/20 to-green-500/10",
+                border: "border-emerald-400/25",
+              },
+            ].map(({ icon, title, sub, gradient, border }) => (
+              <div
+                key={title}
+                className={`bg-gradient-to-br ${gradient} backdrop-blur-sm rounded-2xl p-3.5 border ${border} hover:scale-[1.03] transition-transform duration-200 cursor-default`}
+              >
+                <div className="text-xl mb-1.5">{icon}</div>
+                <div className="text-sm font-bold text-white leading-tight">{title}</div>
+                <div className="text-[11px] text-white/55 font-medium mt-1 leading-snug">{sub}</div>
               </div>
             ))}
           </div>

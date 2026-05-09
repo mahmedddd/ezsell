@@ -193,25 +193,29 @@ Return EXCLUSIVELY this JSON (no extra text):
         }.get(category, "Provide the most relevant configuration options for this product.")
 
 
-        prompt = f"""You are an AI assisting in a Pakistani classifieds marketplace.
+        prompt = f"""You are an expert product database for the Pakistani mobile/tech/furniture market.
 Category: {category}
-Title: "{title}"
+Product Title: "{title}"
 
-Task: Generate the realistic, buyer-facing configuration dropdown options for this specific product in the Pakistani market.
+Task: Return ONLY the exact configuration variants that this SPECIFIC product model was officially released with.
 
 {category_guidance}
 
-Critical Rules:
-- Only list variants that ACTUALLY EXIST for this specific model in Pakistan.
-- For Pakistani local brands (Tecno, Infinix, Itel, Qmobile, Voice), use their real variants.
-- Do NOT hallucinate specs. Max 6-8 options per dropdown key.
+STRICT RULES — VIOLATIONS ARE NOT ALLOWED:
+1. You MUST look up the REAL, OFFICIAL specs for this exact product model from your training data.
+2. Do NOT use generic values. Do NOT copy from examples. Do NOT invent variants.
+3. For mobile phones: list ONLY the RAM and Storage options that this exact model ships with globally OR in Pakistan. For example:
+   - Samsung Galaxy A56 ships with: 6 GB and 12 GB RAM. NOT 8 GB.
+   - Samsung Galaxy A35 ships with: 8 GB and 12 GB RAM.
+   - iPhone 15 ships with: 6 GB RAM (fixed, not a user choice).
+4. If you are unsure about a specific value, OMIT IT rather than guess.
+5. Max 6 options per key. Only include keys that are genuinely configurable for buyers.
 
-Return EXCLUSIVELY a valid JSON object with this exact structure:
+Return EXCLUSIVELY a valid JSON object like this (replace with REAL values for "{title}"):
 {{
   "dropdowns": {{
-    "RAM": ["6 GB", "8 GB", "12 GB"],
-    "Storage": ["128 GB", "256 GB"],
-    "Color": ["Black", "Blue", "Gold"]
+    "KEY_1": ["REAL_VALUE_1", "REAL_VALUE_2"],
+    "KEY_2": ["REAL_VALUE_A", "REAL_VALUE_B"]
   }}
 }}
 """
@@ -339,21 +343,40 @@ Return EXCLUSIVELY a valid JSON object with this exact structure:
         us = user_selections or {}
         t_lower = title.lower()
 
+        import re as _re
+
+        def _extract_num(val):
+            """Extract integer from values like 6, '6', '6 GB', '256 GB'."""
+            if val is None:
+                return None
+            if isinstance(val, (int, float)):
+                return int(val)
+            m = _re.search(r'(\d+)', str(val))
+            return int(m.group(1)) if m else None
+
         if category == 'mobile':
-            if us.get('ram') and str(us.get('ram')) != '0' and f"{us.get('ram')}gb" not in t_lower and f"{us.get('ram')} gb" not in t_lower:
-                spec_suffix_parts.append(f"{us.get('ram')}GB")
-            if us.get('storage') and str(us.get('storage')) != '0' and f"{us.get('storage')}gb" not in t_lower and f"{us.get('storage')} gb" not in t_lower:
-                spec_suffix_parts.append(f"{us.get('storage')}GB")
+            ram_num = _extract_num(us.get('ram'))
+            stor_num = _extract_num(us.get('storage'))
+            if ram_num and ram_num != 0:
+                if f"{ram_num}gb" not in t_lower and f"{ram_num} gb" not in t_lower:
+                    spec_suffix_parts.append(f"{ram_num}GB")
+            if stor_num and stor_num != 0:
+                if f"{stor_num}gb" not in t_lower and f"{stor_num} gb" not in t_lower:
+                    spec_suffix_parts.append(f"{stor_num}GB")
             if us.get('is_pta') and 'pta' not in t_lower:
                 spec_suffix_parts.append("PTA")
                 
         elif category == 'laptop':
             if us.get('processor') and str(us.get('processor')).lower() not in t_lower:
                 spec_suffix_parts.append(str(us.get('processor')))
-            if us.get('ram') and str(us.get('ram')) != '0' and f"{us.get('ram')}gb" not in t_lower and f"{us.get('ram')} gb" not in t_lower:
-                spec_suffix_parts.append(f"{us.get('ram')}GB")
-            if us.get('storage') and str(us.get('storage')) != '0' and f"{us.get('storage')}gb" not in t_lower and f"{us.get('storage')} gb" not in t_lower:
-                spec_suffix_parts.append(f"{us.get('storage')}GB")
+            ram_num = _extract_num(us.get('ram'))
+            stor_num = _extract_num(us.get('storage'))
+            if ram_num and ram_num != 0:
+                if f"{ram_num}gb" not in t_lower and f"{ram_num} gb" not in t_lower:
+                    spec_suffix_parts.append(f"{ram_num}GB")
+            if stor_num and stor_num != 0:
+                if f"{stor_num}gb" not in t_lower and f"{stor_num} gb" not in t_lower:
+                    spec_suffix_parts.append(f"{stor_num}GB")
                 
         elif category == 'furniture':
             if us.get('material') and str(us.get('material')).lower() not in t_lower:
@@ -362,9 +385,17 @@ Return EXCLUSIVELY a valid JSON object with this exact structure:
                 spec_suffix_parts.append(str(us.get('furniture_type')))
 
         if dynamic_specs:
+            import re
             for k, v in dynamic_specs.items():
-                if v and isinstance(v, str) and str(v).lower() not in t_lower:
-                    spec_suffix_parts.append(str(v))
+                if v and isinstance(v, str):
+                    v_stripped = v.strip()
+                    # Normalize: "6 GB" -> "6GB" for comparison
+                    v_normalized = re.sub(r'\s+', '', v_stripped).lower()
+                    t_normalized = re.sub(r'\s+', '', t_lower)
+                    if v_normalized not in t_normalized:
+                        # Use cleaned version in search (e.g., "6GB" not "6 GB")
+                        cleaned = re.sub(r'\s*(GB|TB|MP|MHz|GHz)\s*', r'\1', v_stripped, flags=re.IGNORECASE)
+                        spec_suffix_parts.append(cleaned)
                     
         spec_suffix = " ".join(spec_suffix_parts[:5]) # limit to top 5 specs to prevent overly long queries
         search_title = f"{title} {spec_suffix}".strip()
