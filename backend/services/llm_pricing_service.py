@@ -91,159 +91,7 @@ class LLMPricingService:
                 "missing_fields": [], "suggested_title": title, "extracted_specs": {}
             }
 
-        # ── 1b-extra. Adjective + category-word combos (not in exact JUNK_TITLES) ──
-        # Catches: "Amazing Laptop", "Excellent Notebook", "Powerful Computer"
-        CATEGORY_WORDS = {"phone","mobile","smartphone","handphone","laptop","notebook","computer","tablet"}
-        ADJECTIVE_PREFIXES = {
-            "good","nice","great","excellent","perfect","amazing","awesome",
-            "best","cheap","affordable","used","new","old","fast","powerful",
-            "slim","light","heavy","beautiful","working","urgent","quick",
-        }
-        if len(t_words) == 2 and t_words[0] in ADJECTIVE_PREFIXES and t_words[1] in CATEGORY_WORDS:
-            return {
-                "is_valid": False,
-                "message": f"'{title}' is too vague. Please include the brand and model, e.g. 'Samsung Galaxy S23' or 'Dell Inspiron 15'.",
-                "missing_fields": [], "suggested_title": title, "extracted_specs": {}
-            }
 
-        # ── 1d. Single-word brand-only (mobile/laptop) ───────────────────────
-        MOBILE_BRANDS = {
-            "samsung","apple","iphone","nokia","huawei","oppo","vivo","realme",
-            "xiaomi","redmi","tecno","infinix","itel","qmobile","sony","motorola",
-            "google","pixel","oneplus","nothing","zte","alcatel","honor"
-        }
-        LAPTOP_BRANDS = {
-            "dell","hp","lenovo","acer","asus","apple","macbook","msi","razer",
-            "alienware","microsoft","surface","lg","toshiba","gateway","medion"
-        }
-        ALL_BRANDS = MOBILE_BRANDS | LAPTOP_BRANDS
-
-        if t in ALL_BRANDS:
-            brand_title = title.strip().title()
-            if category == "mobile":
-                return {
-                    "is_valid": False,
-                    "message": f"Please add a model name after '{brand_title}', e.g. '{brand_title} Galaxy S22'",
-                    "missing_fields": [], "suggested_title": title, "extracted_specs": {}
-                }
-            elif category == "laptop":
-                return {
-                    "is_valid": False,
-                    "message": f"Please add a model/series after '{brand_title}', e.g. '{brand_title} Inspiron 15 i7'",
-                    "missing_fields": [], "suggested_title": title, "extracted_specs": {}
-                }
-
-        # ── 1e. Category cross-contamination check ───────────────────────────
-        MOBILE_ONLY_KEYWORDS = {
-            "galaxy","note","redmi","realme","tecno","infinix","camon","spark",
-            "phantom","reno","poco","iphone","s23","s22","s21","s20","a54",
-            "12 pro","13 pro","14 pro","15 pro","nova","y series","f series"
-        }
-        LAPTOP_ONLY_KEYWORDS = {
-            "inspiron","thinkpad","latitude","ideapad","probook","elitebook",
-            "pavilion","vivobook","zenbook","aspire","nitro","rog","tuf",
-            "macbook air","macbook pro","xps","spectre","envy","omen",
-            "legion","swift","predator","chromebook","gram"
-        }
-        FURNITURE_KEYWORDS = {
-            "sofa","couch","settee","bed","wardrobe","almirah","closet",
-            "cupboard","dresser","desk","table","chair","stool","ottoman",
-            "cabinet","shelf","shelves","bookcase","dining","recliner",
-            "futon","armchair","loveseat","sectional","bunk","cot","mattress",
-            "almirah","sideboard","hutch","credenza","console","bench"
-        }
-        MOBILE_BRAND_WORDS = {
-            "samsung","apple","iphone","nokia","huawei","oppo","vivo",
-            "realme","xiaomi","redmi","tecno","infinix","itel","qmobile",
-            "oneplus","motorola","nothing","honor","pixel","google","sony"
-        }
-        LAPTOP_BRAND_WORDS = {
-            "dell","hp","lenovo","acer","asus","msi","razer",
-            "alienware","microsoft","surface","toshiba","lg"
-        }
-
-        title_has_mobile_brand  = any(b in t for b in MOBILE_BRAND_WORDS)
-        title_has_laptop_brand  = any(b in t for b in LAPTOP_BRAND_WORDS)
-        title_has_mobile_kw     = any(k in t for k in MOBILE_ONLY_KEYWORDS)
-        title_has_laptop_kw     = any(k in t for k in LAPTOP_ONLY_KEYWORDS)
-        title_has_furniture_kw  = any(k in t for k in FURNITURE_KEYWORDS)
-
-        if category == "furniture":
-            if (title_has_mobile_brand and title_has_mobile_kw) or title_has_laptop_kw:
-                return {
-                    "is_valid": False,
-                    "message": "This looks like a mobile/laptop listing, not furniture. Please enter a furniture title like 'King Size Bed' or '5-Seater Sofa'.",
-                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
-                }
-
-        if category == "mobile":
-            if title_has_furniture_kw and not title_has_mobile_brand:
-                return {
-                    "is_valid": False,
-                    "message": "This looks like a furniture listing, not a mobile. Please enter a mobile title like 'Samsung Galaxy S23' or 'iPhone 14 Pro'.",
-                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
-                }
-            if title_has_laptop_kw and not title_has_mobile_brand:
-                return {
-                    "is_valid": False,
-                    "message": "This looks like a laptop listing. Please enter a mobile title like 'Samsung Galaxy S23 256GB'.",
-                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
-                }
-
-        if category == "laptop":
-            if title_has_furniture_kw and not title_has_laptop_brand:
-                return {
-                    "is_valid": False,
-                    "message": "This looks like a furniture listing, not a laptop. Please enter a laptop title like 'Dell XPS 15 i7 12th Gen'.",
-                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
-                }
-            if title_has_mobile_kw and title_has_mobile_brand and not title_has_laptop_brand:
-                return {
-                    "is_valid": False,
-                    "message": "This looks like a mobile listing, not a laptop. Please enter a laptop title like 'HP ProBook 450 i5 11th Gen'.",
-                    "missing_fields": [], "suggested_title": "", "extracted_specs": {}
-                }
-
-        # ── 1f. Adjective-only / meaningless modifier junk (mobile/laptop) ───
-        if category in ("mobile", "laptop"):
-            ADJECTIVE_JUNK = {
-                "good","nice","great","excellent","perfect","amazing","awesome",
-                "best","cheap","affordable","low","price","high","end","urgent",
-                "must","sell","quick","fast","powerful","slim","light","heavy",
-                "big","small","mini","max","pro","ultra","plus","used","new","old",
-            }
-            non_adj_words = [
-                w for w in t_words
-                if w not in ADJECTIVE_JUNK and w not in ALL_BRANDS and len(w) >= 2
-            ]
-            meaningful = [
-                w for w in non_adj_words
-                if _re.search(r'\d', w) or len(w) >= 3
-            ]
-            if not meaningful:
-                example = "Samsung Galaxy S23 256GB" if category == "mobile" else "Dell XPS 15 i7 12th Gen"
-                return {
-                    "is_valid": False,
-                    "message": f"Title is too vague. Please include the brand and model, e.g. '{example}'.",
-                    "missing_fields": [], "suggested_title": title, "extracted_specs": {}
-                }
-
-        # ── 1g. Furniture-specific: no furniture keyword + all adjectives → junk
-        if category == "furniture":
-            FURNITURE_ADJECTIVE_JUNK = {
-                "good","nice","great","cheap","affordable","best","old","new",
-                "big","small","large","medium","heavy","light","wooden","metal",
-                "imported","local","handmade","modern","classic","antique",
-                "used","brand","urgent","for","sale","selling",
-            }
-            if not title_has_furniture_kw:
-                all_junk = all(w in FURNITURE_ADJECTIVE_JUNK for w in t_words if len(w) > 2)
-                if all_junk:
-                    return {
-                        "is_valid": False,
-                        "message": "Please specify the type of furniture, e.g. 'King Size Bed', 'L-Shape Sofa', '6-Seater Dining Table'.",
-                        "missing_fields": [], "suggested_title": title, "extracted_specs": {}
-                    }
 
         # ─────────────────────────────────────────────────────────────────────
         # STAGE 2 — LLM Validation with strict category-aware prompt
@@ -258,6 +106,11 @@ Your job: decide if the listing title is a REAL, SPECIFIC product in the correct
 Category: {category}
 Title: "{title}"
 Description: "{description}"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANT INSTRUCTION REGARDING "EXISTENCE":
+Do NOT reject future, unreleased, or unrecognized model numbers if the format is structurally valid (e.g. "iPhone 17", "Samsung S25", "PS6"). Assume the user is selling a newly released item, a clone, or a pre-release. If it has a Brand + Number/Word, it IS VALID.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MANDATORY CATEGORY-MISMATCH RULE (highest priority):
