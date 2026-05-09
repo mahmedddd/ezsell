@@ -156,7 +156,7 @@ export default function Messages() {
                             )}
                           </div>
 
-                          <div className="flex-1 min-w-0 pr-6">
+                          <div className="flex-1 min-w-0 pr-10">
                             <div className="flex justify-between items-baseline mb-0.5">
                               <h3 className={`font-semibold truncate ${isActive ? 'text-[#143109]' : 'text-gray-900'}`}>
                                 {conversation.username}
@@ -185,11 +185,11 @@ export default function Messages() {
                           </div>
                         </div>
 
-                        {/* Delete Button (Visible on hover) */}
+                        {/* Delete Button (Visible on hover on desktop, always visible on mobile) */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 hover:bg-red-50 focus:opacity-100"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 hover:bg-red-50 focus:opacity-100"
                           title="Delete Chat"
                           onClick={(e) => handleDeleteConversation(conversation.user_id, e)}
                         >

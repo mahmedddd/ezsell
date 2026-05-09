@@ -276,7 +276,7 @@ export default function ProductDetail() {
           <div className="space-y-3">
             <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden shadow-lg">
               {mainImgUrl ? (
-                <img src={mainImgUrl} alt={`${listing.title} – image ${selectedImageIndex + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                <img src={mainImgUrl} alt={`${listing.title} – image ${selectedImageIndex + 1}`} className="w-full h-full object-cover" fetchPriority="high" loading="eager" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ShoppingBag className="h-16 w-16 text-gray-300" />

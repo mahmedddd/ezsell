@@ -435,7 +435,12 @@ export function WebARViewer({
   const prepareModel = useCallback(async () => {
     if (proceduralUrl) return; // already built procedural model
 
-    setStep('building_model');
+    const hasAdvancedModel = !!arAssets?.model_glb_url;
+    if (hasAdvancedModel) {
+      setStep('model_ready');
+    } else {
+      setStep('building_model');
+    }
 
     // Simulate progress ticks while async work runs
     let prog = 0;
@@ -1422,6 +1427,15 @@ export function WebARViewer({
                                 <p className="text-white/40 text-[10px] mt-3 text-center">
                                   {aiStage === 'polling' && 'Typically 20–40 seconds · Keep this panel open'}
                                 </p>
+
+                                <div className="mt-4 flex justify-center">
+                                  <button
+                                    onClick={() => setAiStage('idle')}
+                                    className="text-white/60 hover:text-white text-xs font-medium px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                  >
+                                    Cancel Process
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           )}
