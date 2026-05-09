@@ -541,7 +541,16 @@ def apply_mobile_price_adjustments(base_price: float, data: Dict[str, Any]) -> T
         adjustments.append(f"-Rs.{int(fair_penalty):,} (Fair condition)")
     
     # RAM adjustment (if specified and not 0)
-    ram = data.get('ram', 0)
+    ram_raw = data.get('ram', 0)
+    ram = 0
+    if isinstance(ram_raw, (int, float)):
+        ram = int(ram_raw)
+    elif isinstance(ram_raw, str):
+        import re
+        ram_match = re.search(r'(\d+)', ram_raw)
+        if ram_match:
+            ram = int(ram_match.group(1))
+
     if ram > 0:
         if ram >= 12:
             ram_bonus = base_price * 0.05
@@ -553,7 +562,22 @@ def apply_mobile_price_adjustments(base_price: float, data: Dict[str, Any]) -> T
             adjustments.append(f"-Rs.{int(ram_penalty):,} ({ram}GB RAM)")
     
     # Storage adjustment (if specified and not 0)
-    storage = data.get('storage', 0)
+    storage_raw = data.get('storage', 0)
+    storage = 0
+    if isinstance(storage_raw, (int, float)):
+        storage = int(storage_raw)
+    elif isinstance(storage_raw, str):
+        import re
+        storage_str = storage_raw.lower()
+        if 'tb' in storage_str:
+            tb_match = re.search(r'(\d+)', storage_str)
+            if tb_match:
+                storage = int(tb_match.group(1)) * 1000
+        else:
+            gb_match = re.search(r'(\d+)', storage_str)
+            if gb_match:
+                storage = int(gb_match.group(1))
+
     if storage > 0:
         if storage >= 512:
             storage_bonus = base_price * 0.08

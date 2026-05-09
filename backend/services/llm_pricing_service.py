@@ -333,12 +333,41 @@ Return EXCLUSIVELY a valid JSON object with this exact structure:
             return {"estimated_price": 0, "confidence": 0.0, "reasoning": "LLM pricing unavailable"}
 
         # Build a spec-enriched search title (e.g. "iPhone 6s 64GB")
-        spec_suffix = ""
+        # This ensures that whether a user writes specs in the title or selects them from dropdowns,
+        # the OLX search query (and thus the LLM prediction) is absolutely identical.
+        spec_suffix_parts = []
+        us = user_selections or {}
+        t_lower = title.lower()
+
+        if category == 'mobile':
+            if us.get('ram') and str(us.get('ram')) != '0' and f"{us.get('ram')}gb" not in t_lower and f"{us.get('ram')} gb" not in t_lower:
+                spec_suffix_parts.append(f"{us.get('ram')}GB")
+            if us.get('storage') and str(us.get('storage')) != '0' and f"{us.get('storage')}gb" not in t_lower and f"{us.get('storage')} gb" not in t_lower:
+                spec_suffix_parts.append(f"{us.get('storage')}GB")
+            if us.get('is_pta') and 'pta' not in t_lower:
+                spec_suffix_parts.append("PTA")
+                
+        elif category == 'laptop':
+            if us.get('processor') and str(us.get('processor')).lower() not in t_lower:
+                spec_suffix_parts.append(str(us.get('processor')))
+            if us.get('ram') and str(us.get('ram')) != '0' and f"{us.get('ram')}gb" not in t_lower and f"{us.get('ram')} gb" not in t_lower:
+                spec_suffix_parts.append(f"{us.get('ram')}GB")
+            if us.get('storage') and str(us.get('storage')) != '0' and f"{us.get('storage')}gb" not in t_lower and f"{us.get('storage')} gb" not in t_lower:
+                spec_suffix_parts.append(f"{us.get('storage')}GB")
+                
+        elif category == 'furniture':
+            if us.get('material') and str(us.get('material')).lower() not in t_lower:
+                spec_suffix_parts.append(str(us.get('material')))
+            if us.get('furniture_type') and str(us.get('furniture_type')).lower() not in t_lower:
+                spec_suffix_parts.append(str(us.get('furniture_type')))
+
         if dynamic_specs:
-            spec_parts = [v for v in dynamic_specs.values() if v and isinstance(v, str)]
-            if spec_parts:
-                spec_suffix = " " + " ".join(spec_parts[:2])  # e.g. "8 GB 128 GB"
-        search_title = f"{title}{spec_suffix}".strip()
+            for k, v in dynamic_specs.items():
+                if v and isinstance(v, str) and str(v).lower() not in t_lower:
+                    spec_suffix_parts.append(str(v))
+                    
+        spec_suffix = " ".join(spec_suffix_parts[:5]) # limit to top 5 specs to prevent overly long queries
+        search_title = f"{title} {spec_suffix}".strip()
 
         # Fetch live OLX data
         market_data = await self.fetch_online_market_prices(search_title, category)
