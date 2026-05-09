@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { favoritesService, getImageUrl } from '../lib/api.ts';
 import { Home, Heart, Trash2, ShoppingBag, ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { formatCurrency } from '../lib/utils.ts';
+import { SmartImage } from '@/components/ui/SmartImage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -254,7 +256,7 @@ export default function Favorites() {
                       {/* Image */}
                       <div className="aspect-video bg-slate-200 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                         {getListingImage(listing) ? (
-                          <img
+                          <SmartImage
                             src={getListingImage(listing)!}
                             alt={listing.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -283,8 +285,8 @@ export default function Favorites() {
                     <CardContent className="pt-0">
                       {/* Price & Condition */}
                       <div className="flex justify-between items-center mb-3">
-                        <span className="text-xl font-bold text-[#2E6091]">
-                          PKR {listing.price.toLocaleString()}
+                        <span className="text-xl font-black text-slate-900 tracking-tighter">
+                          {formatCurrency(listing.price)}
                         </span>
                         <Badge variant="outline" className="shrink-0 bg-amber-50 text-amber-700 border-amber-200">
                           {listing.condition}/10 {getConditionLabel(listing.condition)}

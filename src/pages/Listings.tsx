@@ -11,6 +11,7 @@ import { listingService, getImageUrl, favoritesService, analyticsService } from 
 import { Search, Filter, X, Heart, Loader2, Tag, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from '../lib/utils.ts';
+import { SmartImage } from '@/components/ui/SmartImage';
 
 const conditions = ["new", "like-new", "good", "fair"];
 const brands = ["Apple", "Samsung", "Huawei", "Oppo", "Vivo", "Xiaomi", "Realme", "OnePlus", "Google", "HP", "Dell", "Lenovo", "Asus", "Acer", "MSI"];
@@ -373,7 +374,7 @@ export default function Listings() {
                             </span>
                           )}
                           {imgUrl ? (
-                            <img src={imgUrl} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                            <SmartImage src={imgUrl} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-muted to-muted/50">📦</div>
                           )}
@@ -397,7 +398,7 @@ export default function Listings() {
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{listing.description}</p>
                           <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
-                            <span className="text-lg font-black text-primary">{formatCurrency(listing.price)}</span>
+                            <span className="text-lg font-black text-slate-900 tracking-tighter">{formatCurrency(listing.price)}</span>
                             {condOk && (
                               <Badge className={`${condClass(condNum)} border text-[10px] font-semibold rounded-full`}>
                                 {getConditionLabel(condNum)} {condNum}/10

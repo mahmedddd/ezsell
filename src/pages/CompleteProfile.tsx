@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Phone, MapPin, Sparkles } from "lucide-react";
+import { Phone, MapPin, Sparkles, ArrowLeft } from "lucide-react";
 import { API_BASE_URL } from "../lib/api";
 
 export default function CompleteProfile() {
@@ -58,7 +58,10 @@ export default function CompleteProfile() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(68,30%,97%)] to-[hsl(50,25%,95%)] p-6">
             <div className="w-full max-w-md animate-scale-in">
-                <div className="bg-white rounded-3xl shadow-[var(--shadow-xl)] border border-border/50 overflow-hidden">
+            <button onClick={() => navigate("/")} className="mb-6 flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Back to Home
+            </button>
+            <div className="bg-white rounded-3xl shadow-[var(--shadow-xl)] border border-border/50 overflow-hidden">
                     {/* Header */}
                     <div className="hero-mesh px-8 pt-10 pb-8 text-white text-center">
                         <img

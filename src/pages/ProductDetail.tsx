@@ -273,6 +273,11 @@ export default function ProductDetail() {
       </div>
 
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-6xl">
+        <div className="hidden md:flex items-center gap-3 mb-6">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors">
+            <ChevronLeft className="h-4 w-4" /> Back to Home
+          </button>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-10">
 
@@ -506,7 +511,7 @@ export default function ProductDetail() {
                   <Card className="border-0 shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-all h-full">
                     <div className="aspect-square relative overflow-hidden bg-gray-100">
                       {img ? (
-                        <img src={getImageUrl(img)!} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <SmartImage src={getImageUrl(img)!} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
                       )}
@@ -520,7 +525,7 @@ export default function ProductDetail() {
                       </div>
                     </div>
                     <CardContent className="p-2.5">
-                      <p className="text-xs font-bold text-[#2E6091] mb-1">PKR {item.price?.toLocaleString()}</p>
+                      <p className="text-xs font-black tracking-tighter text-slate-900 mb-1">{formatCurrency(item.price)}</p>
                       <h3 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight group-hover:text-[#2E6091]">{item.title}</h3>
                     </CardContent>
                   </Card>

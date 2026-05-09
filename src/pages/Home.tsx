@@ -7,6 +7,8 @@ import { Search, MapPin, Plus, Heart, ChevronRight, Loader2, TrendingUp, Shield,
 import { listingService, getImageUrl, favoritesService, recommendationService, analyticsService } from '../lib/api.ts';
 import { listingMatchesSearch } from '../lib/nlp.ts';
 import { useToast } from "@/components/ui/use-toast";
+import { SmartImage } from '@/components/ui/SmartImage';
+import { formatCurrency } from '../lib/utils.ts';
 
 const CATEGORIES = [
   { id: "all", name: "All", icon: "📦" },
@@ -354,10 +356,9 @@ export default function Home() {
                       {/* Image */}
                       <div className="relative aspect-square overflow-hidden bg-muted flex-shrink-0">
                         {imgUrl ? (
-                          <img
+                          <SmartImage
                             src={imgUrl}
                             alt={listing.title}
-                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                           />
                         ) : (
@@ -406,8 +407,8 @@ export default function Home() {
                         <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                           {listing.title}
                         </h3>
-                        <p className="text-base font-black text-primary mt-0.5">
-                          PKR {listing.price?.toLocaleString()}
+                        <p className="text-base font-black text-slate-900 tracking-tighter mt-0.5">
+                          {formatCurrency(listing.price)}
                         </p>
                         <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/30">
                           <span className="text-[10px] text-muted-foreground/60 ml-auto">
