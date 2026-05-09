@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
-import { MessageCircle, Loader2, Home, Trash2 } from 'lucide-react';
+import { MessageCircle, Loader2, Home, Trash2, MoreVertical, ShieldAlert, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { messageService, getImageUrl } from '../lib/api.ts';
 import { toast } from '@/components/ui/use-toast';
 import Avatar from '@/components/ui/avatar';
@@ -185,16 +192,60 @@ export default function Messages() {
                           </div>
                         </div>
 
-                        {/* Delete Button (Visible on hover on desktop, always visible on mobile) */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 hover:bg-red-50 focus:opacity-100"
-                          title="Delete Chat"
-                          onClick={(e) => handleDeleteConversation(conversation.user_id, e)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Dropdown Menu (Visible on hover on desktop, always visible on mobile) */}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:opacity-100"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem 
+                                className="text-gray-700 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast({
+                                    title: "User Blocked",
+                                    description: "You will no longer receive messages from this user.",
+                                  });
+                                }}
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                <span>Block User</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-gray-700 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast({
+                                    title: "User Reported",
+                                    description: "This user has been reported to our moderation team.",
+                                  });
+                                }}
+                              >
+                                <ShieldAlert className="mr-2 h-4 w-4" />
+                                <span>Report User</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteConversation(conversation.user_id, e as any);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete Chat</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     );
                   })}
