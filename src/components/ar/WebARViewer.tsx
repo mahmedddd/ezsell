@@ -685,13 +685,31 @@ export function WebARViewer({
     const onProgress = (e: any) => {
       const p = e.detail?.totalProgress ?? 0;
       setBuildProgress(Math.round(p * 100));
+      
+      // Update model loading state
+      if (p < 1 && p > 0.1) {
+        setModelLoading(true);
+      }
+    };
+
+    const onLoad = () => {
+      setModelLoading(false);
+    };
+
+    const onError = () => {
+      setModelLoading(false);
     };
 
     mv.addEventListener('ar-status', onARStatus);
     mv.addEventListener('progress', onProgress);
+    mv.addEventListener('load', onLoad);
+    mv.addEventListener('error', onError);
+    
     return () => {
       mv.removeEventListener('ar-status', onARStatus);
       mv.removeEventListener('progress', onProgress);
+      mv.removeEventListener('load', onLoad);
+      mv.removeEventListener('error', onError);
     };
   }, [modelViewerRef.current, toast]);
 
@@ -1023,14 +1041,6 @@ export function WebARViewer({
                         camera-orbit="-30deg 75deg auto"
                         interaction-prompt="auto"
                         loading="eager"
-                        onLoad={() => setModelLoading(false)}
-                        onError={() => setModelLoading(false)}
-                        onProgress={(e: any) => {
-                          // Only show loading if progress is significant and not yet finished
-                          if (e.detail.totalProgress < 1 && e.detail.totalProgress > 0.1) {
-                            setModelLoading(true);
-                          }
-                        }}
                         style={{
                           width: '100%',
                           height: '100%',
