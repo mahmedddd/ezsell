@@ -364,7 +364,15 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
 
         # --- Web-grounded spec fetching for mobile and laptop ---
         web_context = ""
-        if category in ("mobile", "laptop"):
+        scraped_mobile_specs = None
+        if category == "mobile":
+            scraped_mobile_specs = await self._scrape_gsmarena_specs(title)
+            if scraped_mobile_specs and any(scraped_mobile_specs.values()):
+                print(f"Returning GSMArena data directly (no LLM needed): {scraped_mobile_specs}")
+                return scraped_mobile_specs
+            # Fallback if GSMArena fails
+            web_context = await self._ddg_snippets(title, category)
+        elif category == "laptop":
             web_context = await self._fetch_web_specs(title, category)
 
         # For furniture, detect the type from the title to give targeted guidance
