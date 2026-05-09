@@ -147,12 +147,16 @@ export default function Profile() {
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
             window.dispatchEvent(new CustomEvent('user-updated'));
-        } catch (error) {
+        } catch (error: any) {
+            const errorMsg = error?.response?.data?.detail || error?.message || 'Could not save profile changes.';
             toast({
                 title: 'Update Failed',
-                description: 'Could not save profile changes.',
+                description: errorMsg,
                 variant: 'destructive'
             });
+            // Revert the form back to the previously saved user state
+            const previousUser = JSON.parse(localStorage.getItem('user') || "{}");
+            if (previousUser?.id) setUser(previousUser);
         } finally {
             setSaving(false);
         }
@@ -668,9 +672,9 @@ export default function Profile() {
                                             </div>
                                             <CardContent className="p-4">
                                                 <h3 className="font-bold text-gray-900 line-clamp-1 mb-2">{listing.title}</h3>
-                                                <div className="flex items-baseline gap-1 text-[#2E6091] mb-4">
+                                                <div className="flex items-baseline gap-1 text-slate-900 mb-4">
                                                     <span className="text-[10px] font-bold uppercase opacity-60">Rs</span>
-                                                    <span className="text-xl font-black">{listing.price.toLocaleString()}</span>
+                                                    <span className="text-xl font-black tracking-tighter">{listing.price.toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                                                     <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">

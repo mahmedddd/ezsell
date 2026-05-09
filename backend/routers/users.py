@@ -41,13 +41,19 @@ def get_user_by_phone(db: Session, phone: str):
     """Return user with this phone number, or None if not taken."""
     if not phone:
         return None
-    # Normalise: strip spaces/dashes so +92-300-1234567 == +923001234567
+    # Strip everything down to digits
     import re as _re
-    normalised = _re.sub(r'[\s\-]', '', phone.strip())
+    digits_only = _re.sub(r'\D', '', str(phone))
+    if len(digits_only) < 10:
+        return None
+    
+    # Match the last 10 digits (e.g. 3301964723) to catch 0330, +92330, etc.
+    last_10 = digits_only[-10:]
+    
+    # Use like() to match variations in the database (e.g. "0330-1964723", "+92 330 1964723")
     return db.query(User).filter(
         User.phone.isnot(None),
-        User.phone != '',
-        User.phone == normalised
+        User.phone.like(f"%{last_10}%")
     ).first()
 
 def get_current_admin_user(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
