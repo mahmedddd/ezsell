@@ -83,10 +83,10 @@
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
+    overflow-y: scroll; /* Force vertical scrollbar to always be present to prevent width jumps */
     max-width: 100%;
     width: 100vw;
-    /* Prevents layout shift when scrollbar disappears (Radix UI Select/Dialog) */
-    scrollbar-gutter: stable;
+    --removed-body-scroll-bar-size: 0px !important; /* Reset Radix's scrollbar compensation */
   }
 
   body {
@@ -100,11 +100,13 @@
     max-width: 100%;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    padding-right: 0px !important; /* Force no padding on body */
   }
 
-  /* Fix for Radix UI adding padding-right to body on scroll lock, causing jumpy layout */
-  body[data-radix-scroll-lock] {
+  /* Force Radix elements to respect the no-padding rule */
+  [data-radix-scroll-lock] {
     padding-right: 0px !important;
+    margin-right: 0px !important;
   }
 
   #root {
