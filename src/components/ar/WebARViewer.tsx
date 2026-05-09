@@ -395,6 +395,7 @@ export function WebARViewer({
     if (arAssets?.model_glb_url) {
       setTripoUrl(getFullUrl(arAssets.model_glb_url));
       setViewMode('advanced');
+      setModelLoading(true);
     }
     if (arAssets?.model_usdz_url) {
       setUsdzUrl(getFullUrl(arAssets.model_usdz_url));
@@ -551,10 +552,10 @@ export function WebARViewer({
             setAiProgress(100);
             setAiStage('success');
             
-            // Apply getFullUrl and add a cache-buster to ensure the model-viewer reloads the fresh file
             const fullUrl = getFullUrl(status.local_url);
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
             setTripoUrl(bustedUrl);
+            setModelLoading(true);
             
             setViewMode('advanced');
             setStep('model_ready');
@@ -949,7 +950,12 @@ export function WebARViewer({
                     <div className="px-5 pt-3 pb-1 bg-gradient-to-b from-gray-50 to-gray-50/50">
                       <div className="flex bg-gray-200/50 p-1 rounded-xl items-center shadow-inner">
                         <button
-                          onClick={() => setViewMode('fast')}
+                          onClick={() => {
+                            if (viewMode !== 'fast') {
+                              setViewMode('fast');
+                              setModelLoading(true);
+                            }
+                          }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#143109]' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
@@ -957,7 +963,12 @@ export function WebARViewer({
                           <span className="text-[9px] font-medium opacity-70 leading-none">CV Generated</span>
                         </button>
                         <button
-                          onClick={() => setViewMode('advanced')}
+                          onClick={() => {
+                            if (viewMode !== 'advanced') {
+                              setViewMode('advanced');
+                              setModelLoading(true);
+                            }
+                          }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#143109] text-white shadow' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
@@ -992,7 +1003,6 @@ export function WebARViewer({
 
                       {/* ── model-viewer element ── */}
                       <model-viewer
-                        key={`mv-${viewMode}-${tripoUrl}-${proceduralUrl}`}
                         ref={modelViewerRef as any}
                         src={(viewMode === 'advanced' && tripoUrl) ? tripoUrl : proceduralUrl || undefined}
                         ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
