@@ -73,8 +73,8 @@ export default function Login() {
                 sub: "Verified buyers browse 24/7. Your first offer is close.",
               },
               {
-                title: "Free. Forever.",
-                sub: "No listing fees, no commissions. Keep every rupee.",
+                title: "Sell with Confidence",
+                sub: "Every buyer is verified. Every deal is protected. Zero doubt.",
               },
             ].map(({ title, sub }) => (
               <div
