@@ -71,6 +71,7 @@ class ListingBase(BaseModel):
     is_sliding_door: Optional[bool] = False
     has_mattress: Optional[bool] = False
     mattress_type: Optional[str] = None
+    color: Optional[str] = None
 
 class ListingCreate(ListingBase):
     # Category-specific details

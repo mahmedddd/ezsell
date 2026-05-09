@@ -94,6 +94,7 @@ class Listing(Base):
     condition = Column(String)
     location = Column(String, nullable=True)
     images = Column(Text)  # JSON array of image paths
+    color = Column(String, nullable=True)
     # Furniture-specific fields
     furniture_type = Column(String, nullable=True)  # sofa, bed, table, chair, etc.
     material = Column(String, nullable=True)  # wood, metal, fabric, leather, etc.

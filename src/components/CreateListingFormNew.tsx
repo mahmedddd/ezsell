@@ -35,6 +35,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [dropdownOptions, setDropdownOptions] = useState<any>({});
+  const [manualOverride, setManualOverride] = useState(false);
   const [dynamicDropdownSelections, setDynamicDropdownSelections] = useState<Record<string, string>>({});
   const [titleValidation, setTitleValidation] = useState<{
     is_valid: boolean;
@@ -103,6 +104,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     has_mattress: false,
     mattress_type: 'standard',
     furniture_brand: 'none',
+    color: '',
   });
 
   const getDropdownSchemaKey = (key: string, category: string) => {
@@ -128,6 +130,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     if (schemaKey.includes('capacity') || schemaKey.includes('seats')) return 'seating_capacity';
     if (schemaKey.includes('type')) return 'furniture_type';
     if (schemaKey.includes('size') && category === 'furniture') return 'furniture_subtype';
+    if (schemaKey.includes('color') || schemaKey.includes('finish')) return 'color';
 
     return schemaKey;
   };
@@ -182,6 +185,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     if (dynamicDropdownCache.current[cacheKey]) {
       const cached = dynamicDropdownCache.current[cacheKey];
       setDropdownOptions(cached);
+      setManualOverride(false);
       syncPrepopulations(cached);
       return;
     }
@@ -194,6 +198,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         if (data.dropdowns) {
           dynamicDropdownCache.current[cacheKey] = data.dropdowns;
           setDropdownOptions(data.dropdowns);
+          setManualOverride(false);
           syncPrepopulations(data.dropdowns);
         }
       }
@@ -1335,15 +1340,27 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
             {/* Step 2: Category-Specific Fields */}
             {formData.category && (
               <div className="space-y-4 border-t pt-6">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  🔧 Step 2: {formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} Specifications
+                <h3 className="text-lg font-semibold flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    🔧 Step 2: {formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} Specifications
+                    {Object.keys(dropdownOptions).length > 0 && !manualOverride && (
+                      <Badge className="bg-purple-100 text-purple-800 border-purple-200"><Sparkles className="w-3 h-3 mr-1 inline" /> AI Guided</Badge>
+                    )}
+                  </span>
                   {Object.keys(dropdownOptions).length > 0 && (
-                    <Badge className="bg-purple-100 text-purple-800 border-purple-200"><Sparkles className="w-3 h-3 mr-1 inline" /> AI Guided</Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setManualOverride(!manualOverride)}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      {manualOverride ? "Use AI Suggestions" : "Missing Options? Enter Manually"}
+                    </Button>
                   )}
                 </h3>
 
                 {/* Dynamic AI Dropdowns */}
-                {Object.keys(dropdownOptions).length > 0 ? (
+                {Object.keys(dropdownOptions).length > 0 && !manualOverride ? (
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     {Object.entries(dropdownOptions).map(([key, options]: [string, any]) => {
                       const schemaKey = getDropdownSchemaKey(key, formData.category);
@@ -1391,7 +1408,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                 {formData.category === 'mobile' && (
                   <div className="grid grid-cols-2 gap-4">
                     {/* Fallback Static Dropdowns */}
-                    {Object.keys(dropdownOptions).length === 0 && (
+                    {(Object.keys(dropdownOptions).length === 0 || manualOverride) && (
                       <>
                         <div>
                           <Label>Brand *</Label>
@@ -1474,6 +1491,14 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                               <SelectItem value="200">200 MP</SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                        <div>
+                          <Label>Color</Label>
+                          <Input
+                            placeholder="e.g. Phantom Black"
+                            value={formData.color}
+                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                          />
                         </div>
                       </>
                     )}
