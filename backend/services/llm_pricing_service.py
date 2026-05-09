@@ -14,7 +14,7 @@ class LLMPricingService:
         if not self.api_key:
             print("WARNING: GROQ_API_KEY not found in environment. LLM features will be disabled.")
         self.client = Groq(api_key=self.api_key) if self.api_key else None
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "llama-3.1-8b-instant"
 
     async def validate_listing_content(self, category: str, title: str, description: str) -> Dict[str, Any]:
         """
