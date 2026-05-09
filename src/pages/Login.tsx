@@ -58,38 +58,31 @@ export default function Login() {
             Buy and sell mobiles, laptops, furniture and more — safely, quickly, and for free.
           </p>
 
-          <div className="mt-10 space-y-2.5">
+          <div className="mt-10 grid grid-cols-2 gap-3">
             {[
               {
-                icon: "✦",
                 title: "Smart Price Prediction",
-                sub: "AI tells you the exact market price before you list.",
+                sub: "AI tells you the real market price — before you even list.",
               },
               {
-                icon: "◈",
                 title: "AR Room Preview",
-                sub: "Buyers place your item in their room — sells faster.",
+                sub: "Buyers see your item in their room. It closes the sale.",
               },
               {
-                icon: "◉",
                 title: "Offers Within Hours",
-                sub: "Verified buyers are always browsing, day and night.",
+                sub: "Verified buyers browse 24/7. Your first offer is close.",
               },
               {
-                icon: "◎",
-                title: "Zero Fees. Always.",
-                sub: "List, sell, and chat — completely free, no hidden cost.",
+                title: "Free. Forever.",
+                sub: "No listing fees, no commissions. Keep every rupee.",
               },
-            ].map(({ icon, title, sub }) => (
+            ].map(({ title, sub }) => (
               <div
                 key={title}
-                className="flex items-start gap-3 bg-white/8 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/12 hover:bg-white/12 transition-colors duration-200 cursor-default"
+                className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 hover:bg-white/15 transition-colors duration-200 cursor-default text-center"
               >
-                <span className="text-white/70 text-lg font-light mt-0.5 leading-none select-none">{icon}</span>
-                <div>
-                  <div className="text-sm font-semibold text-white leading-tight">{title}</div>
-                  <div className="text-xs text-white/50 mt-0.5 leading-snug">{sub}</div>
-                </div>
+                <div className="text-[13px] font-bold text-white leading-tight mb-1.5">{title}</div>
+                <div className="text-[11px] text-white/55 leading-snug">{sub}</div>
               </div>
             ))}
           </div>
