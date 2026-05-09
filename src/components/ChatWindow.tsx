@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, X, Loader2, Check, CheckCheck, ExternalLink } from 'lucide-react';
+import { Send, X, Loader2, Check, CheckCheck, ExternalLink, MoreVertical, ShieldAlert, Ban, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import Avatar from './ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu";
+import { toast } from './ui/use-toast';
 import { messageService, getImageUrl } from '../lib/api.ts';
 
 interface Message {
@@ -88,6 +96,24 @@ export function ChatWindow({
     }
   };
 
+  const handleDeleteChat = async () => {
+    try {
+      await messageService.deleteConversation(sellerId);
+      toast({
+        title: "Chat Deleted",
+        description: "The conversation has been removed.",
+      });
+      onClose(); // Close window if deleted
+    } catch (error) {
+      console.error('Failed to delete chat:', error);
+      toast({
+        title: "Error",
+        description: "Could not delete conversation.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (sending) return;
@@ -167,11 +193,60 @@ export function ChatWindow({
             </div>
           </Link>
         </div>
-        {!inline && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/10">
-            <X className="h-5 w-5" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem 
+                className="text-gray-700 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast({
+                    title: "User Blocked",
+                    description: "You will no longer receive messages from this user.",
+                  });
+                }}
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                <span>Block User</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-gray-700 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast({
+                    title: "User Reported",
+                    description: "This user has been reported to our moderation team.",
+                  });
+                }}
+              >
+                <ShieldAlert className="mr-2 h-4 w-4" />
+                <span>Report User</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteChat();
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete Chat</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {!inline && (
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/10">
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Ad Reference Card */}
