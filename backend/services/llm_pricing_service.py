@@ -4,7 +4,10 @@ import asyncio
 from typing import Dict, Any, List, Optional
 from groq import Groq
 from dotenv import load_dotenv
-from duckduckgo_search import DDGS
+try:
+    from ddgs import DDGS  # new package name
+except ImportError:
+    from duckduckgo_search import DDGS  # legacy fallback
 
 load_dotenv()
 
@@ -535,91 +538,166 @@ Return EXCLUSIVELY a valid JSON object:
 
     async def fetch_online_market_prices(self, title: str, category: str = "") -> Dict[str, Any]:
         """
-        Fetches live OLX Pakistan search snippets, extracts real PKR prices,
-        and filters out outliers (fake listings) using IQR method.
-        Returns both raw snippets and cleaned numeric prices.
+        Aggressively fetches used OLX prices and new retail prices from Pakistan.
+        Runs ALL queries (not just until first hit) to gather enough data points
+        for IQR outlier filtering to reject fake/dump prices.
         """
         import re
 
         if not title:
-            return {"snippets": "No title provided.", "prices": [], "price_summary": ""}
+            return {"snippets": "No title provided.", "prices": [], "new_prices": [], "price_summary": ""}
 
-        # Build two targeted OLX-Pakistan queries
         base = title.strip()
-        queries = [
-            f'site:olx.com.pk "{base}" used price PKR',
-            f'"{base}" used sale Pakistan price PKR -new -brand',
-        ]
-
-        all_snippets: List[str] = []
-        raw_prices: List[float] = []
-
         loop = asyncio.get_event_loop()
 
-        for query in queries:
-            try:
-                def _search(q=query):
+        lo, hi = {
+            'mobile':    (3_000,  800_000),
+            'laptop':    (20_000, 1_500_000),
+            'furniture': (2_000,  2_000_000),
+        }.get(category, (1_000, 5_000_000))
+
+        def _extract_pkr(text: str) -> List[float]:
+            """Extract all valid PKR prices from a text snippet."""
+            nums = re.findall(
+                r'(?:rs\.?|pkr\.?)\s*([\d,]+)|([\d,]{4,7})\s*(?:rs\.?|pkr\.?)',
+                text.lower()
+            )
+            result = []
+            for m in nums:
+                raw = (m[0] or m[1]).replace(',', '')
+                try:
+                    v = float(raw)
+                    if lo <= v <= hi:
+                        result.append(v)
+                except ValueError:
+                    pass
+            return result
+
+        def _iqr_filter(prices: List[float]) -> List[float]:
+            """Remove statistical outliers (fake/dump prices) using IQR."""
+            if len(prices) >= 4:
+                s = sorted(prices)
+                q1, q3 = s[len(s)//4], s[(3*len(s))//4]
+                iqr = q3 - q1
+                # Tighter fence (1.2x instead of 1.5x) to be stricter about fakes
+                return [p for p in prices if (q1 - 1.2*iqr) <= p <= (q3 + 1.2*iqr)]
+            return prices
+
+        # --- Category-specific OLX used price queries ---
+        # Run ALL of them (no early break) to gather as many real prices as possible
+        if category == 'mobile':
+            olx_queries = [
+                f'"{base}" OLX Pakistan used price Rs',
+                f'"{base}" sale Pakistan used PKR mobile',
+                f'{base} used mobile for sale Pakistan',
+                f'{base} second hand price Pakistan',
+                f'{base} olx.com.pk price',
+            ]
+            new_queries = [
+                f'"{base}" price Pakistan 2024 2025',
+                f'"{base}" price in Pakistan new official',
+                f'{base} new price PKR phoneworld priceoye hamariweb',
+            ]
+        elif category == 'laptop':
+            olx_queries = [
+                f'"{base}" OLX Pakistan used laptop price Rs',
+                f'"{base}" laptop sale Pakistan used PKR',
+                f'{base} used laptop Pakistan price',
+                f'{base} second hand laptop price Pakistan',
+                f'{base} olx.com.pk laptop',
+            ]
+            new_queries = [
+                f'"{base}" laptop price Pakistan 2024 2025',
+                f'"{base}" laptop price in Pakistan new official',
+                f'{base} laptop new price PKR Pakistan symbios',
+            ]
+        elif category == 'furniture':
+            olx_queries = [
+                f'"{base}" OLX Pakistan used furniture price Rs',
+                f'"{base}" furniture sale Pakistan PKR',
+                f'{base} used furniture Pakistan price',
+                f'{base} second hand furniture Pakistan',
+                f'{base} olx.com.pk furniture',
+            ]
+            new_queries = [
+                f'"{base}" furniture price Pakistan new',
+                f'"{base}" furniture price PKR Pakistan shop',
+                f'{base} furniture price Pakistan buy new',
+            ]
+        else:
+            olx_queries = [
+                f'"{base}" OLX Pakistan used price Rs',
+                f'"{base}" sale Pakistan used PKR',
+                f'{base} used Pakistan price olx',
+            ]
+            new_queries = [
+                f'"{base}" price Pakistan new 2024 2025',
+                f'"{base}" price in Pakistan new official',
+            ]
+
+        async def _run_all_queries(queries: List[str], max_per_query: int = 8) -> tuple:
+            """Run ALL queries and collect ALL prices — no early termination."""
+            all_snips, all_prices = [], []
+            tasks = []
+
+            def _search(q):
+                try:
                     with DDGS() as ddgs:
-                        return list(ddgs.text(q, max_results=5))
+                        return list(ddgs.text(q, max_results=max_per_query))
+                except:
+                    return []
 
-                results = await loop.run_in_executor(None, _search)
-                for res in results:
-                    snippet = f"- {res.get('title','')}: {res.get('body','')}"
-                    all_snippets.append(snippet)
-                    # Extract all PKR-style numbers: Rs 45000 / PKR 45,000 / 45000 PKR / 45,000 Rs
-                    nums = re.findall(
-                        r'(?:rs\.?|pkr\.?)\s*([\d,]+)|(\b[\d,]{4,7}\b)\s*(?:rs\.?|pkr\.?)',
-                        snippet.lower()
-                    )
-                    for match in nums:
-                        raw_str = (match[0] or match[1]).replace(',', '')
-                        try:
-                            val = float(raw_str)
-                            # Sanity range per category
-                            ranges = {
-                                'mobile':    (3_000,  800_000),
-                                'laptop':    (20_000, 1_500_000),
-                                'furniture': (2_000,  2_000_000),
-                            }
-                            lo, hi = ranges.get(category, (1_000, 5_000_000))
-                            if lo <= val <= hi:
-                                raw_prices.append(val)
-                        except ValueError:
-                            pass
-            except Exception as e:
-                print(f"DuckDuckGo search error: {e}")
-                continue
+            # Run all queries concurrently
+            results_list = await asyncio.gather(
+                *[loop.run_in_executor(None, _search, q) for q in queries],
+                return_exceptions=True
+            )
 
-        # --- Outlier filtering via IQR ---
-        cleaned_prices: List[float] = []
-        if len(raw_prices) >= 4:
-            sorted_p = sorted(raw_prices)
-            q1 = sorted_p[len(sorted_p) // 4]
-            q3 = sorted_p[(3 * len(sorted_p)) // 4]
-            iqr = q3 - q1
-            lo_bound = q1 - 1.5 * iqr
-            hi_bound = q3 + 1.5 * iqr
-            cleaned_prices = [p for p in raw_prices if lo_bound <= p <= hi_bound]
-        elif raw_prices:
-            cleaned_prices = raw_prices
+            for results in results_list:
+                if isinstance(results, Exception):
+                    continue
+                for r in results:
+                    snip = f"- {r.get('title','')}: {r.get('body','')}"
+                    all_snips.append(snip)
+                    all_prices.extend(_extract_pkr(snip))
 
-        price_summary = ""
-        if cleaned_prices:
-            avg = sum(cleaned_prices) / len(cleaned_prices)
-            price_summary = (
-                f"Extracted {len(cleaned_prices)} real PKR prices from OLX listings "
-                f"(after outlier removal): {[int(p) for p in cleaned_prices]}. "
-                f"Average: PKR {int(avg):,}"
+            return all_snips, _iqr_filter(all_prices)
+
+        # Run OLX and new price queries concurrently (both tracks at once)
+        (olx_snips, used_prices), (new_snips, new_prices) = await asyncio.gather(
+            _run_all_queries(olx_queries, max_per_query=8),
+            _run_all_queries(new_queries, max_per_query=5),
+        )
+
+        all_snippets = olx_snips + new_snips
+
+        # Build human-readable summary for LLM
+        parts = []
+        if used_prices:
+            avg = int(sum(used_prices) / len(used_prices))
+            parts.append(
+                f"OLX USED prices ({len(used_prices)} listings, fake/outliers removed via IQR): "
+                f"{[int(p) for p in used_prices]} — avg PKR {avg:,}"
             )
         else:
-            price_summary = "No numeric prices could be reliably extracted from OLX results."
+            parts.append("OLX used prices: none found (DDG may be rate-limited or no listings exist yet).")
 
-        snippets_text = "\n".join(all_snippets) if all_snippets else "No OLX listings found."
+        if new_prices:
+            avg = int(sum(new_prices) / len(new_prices))
+            parts.append(
+                f"NEW RETAIL prices ({len(new_prices)} sources, outliers removed): "
+                f"{[int(p) for p in new_prices]} — avg PKR {avg:,}"
+            )
+        else:
+            parts.append("New retail prices: none found.")
+
         return {
-            "snippets": snippets_text,
-            "prices": [int(p) for p in cleaned_prices],
-            "price_summary": price_summary,
+            "snippets": "\n".join(all_snippets) if all_snippets else "No listings found.",
+            "prices": [int(p) for p in used_prices],
+            "new_prices": [int(p) for p in new_prices],
+            "price_summary": "\n".join(parts),
         }
+
 
     async def estimate_market_price(
         self,
@@ -710,48 +788,48 @@ Item: "{title}"
 User-selected specs: {json.dumps({**(user_selections or {}), **(dynamic_specs or {})})}
 Condition (1=worst, 10=brand new): {condition}
 
-=== LIVE OLX PAKISTAN MARKET DATA ===
+=== LIVE PAKISTAN MARKET DATA (scraped from web) ===
 {market_data['snippets']}
 
-=== EXTRACTED REAL PRICES FROM OLX LISTINGS ===
+=== EXTRACTED PRICES (cleaned, outliers removed) ===
 {market_data['price_summary']}
-Raw cleaned prices (PKR, outliers removed): {market_data['prices']}
-=====================================
+OLX Used prices (PKR): {market_data['prices']}
+New retail prices (PKR): {market_data.get('new_prices', [])}
+=====================================================
 
-Your task — formulate a highly accurate, trustworthy (90%+ accuracy) pricing prediction.
+Your task — produce a highly accurate, trustworthy pricing prediction.
 
-STEP 1 — Product Research (Mental Check):
-- Identify the exact product model.
-- Determine its original LAUNCH YEAR.
-- Determine its ORIGINAL NEW PRICE or CURRENT NEW MARKET PRICE in Pakistan (PKR).
+STEP 1 — Anchor to Real Data:
+- If new retail prices are provided above, use them as the authoritative "current new price" in Pakistan.
+- If OLX used prices are provided, use their average as the authoritative "current used market" baseline.
+- If either is missing, use your knowledge of the Pakistani market to estimate — but ALWAYS prefer scraped data.
 
-STEP 2 — Market Price Validation:
-- Use the provided extracted OLX prices as ground truth for the current USED market.
-- Discard extreme outliers (e.g., Rs 5,000 for an iPhone 13).
-- Compare the new price vs the used market average to gauge typical depreciation based on age.
+STEP 2 — Validate:
+- Cross-check: does the OLX used price make sense relative to the new price? (used should be 30-70% below new for items 1-3 years old)
+- Discard any obvious fake listings (e.g., Rs 5,000 for an iPhone 13).
 
-STEP 3 — Apply Precise Condition Depreciation:
-- The user specified the condition as {condition} out of 10.
-- Condition 9-10 (Like New/Open Box): minimal depreciation from current market rate.
-- Condition 7-8 (Good/Minor wear): standard used market rate.
+STEP 3 — Apply Precise Condition Depreciation from the USED market baseline:
+- Condition 9-10 (Like New/Open Box): used market rate or slightly above.
+- Condition 7-8 (Good/Minor wear): standard used market rate (0-15% discount).
 - Condition 4-6 (Average/Scratches): 15-30% below standard used rate.
 - Condition 1-3 (Poor/Needs Repair): 40-60% below standard used rate.
-- Calculate the FINAL CONDITION-ADJUSTED PRICE.
 
 Return EXCLUSIVELY this JSON:
 {{
-  "launch_year": integer (estimated, e.g. 2021),
-  "new_market_price": integer (estimated original/current new price in PKR),
+  "launch_year": integer,
+  "new_market_price": integer (the current new price in PKR — anchor to scraped data if available),
   "simulated_market_data": [
     {{"listing": "OLX-style ad description", "price": 55000}},
     {{"listing": "OLX-style ad description", "price": 58000}}
   ],
-  "base_used_price": integer (average standard used price in PKR before condition),
-  "estimated_price": integer (the FINAL condition-adjusted fair market price in PKR),
-  "confidence": float (0.0 to 1.0),
-  "reasoning": "Explain the launch year, original price, used market average, and exactly how condition {condition}/10 influenced the final price."
+  "base_used_price": integer (average standard used price in PKR — anchor to OLX scraped data if available),
+  "estimated_price": integer (FINAL condition-adjusted fair market price in PKR),
+  "confidence": float (0.0 to 1.0 — lower if no scraped data was available),
+  "reasoning": "Explain: scraped new price used, scraped OLX used price used, how condition {condition}/10 was applied."
 }}
+
 """
+
         try:
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
