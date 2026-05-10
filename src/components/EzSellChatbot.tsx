@@ -351,8 +351,10 @@ export default function EzSellChatbot() {
             fontFamily: "'Plus Jakarta Sans','Inter',sans-serif",
             whiteSpace: 'nowrap',
             opacity: isFabHovered ? 1 : 0,
+            maxWidth: isFabHovered ? 200 : 0,
+            overflow: 'hidden',
             transform: isFabHovered ? 'translateX(0)' : 'translateX(-8px)',
-            transition: 'opacity 0.25s ease 0.1s, transform 0.25s ease 0.1s',
+            transition: 'opacity 0.25s ease 0.1s, transform 0.25s ease 0.1s, max-width 0.3s ease',
             letterSpacing: '0.01em',
           }}>
             Chat with AI Assistant
