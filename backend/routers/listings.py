@@ -466,6 +466,7 @@ def get_listings(
     max_price: Optional[float] = None,
     search: Optional[str] = None,
     owner_id: Optional[int] = None,
+    location: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """Get all listings with optional filters (only approved listings)"""
@@ -496,6 +497,8 @@ def get_listings(
         query = query.filter(Listing.price <= max_price)
     if owner_id:
         query = query.filter(Listing.owner_id == owner_id)
+    if location:
+        query = query.filter(Listing.location.ilike(f"%{location}%"))
     if search:
         from sqlalchemy import or_
 

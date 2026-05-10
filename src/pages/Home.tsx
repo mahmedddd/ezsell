@@ -17,6 +17,13 @@ const CATEGORIES = [
   { id: "furniture", name: "Furniture", icon: "🛋️" },
 ];
 
+// Frontend pill IDs → backend DB category values (stored singular)
+const CATEGORY_MAP: Record<string, string> = {
+  mobiles: "mobile",
+  laptops: "laptop",
+  furniture: "furniture",
+};
+
 const CITIES = [
   { label: "🇵🇰 All Pakistan", value: "Pakistan" },
   { label: "Islamabad", value: "Islamabad" },
@@ -69,11 +76,19 @@ export default function Home() {
       setLoading(true);
       let results = [];
       if (searchQuery || selectedCategory !== "all" || city || area) {
-        const params = selectedCategory !== "all" ? { category: selectedCategory } : {};
+        const params: Record<string, string> = {};
+        // Map plural UI id → singular DB value
+        if (selectedCategory !== "all") {
+          params.category = CATEGORY_MAP[selectedCategory] ?? selectedCategory;
+        }
+        // Pass city/area to backend for server-side filtering
+        if (city && city !== "Pakistan") {
+          params.location = area ? `${area}, ${city}` : city;
+        }
         const data = await listingService.getListings(params);
         results = Array.isArray(data) ? data : [];
       } else {
-        const data = await recommendationService.getForYou({ limit: 40 }); // Fetch more for better experience
+        const data = await recommendationService.getForYou({ limit: 40 });
         results = data.items.map((item: any) => ({ ...item, id: item.listing_id }));
       }
 

@@ -547,149 +547,297 @@ export default function Dashboard() {
             )}
           </TabsContent>
 
-          {/* Insights Tab */}
+          {/* Insights Tab — Futuristic Redesign */}
           <TabsContent value="insights">
             {analyticsLoading ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2E6091] mb-4" />
-                  <p className="text-muted-foreground">Loading your insights...</p>
-                </CardContent>
-              </Card>
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', minHeight: 340, gap: 16,
+              }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: '50%',
+                  border: '3px solid hsl(210 56% 37%/0.2)',
+                  borderTopColor: 'hsl(210 56% 50%)',
+                  animation: 'spin 0.9s linear infinite',
+                }} />
+                <p style={{ color: 'hsl(210 15% 55%)', fontSize: 14 }}>Crunching your numbers…</p>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
             ) : (
-              <div className="space-y-6">
-                {/* Summary Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <style>{`
+                  .ins-card {
+                    background: linear-gradient(145deg, hsl(210 25% 10%/0.85), hsl(210 20% 14%/0.9));
+                    border: 1px solid hsl(210 40% 30%/0.3);
+                    border-radius: 20px;
+                    backdrop-filter: blur(20px);
+                    box-shadow: 0 8px 32px hsl(210 56% 5%/0.4), inset 0 1px 0 hsl(210 56% 60%/0.08);
+                    padding: 24px;
+                    color: #fff;
+                    position: relative;
+                    overflow: hidden;
+                  }
+                  .ins-card::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: radial-gradient(ellipse at top left, hsl(210 56% 37%/0.06), transparent 60%);
+                    pointer-events: none;
+                  }
+                  .ins-label { color: hsl(210 20% 60%); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+                  .ins-value { font-size: 38px; font-weight: 800; line-height: 1; font-family: 'Plus Jakarta Sans','Inter',sans-serif; }
+                  .ins-sub { font-size: 12px; color: hsl(210 15% 50%); margin-top: 6px; }
+                  .ins-chip {
+                    display: inline-flex; align-items: center; padding: 5px 12px;
+                    border-radius: 999px; font-size: 12px; font-weight: 600;
+                    border: 1px solid hsl(210 40% 40%/0.3);
+                    background: hsl(210 40% 20%/0.5);
+                    color: hsl(210 60% 75%);
+                    cursor: default;
+                    transition: all 0.2s;
+                  }
+                  .ins-chip:hover {
+                    background: hsl(210 56% 37%/0.4);
+                    border-color: hsl(210 56% 50%/0.5);
+                    color: #fff;
+                    transform: translateY(-1px);
+                  }
+                  .ins-section-title {
+                    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+                    text-transform: uppercase; color: hsl(210 20% 45%);
+                    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+                  }
+                  .ins-section-title::after {
+                    content: ''; flex: 1; height: 1px;
+                    background: linear-gradient(90deg, hsl(210 40% 30%/0.4), transparent);
+                  }
+                `}</style>
+
+                {/* ── KPI Strip ─────────────────────────────────────────── */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
                   {[
-                    { label: 'Searches', value: analytics?.total_searches ?? 0, color: 'text-blue-600' },
-                    { label: 'Listing Views', value: analytics?.total_views ?? 0, color: 'text-green-600' },
-                    { label: 'Favorites', value: analytics?.total_favorites ?? 0, color: 'text-red-500' },
-                    { label: 'Messages Sent', value: analytics?.total_messages ?? 0, color: 'text-purple-600' },
-                  ].map(stat => (
-                    <Card key={stat.label}>
-                      <CardContent className="pt-6">
-                        <div className={`text-3xl font-bold ${stat.color}`}>{stat.value}</div>
-                        <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-                      </CardContent>
-                    </Card>
+                    { label: 'Searches', value: analytics?.total_searches ?? 0, icon: '🔍', accent: 'hsl(214 80% 55%)', bg: 'hsl(214 60% 20%/0.3)' },
+                    { label: 'Listing Views', value: analytics?.total_views ?? 0, icon: '👁', accent: 'hsl(145 60% 45%)', bg: 'hsl(145 50% 15%/0.3)' },
+                    { label: 'Favorites', value: analytics?.total_favorites ?? 0, icon: '❤️', accent: 'hsl(350 75% 55%)', bg: 'hsl(350 60% 18%/0.3)' },
+                    { label: 'Messages Sent', value: analytics?.total_messages ?? 0, icon: '💬', accent: 'hsl(270 65% 60%)', bg: 'hsl(270 50% 18%/0.3)' },
+                  ].map(s => (
+                    <div key={s.label} className="ins-card" style={{ paddingTop: 20, paddingBottom: 20 }}>
+                      <div style={{
+                        width: 38, height: 38, borderRadius: 12,
+                        background: s.bg, border: `1px solid ${s.accent}30`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, marginBottom: 12,
+                      }}>{s.icon}</div>
+                      <div className="ins-value" style={{ color: s.accent, fontSize: 32 }}>{s.value.toLocaleString()}</div>
+                      <div className="ins-label" style={{ marginTop: 6, marginBottom: 0 }}>{s.label}</div>
+                    </div>
                   ))}
                 </div>
 
-                {/* Engagement Score */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="border-t-4 border-t-primary">
-                    <CardHeader>
-                      <CardTitle>Engagement Score</CardTitle>
-                      <CardDescription>How active you are on EZSell</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-center py-6">
-                      <div className="text-5xl font-extrabold text-[#2E6091]">
-                        {analytics?.engagement_score ?? 0}
-                        <span className="text-xl text-muted-foreground font-normal">/100</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                {/* ── Engagement Score + Keywords ───────────────────────── */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
 
-                  <Card className="col-span-2 border-t-4 border-t-purple-500">
-                    <CardHeader>
-                      <CardTitle>Top Keywords</CardTitle>
-                      <CardDescription>Extracted from your search history</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {(analytics?.top_keywords ?? []).length > 0
-                          ? analytics.top_keywords.map((kw: any, idx: number) => (
-                            <Badge key={idx} variant="secondary" className="px-3 py-1 text-sm bg-purple-50 text-purple-700 hover:bg-purple-100">
-                              {kw.keyword}
-                            </Badge>
-                          ))
-                          : <p className="text-sm text-muted-foreground">Use the search bar to start building your keyword profile.</p>
-                        }
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {/* Engagement Gauge */}
+                  <div className="ins-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                    <div className="ins-section-title" style={{ width: '100%', marginBottom: 4 }}>Engagement Score</div>
+                    {(() => {
+                      const score = analytics?.engagement_score ?? 0;
+                      const r = 54, circ = 2 * Math.PI * r;
+                      const pct = Math.min(score / 100, 1);
+                      const dash = pct * circ;
+                      const color = score >= 70 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444';
+                      const label = score >= 70 ? 'Excellent' : score >= 40 ? 'Good' : 'Growing';
+                      return (
+                        <div style={{ position: 'relative', width: 140, height: 140 }}>
+                          <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle cx="70" cy="70" r={r} fill="none" stroke="hsl(210 25% 18%)" strokeWidth="10" />
+                            <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="10"
+                              strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+                              style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.16,1,0.3,1)', filter: `drop-shadow(0 0 6px ${color}80)` }} />
+                          </svg>
+                          <div style={{
+                            position: 'absolute', inset: 0, display: 'flex',
+                            flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <div style={{ fontSize: 30, fontWeight: 900, color, lineHeight: 1 }}>{score}</div>
+                            <div style={{ fontSize: 11, color: 'hsl(210 15% 50%)', marginTop: 2 }}>/100</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <div style={{
+                      fontSize: 12, fontWeight: 700, letterSpacing: '0.06em',
+                      color: (analytics?.engagement_score ?? 0) >= 70 ? '#22c55e' : (analytics?.engagement_score ?? 0) >= 40 ? '#f59e0b' : '#ef4444',
+                    }}>
+                      {(analytics?.engagement_score ?? 0) >= 70 ? '🏆 Excellent' : (analytics?.engagement_score ?? 0) >= 40 ? '📈 Good' : '🌱 Growing'}
+                    </div>
+                    <div className="ins-sub" style={{ textAlign: 'center', lineHeight: 1.5 }}>
+                      How active you are on EzSell
+                    </div>
+                  </div>
+
+                  {/* Top Keywords */}
+                  <div className="ins-card">
+                    <div className="ins-section-title">Top Keywords</div>
+                    <p className="ins-sub" style={{ marginBottom: 16 }}>Extracted from your search & browse history</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {(analytics?.top_keywords ?? []).length > 0
+                        ? analytics.top_keywords.map((kw: any, idx: number) => {
+                            const sizes = [16, 14, 13, 12, 12];
+                            const opacities = [1, 0.88, 0.78, 0.7, 0.65];
+                            return (
+                              <span key={idx} className="ins-chip" style={{
+                                fontSize: sizes[Math.min(idx, sizes.length - 1)] ?? 12,
+                                opacity: opacities[Math.min(idx, opacities.length - 1)] ?? 0.65,
+                              }}>
+                                {kw.keyword}
+                                {idx < 3 && <span style={{ marginLeft: 5, fontSize: 9, opacity: 0.6 }}>#{idx + 1}</span>}
+                              </span>
+                            );
+                          })
+                        : <p style={{ color: 'hsl(210 15% 45%)', fontSize: 13 }}>Use the search bar to build your keyword profile.</p>
+                      }
+                    </div>
+                  </div>
                 </div>
 
-                {/* Charts */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Activity Timeline */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Activity Timeline</CardTitle>
-                      <CardDescription>Your search & view trends over the last 30 days</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {(analytics?.activity_timeline ?? []).length > 0 ? (
-                        <div className="h-64 w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={analytics.activity_timeline} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                              <defs>
-                                <linearGradient id="colorSearch" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                                  <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
-                                </linearGradient>
-                                <linearGradient id="colorView" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                              <Tooltip />
-                              <Legend />
-                              <Area type="monotone" dataKey="search_count" stroke="#82ca9d" fill="url(#colorSearch)" name="Searches" strokeWidth={2} />
-                              <Area type="monotone" dataKey="view_count" stroke="#8884d8" fill="url(#colorView)" name="Views" strokeWidth={2} />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      ) : (
-                        <div className="h-64 flex flex-col items-center justify-center text-muted-foreground">
-                          <BarChart3 className="h-10 w-10 mb-3 opacity-40" />
-                          <p className="text-sm">Search or browse listings to build your activity timeline.</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                {/* ── Charts Row ────────────────────────────────────────── */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
 
-                  {/* Top Categories Pie */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Top Categories</CardTitle>
-                      <CardDescription>Categories you search & browse most</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {(analytics?.top_categories ?? []).length > 0 ? (
-                        <div className="h-64 w-full">
+                  {/* Activity Timeline */}
+                  <div className="ins-card">
+                    <div className="ins-section-title">Activity Timeline</div>
+                    <p className="ins-sub" style={{ marginBottom: 16 }}>Search & view trends — last 30 days</p>
+                    {(analytics?.activity_timeline ?? []).length > 0 ? (
+                      <div style={{ height: 220 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={analytics.activity_timeline} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="gSearch" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(145 60% 45%)" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="hsl(145 60% 45%)" stopOpacity={0.02} />
+                              </linearGradient>
+                              <linearGradient id="gView" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(214 80% 65%)" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="hsl(214 80% 65%)" stopOpacity={0.02} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 25% 20%/0.5)" />
+                            <XAxis dataKey="date" tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                            <Tooltip
+                              contentStyle={{ background: 'hsl(210 25% 10%)', border: '1px solid hsl(210 40% 25%)', borderRadius: 10, fontSize: 12 }}
+                              labelStyle={{ color: '#fff', fontWeight: 700 }}
+                              itemStyle={{ color: 'hsl(210 20% 70%)' }}
+                            />
+                            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: 'hsl(210 15% 60%)' }} />
+                            <Area type="monotone" dataKey="search_count" stroke="hsl(145 60% 45%)" fill="url(#gSearch)" name="Searches" strokeWidth={2.5} dot={false} />
+                            <Area type="monotone" dataKey="view_count" stroke="hsl(214 80% 65%)" fill="url(#gView)" name="Views" strokeWidth={2.5} dot={false} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div style={{ height: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 36 }}>📊</span>
+                        <p style={{ color: 'hsl(210 15% 45%)', fontSize: 13 }}>Search or browse listings to build your timeline.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category Donut */}
+                  <div className="ins-card">
+                    <div className="ins-section-title">Top Categories</div>
+                    <p className="ins-sub" style={{ marginBottom: 12 }}>What you browse most</p>
+                    {(analytics?.top_categories ?? []).length > 0 ? (
+                      <>
+                        <div style={{ height: 180 }}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
+                              <defs>
+                                {['hsl(214 80% 55%)', 'hsl(145 60% 45%)', 'hsl(270 65% 60%)', 'hsl(35 90% 55%)', 'hsl(350 75% 55%)'].map((c, i) => (
+                                  <radialGradient key={i} id={`pieG${i}`} cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stopColor={c} stopOpacity={1} />
+                                    <stop offset="100%" stopColor={c} stopOpacity={0.7} />
+                                  </radialGradient>
+                                ))}
+                              </defs>
                               <Pie
                                 data={analytics.top_categories.slice(0, 5)}
-                                dataKey="count"
-                                nameKey="category"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={90}
-                                label={({ category, percent }: any) => `${category} ${(percent * 100).toFixed(0)}%`}
-                                labelLine={false}
+                                dataKey="count" nameKey="category"
+                                cx="50%" cy="50%"
+                                innerRadius={46} outerRadius={78}
+                                paddingAngle={3}
+                                stroke="none"
                               >
                                 {analytics.top_categories.slice(0, 5).map((_: any, i: number) => (
-                                  <Cell key={i} fill={['#2E6091', '#82ca9d', '#8884d8', '#ffc658', '#ff7f7f'][i % 5]} />
+                                  <Cell key={i} fill={`url(#pieG${i})`} />
                                 ))}
                               </Pie>
-                              <Tooltip formatter={(val: any, name: any) => [val, name]} />
+                              <Tooltip
+                                contentStyle={{ background: 'hsl(210 25% 10%)', border: '1px solid hsl(210 40% 25%)', borderRadius: 10, fontSize: 12 }}
+                                formatter={(val: any, name: any) => [val, name]}
+                              />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
-                      ) : (
-                        <div className="h-64 flex flex-col items-center justify-center text-muted-foreground">
-                          <BarChart3 className="h-10 w-10 mb-3 opacity-40" />
-                          <p className="text-sm">Browse listings by category to see your preferences here.</p>
+                        {/* Legend */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                          {analytics.top_categories.slice(0, 4).map((cat: any, i: number) => {
+                            const colors = ['hsl(214 80% 55%)', 'hsl(145 60% 45%)', 'hsl(270 65% 60%)', 'hsl(35 90% 55%)'];
+                            const total = analytics.top_categories.reduce((a: number, c: any) => a + c.count, 0);
+                            const pct = total > 0 ? Math.round((cat.count / total) * 100) : 0;
+                            return (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i], flexShrink: 0 }} />
+                                <span style={{ fontSize: 12, color: 'hsl(210 15% 65%)', flex: 1, textTransform: 'capitalize' }}>{cat.category}</span>
+                                <div style={{ width: 60, height: 4, borderRadius: 4, background: 'hsl(210 25% 18%)' }}>
+                                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: colors[i] }} />
+                                </div>
+                                <span style={{ fontSize: 11, color: 'hsl(210 15% 50%)', width: 28, textAlign: 'right' }}>{pct}%</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </>
+                    ) : (
+                      <div style={{ height: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 36 }}>🍩</span>
+                        <p style={{ color: 'hsl(210 15% 45%)', fontSize: 13 }}>Browse by category to see your preferences.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* ── Listing Performance Bar Chart ──────────────────────── */}
+                {listings.length > 0 && (
+                  <div className="ins-card">
+                    <div className="ins-section-title">Your Listing Performance</div>
+                    <p className="ins-sub" style={{ marginBottom: 16 }}>Views per listing</p>
+                    <div style={{ height: 180 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={listings.slice(0, 8).map(l => ({ name: l.title.slice(0, 14) + (l.title.length > 14 ? '…' : ''), views: l.views || 0 }))}
+                          margin={{ top: 4, right: 4, left: -28, bottom: 0 }}
+                        >
+                          <defs>
+                            <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="hsl(210 56% 55%)" />
+                              <stop offset="100%" stopColor="hsl(210 56% 35%)" />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 25% 20%/0.5)" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <Tooltip
+                            contentStyle={{ background: 'hsl(210 25% 10%)', border: '1px solid hsl(210 40% 25%)', borderRadius: 10, fontSize: 12 }}
+                            cursor={{ fill: 'hsl(210 40% 30%/0.2)' }}
+                          />
+                          <Bar dataKey="views" fill="url(#barGrad)" radius={[6, 6, 0, 0]} name="Views" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
