@@ -6,7 +6,28 @@ def upgrade_database():
     conn = sqlite3.connect('ezsell.db')
     cursor = conn.cursor()
     
-    # 1. Upgrade 'listings' table
+    # 1. Upgrade 'users' table
+    users_cols = [
+        ('google_id', 'TEXT'),
+        ('avatar_url', 'TEXT'),
+        ('bio', 'TEXT'),
+        ('location', 'TEXT'),
+        ('last_login', 'DATETIME'),
+        ('last_seen', 'DATETIME'),
+        ('auth_provider', 'TEXT DEFAULT "local"')
+    ]
+    
+    for col_name, col_type in users_cols:
+        try:
+            print(f"Adding {col_name} to users...")
+            cursor.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                pass
+            else:
+                print(f"Error adding {col_name} to users: {e}")
+
+    # 2. Upgrade 'listings' table
     listings_cols = [
         ('furniture_type', 'TEXT'),
         ('material', 'TEXT'),
@@ -25,7 +46,12 @@ def upgrade_database():
         ('model_glb_url', 'TEXT'),
         ('model_usdz_url', 'TEXT'),
         ('dimensions_cm', 'TEXT'),
-        ('polygon_count', 'INTEGER')
+        ('polygon_count', 'INTEGER'),
+        ('color', 'TEXT'),
+        ('views', 'INTEGER DEFAULT 0'),
+        ('ar_model_url', 'TEXT'),
+        ('is_approved', 'INTEGER DEFAULT 1'),
+        ('approval_status', 'TEXT DEFAULT "approved"')
     ]
     
     for col_name, col_type in listings_cols:
