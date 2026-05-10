@@ -204,53 +204,40 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             "Accept-Language": "en-US,en;q=0.5",
         }
 
-        # --- Stage 1: Find GSMArena URL ---
+        # --- Stage 1: Find GSMArena URL via their own search ---
         try:
-            from duckduckgo_search import DDGS
-            import asyncio
-            loop = asyncio.get_event_loop()
-            
-            def _run_discovery():
-                # Try multiple queries to be absolutely sure we find the link
-                queries = [
-                    f'site:gsmarena.com "{title}" specifications',
-                    f'gsmarena {title} specs',
-                    f'"{title}" gsmarena'
-                ]
-                found_links = []
-                with DDGS() as ddgs:
-                    for q in queries:
-                        try:
-                            results = list(ddgs.text(q, max_results=5))
+            title_encoded = urllib.parse.quote_plus(title)
+            search_url = f'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={title_encoded}'
+            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+                search_res = await client.get(search_url, headers=headers)
+                if search_res.status_code == 200:
+                    links = re.findall(r'href="/?([a-zA-Z0-9_-]+-\d+\.php)"', search_res.text)
+                    for link in links:
+                        candidate = f"https://www.gsmarena.com/{link.lstrip('/')}"
+                        if re.match(r'^https://www\.gsmarena\.com/[a-zA-Z0-9_-]+-\d+\.php$', candidate):
+                            gsmarena_url = candidate
+                            break
+        except Exception as e:
+            print(f"GSMArena direct search failed: {e}")
+
+        # --- Stage 1 Fallback: DuckDuckGo (only if GSMArena search returned nothing) ---
+        if not gsmarena_url:
+            try:
+                loop = asyncio.get_event_loop()
+                def _ddg_find():
+                    try:
+                        with DDGS() as ddgs:
+                            results = list(ddgs.text(f'site:gsmarena.com "{title}" specifications', max_results=5))
                             for r in results:
                                 url = r.get('href', '')
-                                if "gsmarena.com" in url and ".php" in url:
-                                    found_links.append(url)
-                        except:
-                            continue
-                        if found_links: break
-                return found_links
-            
-            discovery_results = await loop.run_in_executor(None, _run_discovery)
-            for url in discovery_results:
-                # Filter to valid device pages (e.g. samsung_galaxy_a56-13603.php)
-                if re.match(r'^https://www\.gsmarena\.com/[a-zA-Z0-9_-]+-\d+\.php$', url):
-                    gsmarena_url = url
-                    break
-
-            # Fallback to direct search only if all else fails
-            if not gsmarena_url:
-                search_url = f'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={urllib.parse.quote_plus(title)}'
-                async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                    search_res = await client.get(search_url, headers=headers)
-                    if search_res.status_code == 200:
-                        links = re.findall(r'href="(.*?\.php)"', search_res.text)
-                        for link in links:
-                            if re.match(r'^[a-zA-Z0-9_-]+-\d+\.php$', link):
-                                gsmarena_url = f"https://www.gsmarena.com/{link}"
-                                break
-        except Exception as e:
-            print(f"GSMArena discovery path failed: {e}")
+                                if re.match(r'^https://www\.gsmarena\.com/[a-zA-Z0-9_-]+-\d+\.php$', url):
+                                    return url
+                    except:
+                        pass
+                    return None
+                gsmarena_url = await loop.run_in_executor(None, _ddg_find)
+            except Exception as e:
+                print(f"DDG fallback discovery failed: {e}")
 
         if not gsmarena_url:
             print(f"No GSMArena URL found for '{title}'")
@@ -258,12 +245,6 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
 
         # --- Stage 2: Fetch and parse the spec table ---
         try:
-            # Reverted to simpler headers that worked for the user previously
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-            }
             async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
                 response = await client.get(gsmarena_url, headers=headers)
                 html = response.text
@@ -277,54 +258,47 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             )
             if memory_match:
                 raw = memory_match.group(1)
-                
+
                 # Find all GB/TB values before "RAM"
                 ram_vals = re.findall(r'(\d+)\s*GB\s*RAM', raw, re.IGNORECASE)
                 if ram_vals:
                     specs["RAM"] = sorted(list(set([f"{v} GB" for v in ram_vals if 2 <= int(v) <= 24])), key=lambda x: int(re.search(r'\d+', x).group()))
 
-                # Extract storage: it's typically the first GB/TB value in each pair, e.g. "128GB 6GB RAM"
-                # So we look for numbers followed by GB or TB that are NOT immediately followed by RAM
-                # Alternatively, just find all GB/TB values and filter out the RAM ones
+                # Extract storage: look for storage-sized values (>=32GB) not tagged as RAM
                 all_gb_tb = re.findall(r'(\d+)\s*(GB|TB)', raw, re.IGNORECASE)
                 storage_set = set()
                 for v, unit in all_gb_tb:
                     val = int(v)
-                    if unit.upper() == 'GB' and val >= 16 and val not in [2,3,4,6,8,12,16,24]: # typical storage vs RAM disambiguation
-                        storage_set.add(f"{val} GB")
-                    elif unit.upper() == 'TB':
+                    if unit.upper() == 'TB':
                         storage_set.add(f"{val} TB")
-                    elif unit.upper() == 'GB' and val == 16 and "16GB RAM" not in raw.upper():
-                        storage_set.add("16 GB")
-                        
-                # More robust fallback: split by comma, extract first size as storage, second as RAM
+                    elif unit.upper() == 'GB' and val >= 32:
+                        storage_set.add(f"{val} GB")
+
+                # Fallback: split by comma, each segment's first big number is storage
                 parts = raw.split(',')
                 for p in parts:
                     sizes = re.findall(r'(\d+)\s*(GB|TB)', p, re.IGNORECASE)
                     if len(sizes) >= 2:
                         s_val, s_unit = sizes[0]
                         storage_set.add(f"{s_val} {s_unit.upper()}")
-                        
+
                 if storage_set:
-                    # Sort storage values properly
                     def storage_sort_key(x):
                         num = int(re.search(r'\d+', x).group())
                         return num * 1024 if 'TB' in x else num
                     specs["Storage"] = sorted(list(storage_set), key=storage_sort_key)
 
             # --- Parse Colors ---
-            # GSMArena format: Colors  White, Blue, Violet etc (inside <td>)
             color_match = re.search(
                 r'Colors?.*?<td[^>]*>(.*?)</td>',
                 html, re.IGNORECASE | re.DOTALL
             )
             if color_match:
-                raw = re.sub(r'<[^>]+>', ' ', color_match.group(1))  # strip HTML tags
+                raw = re.sub(r'<[^>]+>', ' ', color_match.group(1))
                 raw = re.sub(r'\s+', ' ', raw).strip()
-                # Split on commas or semicolons
                 colors = [c.strip() for c in re.split(r'[,;]', raw) if c.strip() and len(c.strip()) > 2]
                 if colors:
-                    specs["Color"] = colors[:8]  # max 8 colors
+                    specs["Color"] = colors[:8]
 
             print(f"GSMArena scraped specs for '{title}': {specs}")
             return specs
@@ -332,6 +306,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
         except Exception as e:
             print(f"GSMArena scrape failed for '{title}': {e}")
             return {}
+
 
     async def _fetch_web_specs(self, title: str, category: str) -> str:
         """
