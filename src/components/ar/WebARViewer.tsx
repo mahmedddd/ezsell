@@ -127,13 +127,13 @@ function detectARModesAttr(supportedModes: string[]): string {
 function getFullUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
-  
+
   // For mobile devices, we MUST prefix relative paths with the backend IP
   // otherwise the browser tries to hit the phone's localhost.
   const base = typeof window !== 'undefined' ? (window as any).BACKEND_URL || API_BASE_URL : API_BASE_URL;
   const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
   const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-  
+
   return `${cleanBase}${cleanUrl}`;
 }
 
@@ -384,7 +384,7 @@ export function WebARViewer({
   const [step, setStep] = useState<ARStep>('idle');
   const [buildProgress, setBuildProgress] = useState(0);
   const [proceduralUrl, setProceduralUrl] = useState<string | null>(null);
-  
+
   // These stay in sync with arAssets via useEffect or direct derivation
   const [tripoUrl, setTripoUrl] = useState<string | null>(getFullUrl(arAssets?.model_glb_url));
   const [usdzUrl, setUsdzUrl] = useState<string | null>(getFullUrl(arAssets?.model_usdz_url));
@@ -435,7 +435,7 @@ export function WebARViewer({
   if (category?.toLowerCase() !== 'furniture') return null;
 
   // ── Resolve furniture metadata (Memoized to prevent drift) ───────────────────
-  const fType: FurnitureType = useMemo(() => 
+  const fType: FurnitureType = useMemo(() =>
     resolveFurnitureType(furnitureType, listingTitle, listingDescription),
     [furnitureType, listingTitle, listingDescription]
   );
@@ -539,9 +539,9 @@ export function WebARViewer({
     } catch (err: any) {
       console.error('[WebARViewer] AI Start failed:', err);
       setAiStage('error');
-      
+
       const errorMessage = err?.response?.data?.detail || err?.message || "Could not start AI generation. Please try again later.";
-      
+
       toast({
         title: "AI Generation Failed",
         description: errorMessage,
@@ -565,23 +565,23 @@ export function WebARViewer({
           if (status.local_url) {
             setAiProgress(100);
             setAiStage('success');
-            
+
             const fullUrl = getFullUrl(status.local_url);
             // Append a cache-buster so model-viewer fetches the new file, not a stale cache
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
             setTripoUrl(bustedUrl);
             // Do NOT set modelLoading=true here — let model-viewer's progress event handle it
             // so there's no artificial delay and the model appears as soon as it parses
-            
+
             setViewMode('advanced');
             setStep('model_ready');
-            
+
             // Auto-switch to AR tab so user sees the new model immediately
             setActiveTab('ar');
-            
+
             // Reset aiStage after a short delay so the UI cleans up nicely
             setTimeout(() => setAiStage('idle'), 800);
-            
+
             // Notify parent to refresh assets
             onModelGenerated?.();
 
@@ -611,9 +611,9 @@ export function WebARViewer({
       } catch (err: any) {
         console.error('[WebARViewer] Polling error:', err);
         setAiStage('error');
-        
+
         const errorMessage = err?.response?.data?.detail || err?.message || "Lost connection to the generation server. Please try again.";
-        
+
         toast({
           title: "Polling Error",
           description: errorMessage,
@@ -1253,16 +1253,16 @@ export function WebARViewer({
                         {caps.isDesktop && caps.isChecked && (
                           <div className="bg-gradient-to-br from-[#2E6091]/5 to-transparent p-6 rounded-[32px] border border-[#2E6091]/10 relative overflow-hidden group">
                             <div className="absolute -right-8 -top-8 w-40 h-40 bg-[#2E6091]/5 rounded-full blur-3xl group-hover:bg-[#2E6091]/10 transition-all duration-700" />
-                            
+
                             <div className="flex flex-col items-center text-center gap-4 relative z-10">
                               <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#2E6091]/10 border border-gray-100 transform group-hover:scale-105 transition-transform duration-300">
-                                <img 
-                                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(productPageUrl)}`} 
-                                  alt="Scan to view in AR" 
+                                <img
+                                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(productPageUrl)}`}
+                                  alt="Scan to view in AR"
                                   className="w-32 h-32"
                                 />
                               </div>
-                              
+
                               <div className="space-y-1">
                                 <h4 className="text-lg font-black text-gray-900">Scan to Place in Your Room</h4>
                                 <p className="text-xs text-gray-500 max-w-[280px] leading-relaxed">
