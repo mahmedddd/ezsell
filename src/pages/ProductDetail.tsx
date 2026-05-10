@@ -341,8 +341,8 @@ export default function ProductDetail() {
                       {listing.is_sold && <Badge variant="destructive">Sold</Badge>}
                     </div>
                   </div>
-                  <div className="text-3xl md:text-4xl font-black tracking-tighter text-[#143109] break-words overflow-hidden max-w-full">
-                    PKR {listing.price?.toLocaleString()}
+                  <div className="text-3xl md:text-4xl font-black tracking-tighter text-primary break-words overflow-hidden max-w-full">
+                    {formatCurrency(listing.price)}
                   </div>
                 </div>
                 <CardDescription className="text-sm leading-relaxed mt-2 text-gray-600">{listing.description}</CardDescription>
@@ -400,7 +400,7 @@ export default function ProductDetail() {
                     </div>
                     <Button
                       size="sm"
-                      className="bg-[#143109] hover:bg-[#1e4d10] text-white rounded-lg h-9 px-4"
+                      className="bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-lg h-9 px-4"
                       onClick={handleCallAction}
                     >
                       {showPhone || isOwner ? 'Call Now' : 'Show Contact'}
@@ -433,11 +433,11 @@ export default function ProductDetail() {
             <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
               <CardContent className="pt-4 pb-4 space-y-3">
                 {isOwner ? (
-                  <Button className="w-full bg-[#143109] hover:bg-[#1e4d10] text-white rounded-xl py-5 text-base font-semibold" onClick={() => navigate(`/edit-listing/${listing.id}`)}>
+                  <Button className="w-full bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-xl py-5 text-base font-semibold" onClick={() => navigate(`/edit-listing/${listing.id}`)}>
                     <MessageCircle className="mr-2 h-5 w-5" />Edit Listing
                   </Button>
                 ) : (
-                  <Button className="w-full bg-[#143109] hover:bg-[#1e4d10] text-white rounded-xl py-5 text-base font-semibold" disabled={listing.is_sold} onClick={() => setShowChat(true)}>
+                  <Button className="w-full bg-[#2E6091] hover:bg-[#1E4166] text-white rounded-xl py-5 text-base font-semibold" disabled={listing.is_sold} onClick={() => setShowChat(true)}>
                     <MessageCircle className="mr-2 h-5 w-5" />{listing.is_sold ? 'Sold Out' : 'Chat with Seller'}
                   </Button>
                 )}
@@ -497,8 +497,8 @@ export default function ProductDetail() {
       {similarListings.length > 0 && (
         <div className="container mx-auto px-4 py-12 max-w-6xl">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[#143109]">Similar Items You Might Like</h2>
-            <Link to="/" className="text-sm font-semibold text-[#143109] hover:underline">Explore More</Link>
+            <h2 className="text-2xl font-bold text-[#2E6091]">Similar Items You Might Like</h2>
+            <Link to="/" className="text-sm font-semibold text-[#2E6091] hover:underline">Explore More</Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {similarListings.map((rec: any, idx: number) => {
@@ -525,8 +525,8 @@ export default function ProductDetail() {
                       </div>
                     </div>
                     <CardContent className="p-2.5">
-                      <p className="text-xs font-bold text-[#143109] mb-1">{formatCurrency(item.price)}</p>
-                      <h3 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight group-hover:text-[#143109]">{item.title}</h3>
+                      <p className="text-xs font-black tracking-tighter text-[#2E6091] mb-1">{formatCurrency(item.price)}</p>
+                      <h3 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight group-hover:text-[#2E6091]">{item.title}</h3>
                     </CardContent>
                   </Card>
                 </Link>
