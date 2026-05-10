@@ -300,9 +300,8 @@ export default function EzSellChatbot() {
       `}</style>
 
       {/* ── Floating Action Button ─────────────────────────────────────────── */}
-      {!isOpen && (
-        <button
-          id="ezsell-chatbot-fab"
+      <button
+        id="ezsell-chatbot-fab"
           onClick={openChat}
           aria-label="Chat with AI Assistant"
           onMouseEnter={() => setIsFabHovered(true)}
@@ -321,11 +320,15 @@ export default function EzSellChatbot() {
             gap: isFabHovered ? 10 : 0,
             overflow: 'hidden',
             animation: isFabHovered ? 'none' : 'ezFabGlow 2.5s ease-in-out infinite',
-            transition: 'width 0.35s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.35s ease, background 0.2s ease, box-shadow 0.2s ease',
+            transition: 'width 0.35s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.35s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1), visibility 0.4s',
             boxShadow: isFabHovered
               ? '0 8px 32px hsl(210 56% 37%/0.55), 0 2px 8px hsl(210 56% 37%/0.3)'
               : undefined,
             paddingInline: isFabHovered ? 22 : 0,
+            opacity: isOpen ? 0 : 1,
+            visibility: isOpen ? 'hidden' : 'visible',
+            transform: isOpen ? 'scale(0.8) translateY(20px)' : 'scale(1) translateY(0)',
+            pointerEvents: isOpen ? 'none' : 'auto',
           }}
         >
           {/* Bot icon — scales up slightly on hover */}
@@ -371,12 +374,10 @@ export default function EzSellChatbot() {
             }} />
           )}
         </button>
-      )}
 
       {/* ── Chat Panel ────────────────────────────────────────────────────── */}
-      {isOpen && (
-        <div
-          id="ezsell-chatbot-panel"
+      <div
+        id="ezsell-chatbot-panel"
           style={{
             position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
             width: 'min(460px, calc(100vw - 24px))',
@@ -387,7 +388,11 @@ export default function EzSellChatbot() {
             border: '1px solid hsl(210 56% 37%/0.3)',
             borderRadius: 22,
             boxShadow: '0 20px 60px hsl(210 56% 7%/0.7), 0 0 0 1px hsl(210 56% 37%/0.15)',
-            animation: 'ezPanelIn 0.28s cubic-bezier(0.16,1,0.3,1) both',
+            transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1), visibility 0.4s',
+            opacity: isOpen ? 1 : 0,
+            visibility: isOpen ? 'visible' : 'hidden',
+            transform: isOpen ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.96)',
+            pointerEvents: isOpen ? 'auto' : 'none',
             overflow: 'hidden',
           }}
         >
@@ -516,7 +521,6 @@ export default function EzSellChatbot() {
             </button>
           </div>
         </div>
-      )}
     </>
   );
 }
