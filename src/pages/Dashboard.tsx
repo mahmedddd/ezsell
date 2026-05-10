@@ -547,7 +547,7 @@ export default function Dashboard() {
             )}
           </TabsContent>
 
-          {/* Insights Tab — Futuristic Redesign */}
+          {/* Insights Tab — Premium Light Redesign */}
           <TabsContent value="insights">
             {analyticsLoading ? (
               <div style={{
@@ -556,80 +556,84 @@ export default function Dashboard() {
               }}>
                 <div style={{
                   width: 52, height: 52, borderRadius: '50%',
-                  border: '3px solid hsl(210 56% 37%/0.2)',
-                  borderTopColor: 'hsl(210 56% 50%)',
+                  border: '3px solid hsl(210 20% 90%)',
+                  borderTopColor: '#2E6091',
                   animation: 'spin 0.9s linear infinite',
                 }} />
-                <p style={{ color: 'hsl(210 15% 55%)', fontSize: 14 }}>Crunching your numbers…</p>
+                <p style={{ color: 'hsl(210 15% 45%)', fontSize: 14 }}>Crunching your numbers…</p>
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <style>{`
                   .ins-card {
-                    background: linear-gradient(145deg, hsl(210 25% 10%/0.85), hsl(210 20% 14%/0.9));
-                    border: 1px solid hsl(210 40% 30%/0.3);
-                    border-radius: 20px;
-                    backdrop-filter: blur(20px);
-                    box-shadow: 0 8px 32px hsl(210 56% 5%/0.4), inset 0 1px 0 hsl(210 56% 60%/0.08);
+                    background: #ffffff;
+                    border: 1px solid hsl(210 20% 90%);
+                    border-radius: 16px;
+                    box-shadow: 0 4px 20px hsl(210 20% 40%/0.05), 0 1px 3px hsl(210 20% 40%/0.02);
                     padding: 24px;
-                    color: #fff;
+                    color: hsl(210 25% 20%);
                     position: relative;
                     overflow: hidden;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                  }
+                  .ins-card:hover {
+                    box-shadow: 0 8px 30px hsl(210 20% 40%/0.08), 0 2px 8px hsl(210 20% 40%/0.04);
                   }
                   .ins-card::before {
                     content: '';
                     position: absolute;
                     inset: 0;
-                    background: radial-gradient(ellipse at top left, hsl(210 56% 37%/0.06), transparent 60%);
+                    background: radial-gradient(ellipse at top right, hsl(210 56% 96%/0.8), transparent 70%);
                     pointer-events: none;
                   }
-                  .ins-label { color: hsl(210 20% 60%); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
-                  .ins-value { font-size: 38px; font-weight: 800; line-height: 1; font-family: 'Plus Jakarta Sans','Inter',sans-serif; }
-                  .ins-sub { font-size: 12px; color: hsl(210 15% 50%); margin-top: 6px; }
+                  .ins-label { color: hsl(210 15% 45%); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+                  .ins-value { font-size: 38px; font-weight: 800; line-height: 1; font-family: 'Plus Jakarta Sans','Inter',sans-serif; color: hsl(210 25% 15%); }
+                  .ins-sub { font-size: 13px; color: hsl(210 15% 45%); margin-top: 6px; }
                   .ins-chip {
-                    display: inline-flex; align-items: center; padding: 5px 12px;
-                    border-radius: 999px; font-size: 12px; font-weight: 600;
-                    border: 1px solid hsl(210 40% 40%/0.3);
-                    background: hsl(210 40% 20%/0.5);
-                    color: hsl(210 60% 75%);
+                    display: inline-flex; align-items: center; padding: 6px 14px;
+                    border-radius: 999px; font-size: 13px; font-weight: 600;
+                    border: 1px solid hsl(210 40% 90%);
+                    background: hsl(210 40% 96%);
+                    color: #2E6091;
                     cursor: default;
                     transition: all 0.2s;
                   }
                   .ins-chip:hover {
-                    background: hsl(210 56% 37%/0.4);
-                    border-color: hsl(210 56% 50%/0.5);
+                    background: #2E6091;
+                    border-color: #2E6091;
                     color: #fff;
-                    transform: translateY(-1px);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px hsl(210 56% 40%/0.2);
                   }
                   .ins-section-title {
-                    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-                    text-transform: uppercase; color: hsl(210 20% 45%);
+                    font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
+                    color: hsl(210 25% 20%);
                     display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
                   }
                   .ins-section-title::after {
                     content: ''; flex: 1; height: 1px;
-                    background: linear-gradient(90deg, hsl(210 40% 30%/0.4), transparent);
+                    background: linear-gradient(90deg, hsl(210 20% 90%), transparent);
                   }
                 `}</style>
 
                 {/* ── KPI Strip ─────────────────────────────────────────── */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
                   {[
-                    { label: 'Searches', value: analytics?.total_searches ?? 0, icon: '🔍', accent: 'hsl(214 80% 55%)', bg: 'hsl(214 60% 20%/0.3)' },
-                    { label: 'Listing Views', value: analytics?.total_views ?? 0, icon: '👁', accent: 'hsl(145 60% 45%)', bg: 'hsl(145 50% 15%/0.3)' },
-                    { label: 'Favorites', value: analytics?.total_favorites ?? 0, icon: '❤️', accent: 'hsl(350 75% 55%)', bg: 'hsl(350 60% 18%/0.3)' },
-                    { label: 'Messages Sent', value: analytics?.total_messages ?? 0, icon: '💬', accent: 'hsl(270 65% 60%)', bg: 'hsl(270 50% 18%/0.3)' },
+                    { label: 'Searches', value: analytics?.total_searches ?? 0, icon: '🔍', accent: '#2E6091', bg: 'hsl(210 56% 96%)' },
+                    { label: 'Listing Views', value: analytics?.total_views ?? 0, icon: '👁', accent: '#10b981', bg: 'hsl(160 84% 96%)' },
+                    { label: 'Favorites', value: analytics?.total_favorites ?? 0, icon: '❤️', accent: '#ef4444', bg: 'hsl(350 84% 96%)' },
+                    { label: 'Messages Sent', value: analytics?.total_messages ?? 0, icon: '💬', accent: '#8b5cf6', bg: 'hsl(258 84% 96%)' },
                   ].map(s => (
-                    <div key={s.label} className="ins-card" style={{ paddingTop: 20, paddingBottom: 20 }}>
+                    <div key={s.label} className="ins-card" style={{ paddingTop: 24, paddingBottom: 24 }}>
                       <div style={{
-                        width: 38, height: 38, borderRadius: 12,
-                        background: s.bg, border: `1px solid ${s.accent}30`,
+                        width: 44, height: 44, borderRadius: 12,
+                        background: s.bg, border: `1px solid ${s.accent}20`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, marginBottom: 12,
+                        fontSize: 20, marginBottom: 16, color: s.accent
                       }}>{s.icon}</div>
-                      <div className="ins-value" style={{ color: s.accent, fontSize: 32 }}>{s.value.toLocaleString()}</div>
-                      <div className="ins-label" style={{ marginTop: 6, marginBottom: 0 }}>{s.label}</div>
+                      <div className="ins-value">{s.value.toLocaleString()}</div>
+                      <div className="ins-label" style={{ marginTop: 8, marginBottom: 0 }}>{s.label}</div>
                     </div>
                   ))}
                 </div>
@@ -645,33 +649,35 @@ export default function Dashboard() {
                       const r = 54, circ = 2 * Math.PI * r;
                       const pct = Math.min(score / 100, 1);
                       const dash = pct * circ;
-                      const color = score >= 70 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444';
+                      const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
                       const label = score >= 70 ? 'Excellent' : score >= 40 ? 'Good' : 'Growing';
                       return (
                         <div style={{ position: 'relative', width: 140, height: 140 }}>
                           <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
-                            <circle cx="70" cy="70" r={r} fill="none" stroke="hsl(210 25% 18%)" strokeWidth="10" />
+                            <circle cx="70" cy="70" r={r} fill="none" stroke="hsl(210 20% 94%)" strokeWidth="10" />
                             <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="10"
                               strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-                              style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.16,1,0.3,1)', filter: `drop-shadow(0 0 6px ${color}80)` }} />
+                              style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.16,1,0.3,1)' }} />
                           </svg>
                           <div style={{
                             position: 'absolute', inset: 0, display: 'flex',
                             flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                           }}>
-                            <div style={{ fontSize: 30, fontWeight: 900, color, lineHeight: 1 }}>{score}</div>
-                            <div style={{ fontSize: 11, color: 'hsl(210 15% 50%)', marginTop: 2 }}>/100</div>
+                            <div style={{ fontSize: 32, fontWeight: 900, color: hsl(210 25% 15%), lineHeight: 1 }}>{score}</div>
+                            <div style={{ fontSize: 12, color: 'hsl(210 15% 50%)', marginTop: 2, fontWeight: 600 }}>/100</div>
                           </div>
                         </div>
                       );
                     })()}
                     <div style={{
-                      fontSize: 12, fontWeight: 700, letterSpacing: '0.06em',
-                      color: (analytics?.engagement_score ?? 0) >= 70 ? '#22c55e' : (analytics?.engagement_score ?? 0) >= 40 ? '#f59e0b' : '#ef4444',
+                      fontSize: 14, fontWeight: 700, letterSpacing: '0.02em',
+                      color: (analytics?.engagement_score ?? 0) >= 70 ? '#10b981' : (analytics?.engagement_score ?? 0) >= 40 ? '#f59e0b' : '#ef4444',
+                      background: (analytics?.engagement_score ?? 0) >= 70 ? 'hsl(160 84% 96%)' : (analytics?.engagement_score ?? 0) >= 40 ? 'hsl(38 92% 95%)' : 'hsl(350 84% 96%)',
+                      padding: '4px 12px', borderRadius: '999px'
                     }}>
                       {(analytics?.engagement_score ?? 0) >= 70 ? '🏆 Excellent' : (analytics?.engagement_score ?? 0) >= 40 ? '📈 Good' : '🌱 Growing'}
                     </div>
-                    <div className="ins-sub" style={{ textAlign: 'center', lineHeight: 1.5 }}>
+                    <div className="ins-sub" style={{ textAlign: 'center', lineHeight: 1.5, marginTop: 4 }}>
                       How active you are on EzSell
                     </div>
                   </div>
@@ -679,23 +685,23 @@ export default function Dashboard() {
                   {/* Top Keywords */}
                   <div className="ins-card">
                     <div className="ins-section-title">Top Keywords</div>
-                    <p className="ins-sub" style={{ marginBottom: 16 }}>Extracted from your search & browse history</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <p className="ins-sub" style={{ marginBottom: 20 }}>Extracted from your search & browse history</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                       {(analytics?.top_keywords ?? []).length > 0
                         ? analytics.top_keywords.map((kw: any, idx: number) => {
-                            const sizes = [16, 14, 13, 12, 12];
-                            const opacities = [1, 0.88, 0.78, 0.7, 0.65];
+                            const sizes = [15, 14, 13, 13, 12];
+                            const opacities = [1, 0.9, 0.8, 0.7, 0.6];
                             return (
                               <span key={idx} className="ins-chip" style={{
                                 fontSize: sizes[Math.min(idx, sizes.length - 1)] ?? 12,
-                                opacity: opacities[Math.min(idx, opacities.length - 1)] ?? 0.65,
+                                opacity: opacities[Math.min(idx, opacities.length - 1)] ?? 0.6,
                               }}>
                                 {kw.keyword}
-                                {idx < 3 && <span style={{ marginLeft: 5, fontSize: 9, opacity: 0.6 }}>#{idx + 1}</span>}
+                                {idx < 3 && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.7, fontWeight: 700 }}>#{idx + 1}</span>}
                               </span>
                             );
                           })
-                        : <p style={{ color: 'hsl(210 15% 45%)', fontSize: 13 }}>Use the search bar to build your keyword profile.</p>
+                        : <p style={{ color: 'hsl(210 15% 60%)', fontSize: 14 }}>Use the search bar to build your keyword profile.</p>
                       }
                     </div>
                   </div>
@@ -707,32 +713,32 @@ export default function Dashboard() {
                   {/* Activity Timeline */}
                   <div className="ins-card">
                     <div className="ins-section-title">Activity Timeline</div>
-                    <p className="ins-sub" style={{ marginBottom: 16 }}>Search & view trends — last 30 days</p>
+                    <p className="ins-sub" style={{ marginBottom: 20 }}>Search & view trends — last 30 days</p>
                     {(analytics?.activity_timeline ?? []).length > 0 ? (
-                      <div style={{ height: 220 }}>
+                      <div style={{ height: 240 }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={analytics.activity_timeline} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                             <defs>
                               <linearGradient id="gSearch" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(145 60% 45%)" stopOpacity={0.5} />
-                                <stop offset="100%" stopColor="hsl(145 60% 45%)" stopOpacity={0.02} />
+                                <stop offset="0%" stopColor="#10b981" stopOpacity={0.2} />
+                                <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                               </linearGradient>
                               <linearGradient id="gView" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(214 80% 65%)" stopOpacity={0.5} />
-                                <stop offset="100%" stopColor="hsl(214 80% 65%)" stopOpacity={0.02} />
+                                <stop offset="0%" stopColor="#2E6091" stopOpacity={0.2} />
+                                <stop offset="100%" stopColor="#2E6091" stopOpacity={0} />
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 25% 20%/0.5)" />
-                            <XAxis dataKey="date" tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 20% 90%)" vertical={false} />
+                            <XAxis dataKey="date" tick={{ fill: 'hsl(210 15% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
+                            <YAxis tick={{ fill: 'hsl(210 15% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} dx={-10} />
                             <Tooltip
-                              contentStyle={{ background: 'hsl(210 25% 10%)', border: '1px solid hsl(210 40% 25%)', borderRadius: 10, fontSize: 12 }}
-                              labelStyle={{ color: '#fff', fontWeight: 700 }}
-                              itemStyle={{ color: 'hsl(210 20% 70%)' }}
+                              contentStyle={{ background: '#ffffff', border: '1px solid hsl(210 20% 90%)', borderRadius: 12, boxShadow: '0 4px 12px hsl(210 20% 40%/0.1)' }}
+                              labelStyle={{ color: 'hsl(210 25% 15%)', fontWeight: 700, marginBottom: 4 }}
+                              itemStyle={{ color: 'hsl(210 20% 40%)', fontWeight: 600 }}
                             />
-                            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: 'hsl(210 15% 60%)' }} />
-                            <Area type="monotone" dataKey="search_count" stroke="hsl(145 60% 45%)" fill="url(#gSearch)" name="Searches" strokeWidth={2.5} dot={false} />
-                            <Area type="monotone" dataKey="view_count" stroke="hsl(214 80% 65%)" fill="url(#gView)" name="Views" strokeWidth={2.5} dot={false} />
+                            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 13, color: 'hsl(210 15% 45%)', paddingTop: 10 }} />
+                            <Area type="monotone" dataKey="search_count" stroke="#10b981" fill="url(#gSearch)" name="Searches" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} />
+                            <Area type="monotone" dataKey="view_count" stroke="#2E6091" fill="url(#gView)" name="Views" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#2E6091', stroke: '#fff', strokeWidth: 2 }} />
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
@@ -747,17 +753,17 @@ export default function Dashboard() {
                   {/* Category Donut */}
                   <div className="ins-card">
                     <div className="ins-section-title">Top Categories</div>
-                    <p className="ins-sub" style={{ marginBottom: 12 }}>What you browse most</p>
+                    <p className="ins-sub" style={{ marginBottom: 16 }}>What you browse most</p>
                     {(analytics?.top_categories ?? []).length > 0 ? (
                       <>
                         <div style={{ height: 180 }}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <defs>
-                                {['hsl(214 80% 55%)', 'hsl(145 60% 45%)', 'hsl(270 65% 60%)', 'hsl(35 90% 55%)', 'hsl(350 75% 55%)'].map((c, i) => (
+                                {['#2E6091', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'].map((c, i) => (
                                   <radialGradient key={i} id={`pieG${i}`} cx="50%" cy="50%" r="50%">
                                     <stop offset="0%" stopColor={c} stopOpacity={1} />
-                                    <stop offset="100%" stopColor={c} stopOpacity={0.7} />
+                                    <stop offset="100%" stopColor={c} stopOpacity={0.8} />
                                   </radialGradient>
                                 ))}
                               </defs>
@@ -765,7 +771,7 @@ export default function Dashboard() {
                                 data={analytics.top_categories.slice(0, 5)}
                                 dataKey="count" nameKey="category"
                                 cx="50%" cy="50%"
-                                innerRadius={46} outerRadius={78}
+                                innerRadius={48} outerRadius={80}
                                 paddingAngle={3}
                                 stroke="none"
                               >
@@ -774,26 +780,27 @@ export default function Dashboard() {
                                 ))}
                               </Pie>
                               <Tooltip
-                                contentStyle={{ background: 'hsl(210 25% 10%)', border: '1px solid hsl(210 40% 25%)', borderRadius: 10, fontSize: 12 }}
+                                contentStyle={{ background: '#ffffff', border: '1px solid hsl(210 20% 90%)', borderRadius: 12, boxShadow: '0 4px 12px hsl(210 20% 40%/0.1)' }}
+                                itemStyle={{ fontWeight: 600 }}
                                 formatter={(val: any, name: any) => [val, name]}
                               />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
                         {/* Legend */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
                           {analytics.top_categories.slice(0, 4).map((cat: any, i: number) => {
-                            const colors = ['hsl(214 80% 55%)', 'hsl(145 60% 45%)', 'hsl(270 65% 60%)', 'hsl(35 90% 55%)'];
+                            const colors = ['#2E6091', '#10b981', '#8b5cf6', '#f59e0b'];
                             const total = analytics.top_categories.reduce((a: number, c: any) => a + c.count, 0);
                             const pct = total > 0 ? Math.round((cat.count / total) * 100) : 0;
                             return (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i], flexShrink: 0 }} />
-                                <span style={{ fontSize: 12, color: 'hsl(210 15% 65%)', flex: 1, textTransform: 'capitalize' }}>{cat.category}</span>
-                                <div style={{ width: 60, height: 4, borderRadius: 4, background: 'hsl(210 25% 18%)' }}>
-                                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: colors[i] }} />
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', background: colors[i], flexShrink: 0 }} />
+                                <span style={{ fontSize: 13, color: 'hsl(210 25% 30%)', flex: 1, textTransform: 'capitalize', fontWeight: 500 }}>{cat.category}</span>
+                                <div style={{ width: 70, height: 6, borderRadius: 6, background: 'hsl(210 20% 92%)' }}>
+                                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: 6, background: colors[i] }} />
                                 </div>
-                                <span style={{ fontSize: 11, color: 'hsl(210 15% 50%)', width: 28, textAlign: 'right' }}>{pct}%</span>
+                                <span style={{ fontSize: 12, color: 'hsl(210 15% 45%)', width: 32, textAlign: 'right', fontWeight: 600 }}>{pct}%</span>
                               </div>
                             );
                           })}
@@ -801,8 +808,8 @@ export default function Dashboard() {
                       </>
                     ) : (
                       <div style={{ height: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 36 }}>🍩</span>
-                        <p style={{ color: 'hsl(210 15% 45%)', fontSize: 13 }}>Browse by category to see your preferences.</p>
+                        <span style={{ fontSize: 40 }}>🍩</span>
+                        <p style={{ color: 'hsl(210 15% 50%)', fontSize: 14 }}>Browse by category to see your preferences.</p>
                       </div>
                     )}
                   </div>
@@ -812,8 +819,8 @@ export default function Dashboard() {
                 {listings.length > 0 && (
                   <div className="ins-card">
                     <div className="ins-section-title">Your Listing Performance</div>
-                    <p className="ins-sub" style={{ marginBottom: 16 }}>Views per listing</p>
-                    <div style={{ height: 180 }}>
+                    <p className="ins-sub" style={{ marginBottom: 20 }}>Views per listing</p>
+                    <div style={{ height: 200 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={listings.slice(0, 8).map(l => ({ name: l.title.slice(0, 14) + (l.title.length > 14 ? '…' : ''), views: l.views || 0 }))}
@@ -821,18 +828,18 @@ export default function Dashboard() {
                         >
                           <defs>
                             <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(210 56% 55%)" />
-                              <stop offset="100%" stopColor="hsl(210 56% 35%)" />
+                              <stop offset="0%" stopColor="#4f8bd1" />
+                              <stop offset="100%" stopColor="#2E6091" />
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 25% 20%/0.5)" vertical={false} />
-                          <XAxis dataKey="name" tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fill: 'hsl(210 15% 45%)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(210 20% 90%)" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fill: 'hsl(210 15% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
+                          <YAxis tick={{ fill: 'hsl(210 15% 50%)', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} dx={-10} />
                           <Tooltip
-                            contentStyle={{ background: 'hsl(210 25% 10%)', border: '1px solid hsl(210 40% 25%)', borderRadius: 10, fontSize: 12 }}
-                            cursor={{ fill: 'hsl(210 40% 30%/0.2)' }}
+                            contentStyle={{ background: '#ffffff', border: '1px solid hsl(210 20% 90%)', borderRadius: 12, boxShadow: '0 4px 12px hsl(210 20% 40%/0.1)' }}
+                            cursor={{ fill: 'hsl(210 20% 96%)' }}
                           />
-                          <Bar dataKey="views" fill="url(#barGrad)" radius={[6, 6, 0, 0]} name="Views" />
+                          <Bar dataKey="views" fill="url(#barGrad)" radius={[8, 8, 0, 0]} name="Views" maxBarSize={60} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

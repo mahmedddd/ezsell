@@ -452,26 +452,24 @@ export default function EzSellChatbot() {
             {messages.map((msg, idx) => (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 {msg.role === 'assistant' ? (
-                  <div className={`ez-bot-bubble${msg.streaming && msg.content ? ' ez-cursor' : ''}`}
-                    dangerouslySetInnerHTML={{ __html: msg.content ? renderMarkdown(msg.content) : '' }}
-                  />
+                  msg.content === '' ? (
+                    msg.streaming ? <TypingDots /> : null
+                  ) : (
+                    <div className={`ez-bot-bubble${msg.streaming ? ' ez-cursor' : ''}`}
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                    />
+                  )
                 ) : (
                   <div className="ez-user-bubble">{msg.content}</div>
                 )}
                 {/* Timestamp on last message */}
-                {idx === messages.length - 1 && (
+                {idx === messages.length - 1 && !msg.streaming && msg.content !== '' && (
                   <span style={{ fontSize: 11, color: 'hsl(210 15% 42%)', marginTop: 4, paddingInline: 4 }}>
                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </div>
             ))}
-            {/* Typing indicator when awaiting first token */}
-            {isStreaming && messages[messages.length - 1]?.content === '' && (
-              <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                <TypingDots />
-              </div>
-            )}
             <div ref={messagesEndRef} />
           </div>
 
