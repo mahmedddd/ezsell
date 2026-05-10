@@ -20,7 +20,12 @@ def upgrade_database():
         ('listing_hash', 'TEXT'),
         ('fraud_flags', 'TEXT'),
         ('rejection_reason', 'TEXT'),
-        ('semantic_embedding', 'TEXT')
+        ('semantic_embedding', 'TEXT'),
+        ('image_hash', 'TEXT'),
+        ('model_glb_url', 'TEXT'),
+        ('model_usdz_url', 'TEXT'),
+        ('dimensions_cm', 'TEXT'),
+        ('polygon_count', 'INTEGER')
     ]
     
     for col_name, col_type in listings_cols:
