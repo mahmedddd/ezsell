@@ -663,7 +663,7 @@ export default function Dashboard() {
                             position: 'absolute', inset: 0, display: 'flex',
                             flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                           }}>
-                            <div style={{ fontSize: 32, fontWeight: 900, color: hsl(210 25% 15%), lineHeight: 1 }}>{score}</div>
+                            <div style={{ fontSize: 32, fontWeight: 900, color: 'hsl(210 25% 15%)', lineHeight: 1 }}>{score}</div>
                             <div style={{ fontSize: 12, color: 'hsl(210 15% 50%)', marginTop: 2, fontWeight: 600 }}>/100</div>
                           </div>
                         </div>
