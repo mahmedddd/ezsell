@@ -1,10 +1,5 @@
-"""
-Semantic AI Service
-Generates dense vector embeddings for text using Sentence Transformers
-"""
 import json
 from typing import List, Dict, Optional
-import numpy as np
 
 HAS_ML = True # We assume True and handle errors in the function
 
