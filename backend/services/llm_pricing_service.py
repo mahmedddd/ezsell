@@ -210,24 +210,35 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             import asyncio
             loop = asyncio.get_event_loop()
             
-            def _run_search():
-                try:
-                    with DDGS() as ddgs:
-                        # Narrow search to exact device specs
-                        q = f'site:gsmarena.com "{title}" specifications'
-                        return list(ddgs.text(q, max_results=5))
-                except:
-                    return []
+            def _run_discovery():
+                # Try multiple queries to be absolutely sure we find the link
+                queries = [
+                    f'site:gsmarena.com "{title}" specifications',
+                    f'gsmarena {title} specs',
+                    f'"{title}" gsmarena'
+                ]
+                found_links = []
+                with DDGS() as ddgs:
+                    for q in queries:
+                        try:
+                            results = list(ddgs.text(q, max_results=5))
+                            for r in results:
+                                url = r.get('href', '')
+                                if "gsmarena.com" in url and ".php" in url:
+                                    found_links.append(url)
+                        except:
+                            continue
+                        if found_links: break
+                return found_links
             
-            search_results = await loop.run_in_executor(None, _run_search)
-            for r in search_results:
-                url = r.get('href', '')
-                # Filter to valid device pages (e.g. https://www.gsmarena.com/samsung_galaxy_a56-13603.php)
+            discovery_results = await loop.run_in_executor(None, _run_discovery)
+            for url in discovery_results:
+                # Filter to valid device pages (e.g. samsung_galaxy_a56-13603.php)
                 if re.match(r'^https://www\.gsmarena\.com/[a-zA-Z0-9_-]+-\d+\.php$', url):
                     gsmarena_url = url
                     break
 
-            # Fallback to direct search if DDG yields nothing or is blocked
+            # Fallback to direct search only if all else fails
             if not gsmarena_url:
                 search_url = f'https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName={urllib.parse.quote_plus(title)}'
                 async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
@@ -239,7 +250,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                                 gsmarena_url = f"https://www.gsmarena.com/{link}"
                                 break
         except Exception as e:
-            print(f"GSMArena URL discovery failed: {e}")
+            print(f"GSMArena discovery path failed: {e}")
 
         if not gsmarena_url:
             print(f"No GSMArena URL found for '{title}'")
