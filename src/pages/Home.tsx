@@ -408,8 +408,8 @@ export default function Home() {
                         <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                           {listing.title}
                         </h3>
-                        <p className="text-base font-black text-primary tracking-tighter mt-0.5">
-                          {formatCurrency(listing.price)}
+                        <p className="text-base font-black text-primary mt-0.5">
+                          PKR {listing.price?.toLocaleString()}
                         </p>
                         <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/30">
                           <span className="text-[10px] text-muted-foreground/60 ml-auto">

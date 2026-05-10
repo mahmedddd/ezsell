@@ -13,51 +13,51 @@
   :root {
     /* Core palette */
     --background:      50 30% 97%;
-    --foreground:      210 56% 7%;
+    --foreground:      128 56% 7%;
 
     --card:            0 0% 100%;
-    --card-foreground: 210 56% 7%;
+    --card-foreground: 128 56% 7%;
 
     --popover:         0 0% 100%;
-    --popover-foreground: 210 56% 7%;
+    --popover-foreground: 128 56% 7%;
 
-    /* Brand blues (from logo) */
-    --primary:         210 56% 37%;
+    /* Brand greens */
+    --primary:         128 56% 13%;
     --primary-foreground: 0 0% 100%;
-    --primary-light:   206 56% 53%;
-    --primary-glow:    212 47% 46%;
+    --primary-light:   128 40% 22%;
+    --primary-glow:    128 60% 35%;
 
-    /* Accent blue-grey */
-    --secondary:       210 20% 61%;
-    --secondary-foreground: 210 56% 7%;
+    /* Accent olive */
+    --secondary:       68 23% 61%;
+    --secondary-foreground: 128 56% 7%;
 
-    --muted:           210 20% 95%;
-    --muted-foreground: 210 15% 42%;
+    --muted:           68 23% 95%;
+    --muted-foreground: 68 15% 42%;
 
-    --accent:          210 35% 55%;
-    --accent-foreground: 210 56% 7%;
+    --accent:          68 35% 55%;
+    --accent-foreground: 128 56% 7%;
 
     --destructive:     0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border:          210 20% 88%;
-    --input:           210 20% 88%;
-    --ring:            210 56% 37%;
+    --border:          68 20% 88%;
+    --input:           68 20% 88%;
+    --ring:            128 56% 13%;
 
     --radius: 0.875rem;
 
     /* Gradients */
-    --gradient-hero:     linear-gradient(135deg, hsl(210 56% 37%) 0%, hsl(212 47% 46%) 50%, hsl(206 40% 62%) 100%);
-    --gradient-primary:  linear-gradient(135deg, hsl(210 56% 37%) 0%, hsl(206 23% 61%) 100%);
-    --gradient-card:     linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(206 30% 98%) 100%);
-    --gradient-bg:       linear-gradient(160deg, hsl(206 30% 97%) 0%, hsl(210 25% 95%) 40%, hsl(212 15% 96%) 100%);
-    --gradient-glass:    linear-gradient(135deg, hsl(0 0% 100% / 0.7) 0%, hsl(206 20% 98% / 0.4) 100%);
+    --gradient-hero:     linear-gradient(135deg, hsl(128 56% 13%) 0%, hsl(128 45% 20%) 50%, hsl(68 40% 42%) 100%);
+    --gradient-primary:  linear-gradient(135deg, hsl(128 56% 13%) 0%, hsl(68 23% 61%) 100%);
+    --gradient-card:     linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(68 30% 98%) 100%);
+    --gradient-bg:       linear-gradient(160deg, hsl(68 30% 97%) 0%, hsl(50 25% 95%) 40%, hsl(128 15% 96%) 100%);
+    --gradient-glass:    linear-gradient(135deg, hsl(0 0% 100% / 0.7) 0%, hsl(68 20% 98% / 0.4) 100%);
 
     /* Glassmorphism */
     --glass-bg:          hsl(0 0% 100% / 0.72);
-    --glass-bg-dark:     hsl(210 56% 7% / 0.85);
-    --glass-border:      hsl(206 23% 91% / 0.6);
-    --glass-border-dark: hsl(210 56% 60% / 0.15);
+    --glass-bg-dark:     hsl(128 56% 7% / 0.85);
+    --glass-border:      hsl(68 23% 91% / 0.6);
+    --glass-border-dark: hsl(128 56% 60% / 0.15);
 
     /* Shadows */
     --shadow-xs:     0 1px 3px hsl(210 56% 7% / 0.06), 0 1px 2px hsl(210 56% 7% / 0.04);
