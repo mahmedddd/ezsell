@@ -229,24 +229,24 @@ export default function EzSellChatbot() {
         .ez-bot-bubble {
           background:hsl(210 25% 13%);
           border:1px solid hsl(210 56% 37%/0.25);
-          border-radius:4px 16px 16px 16px;
-          padding:10px 14px;
-          font-size:13.5px;
-          line-height:1.6;
-          color:hsl(210 20% 88%);
+          border-radius:4px 18px 18px 18px;
+          padding:13px 17px;
+          font-size:14.5px;
+          line-height:1.7;
+          color:hsl(210 20% 90%);
           animation:ezMsgIn 0.25s ease both;
-          max-width:88%;
+          max-width:90%;
           word-break:break-word;
         }
         .ez-user-bubble {
           background:linear-gradient(135deg,hsl(210 56% 37%),hsl(212 47% 48%));
-          border-radius:16px 4px 16px 16px;
-          padding:10px 14px;
-          font-size:13.5px;
-          line-height:1.6;
+          border-radius:18px 4px 18px 18px;
+          padding:13px 17px;
+          font-size:14.5px;
+          line-height:1.7;
           color:#fff;
           animation:ezMsgIn 0.25s ease both;
-          max-width:88%;
+          max-width:90%;
           word-break:break-word;
           margin-left:auto;
         }
@@ -254,8 +254,8 @@ export default function EzSellChatbot() {
           background:hsl(210 25% 16%);
           border:1px solid hsl(210 56% 37%/0.3);
           border-radius:20px;
-          padding:6px 13px;
-          font-size:12px;
+          padding:7px 15px;
+          font-size:13px;
           color:hsl(210 60% 75%);
           cursor:pointer;
           transition:all 0.2s;
@@ -270,23 +270,23 @@ export default function EzSellChatbot() {
         .ez-input {
           background:hsl(210 20% 11%);
           border:1px solid hsl(210 30% 22%);
-          border-radius:12px;
-          padding:10px 14px;
-          font-size:13.5px;
+          border-radius:14px;
+          padding:12px 16px;
+          font-size:14.5px;
           color:hsl(210 20% 90%);
           width:100%;
           resize:none;
           outline:none;
           font-family:inherit;
           transition:border-color 0.2s;
-          line-height:1.5;
+          line-height:1.55;
         }
         .ez-input:focus { border-color:hsl(210 56% 37%/0.7); }
         .ez-input::placeholder { color:hsl(210 15% 45%); }
         .ez-send-btn {
-          width:38px; height:38px;
+          width:44px; height:44px;
           background:linear-gradient(135deg,hsl(210 56% 37%),hsl(212 47% 48%));
-          border:none; border-radius:10px; cursor:pointer;
+          border:none; border-radius:12px; cursor:pointer;
           display:flex; align-items:center; justify-content:center;
           transition:all 0.2s; flex-shrink:0;
         }
@@ -340,13 +340,13 @@ export default function EzSellChatbot() {
           id="ezsell-chatbot-panel"
           style={{
             position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-            width: 'min(380px, calc(100vw - 32px))',
-            height: 'min(580px, calc(100vh - 100px))',
+            width: 'min(460px, calc(100vw - 24px))',
+            height: 'min(640px, calc(100vh - 80px))',
             display: 'flex', flexDirection: 'column',
             background: 'hsl(210 25% 8%/0.97)',
             backdropFilter: 'blur(24px)',
             border: '1px solid hsl(210 56% 37%/0.3)',
-            borderRadius: 20,
+            borderRadius: 22,
             boxShadow: '0 20px 60px hsl(210 56% 7%/0.7), 0 0 0 1px hsl(210 56% 37%/0.15)',
             animation: 'ezPanelIn 0.28s cubic-bezier(0.16,1,0.3,1) both',
             overflow: 'hidden',
@@ -354,17 +354,17 @@ export default function EzSellChatbot() {
         >
           {/* Header */}
           <div style={{
-            padding: '14px 16px',
+            padding: '16px 18px',
             background: 'linear-gradient(135deg,hsl(210 56% 22%),hsl(212 47% 28%))',
             backgroundSize: '200% 200%',
             animation: 'ezHeaderShimmer 6s ease infinite',
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'center', gap: 12,
             borderBottom: '1px solid hsl(210 56% 37%/0.2)',
             flexShrink: 0,
           }}>
             {/* Avatar */}
             <div style={{
-              width: 36, height: 36, borderRadius: '50%',
+              width: 42, height: 42, borderRadius: '50%',
               background: 'hsl(210 56% 37%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: '2px solid hsl(210 56% 60%/0.4)', flexShrink: 0,
@@ -376,12 +376,12 @@ export default function EzSellChatbot() {
               </svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15.5, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
                 EzSell Assistant
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
-                <span style={{ color: 'hsl(210 20% 70%)', fontSize: 11 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+                <span style={{ color: 'hsl(210 20% 72%)', fontSize: 12 }}>
                   {isStreaming ? 'Typing...' : 'Online · llama-3.1-8b'}
                 </span>
               </div>
@@ -404,7 +404,7 @@ export default function EzSellChatbot() {
           </div>
 
           {/* Messages */}
-          <div className="ez-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="ez-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {messages.map((msg, idx) => (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 {msg.role === 'assistant' ? (
@@ -416,7 +416,7 @@ export default function EzSellChatbot() {
                 )}
                 {/* Timestamp on last message */}
                 {idx === messages.length - 1 && (
-                  <span style={{ fontSize: 10, color: 'hsl(210 15% 40%)', marginTop: 3, paddingInline: 4 }}>
+                  <span style={{ fontSize: 11, color: 'hsl(210 15% 42%)', marginTop: 4, paddingInline: 4 }}>
                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
@@ -433,7 +433,7 @@ export default function EzSellChatbot() {
 
           {/* Quick suggestion chips */}
           {!isStreaming && (
-            <div style={{ padding: '0 14px 10px', display: 'flex', gap: 6, flexWrap: 'wrap', flexShrink: 0 }}>
+            <div style={{ padding: '0 16px 12px', display: 'flex', gap: 7, flexWrap: 'wrap', flexShrink: 0 }}>
               {suggestions.map(s => (
                 <button key={s} className="ez-chip" onClick={() => sendMessage(s)}>{s}</button>
               ))}
@@ -442,10 +442,10 @@ export default function EzSellChatbot() {
 
           {/* Input bar */}
           <div style={{
-            padding: '10px 14px 14px',
+            padding: '12px 16px 16px',
             borderTop: '1px solid hsl(210 25% 15%)',
             background: 'hsl(210 25% 7%)',
-            display: 'flex', gap: 8, alignItems: 'flex-end', flexShrink: 0,
+            display: 'flex', gap: 10, alignItems: 'flex-end', flexShrink: 0,
           }}>
             <textarea
               ref={inputRef}
@@ -461,7 +461,7 @@ export default function EzSellChatbot() {
               onKeyDown={handleKeyDown}
               placeholder="Ask me anything…"
               disabled={isStreaming}
-              style={{ maxHeight: 100 }}
+              style={{ maxHeight: 120 }}
             />
             <button
               id="ezsell-chatbot-send"
