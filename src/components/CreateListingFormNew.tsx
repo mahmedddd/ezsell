@@ -2094,8 +2094,8 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                       <div className="bg-white/60 border border-green-100 rounded-lg px-3 py-2 text-xs text-green-800">
                         <span className="font-semibold">Blend: </span>
                         {blendIsLLMDominant
-                          ? '70% live OLX market data + 30% ML model (high confidence)'
-                          : '30% live OLX data + 70% ML model (lower confidence — limited market data)'}
+                          ? '85% live scraped market data + 15% ML model (high confidence)'
+                          : '60% live scraped data + 40% ML model (lower confidence — limited market data)'}
                       </div>
 
                       {/* LLM Reasoning */}

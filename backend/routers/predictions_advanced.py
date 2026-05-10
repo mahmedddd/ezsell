@@ -1787,12 +1787,12 @@ async def predict_price(request: PricePredictionRequest):
             
             # 3. Blend with LLM Price (LLM is ALREADY condition adjusted)
             if llm_price > 0:
-                if llm_conf > 0.6:
-                    predicted_price = (llm_price * 0.7) + (adjusted_ml_price * 0.3)
+                if llm_conf >= 0.5:
+                    predicted_price = (llm_price * 0.85) + (adjusted_ml_price * 0.15)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (adjusted_ml_price * 0.7)
-                    data_source = "ML Model + LLM Blend"
+                    predicted_price = (llm_price * 0.6) + (adjusted_ml_price * 0.4)
+                    data_source = "LLM Market Aware + ML Blend"
             else:
                 predicted_price = adjusted_ml_price
                 data_source = "Enhanced ML Model"
@@ -1834,12 +1834,12 @@ async def predict_price(request: PricePredictionRequest):
             
             # 3. Blend with LLM Price
             if llm_price > 0:
-                if llm_conf > 0.6:
-                    predicted_price = (llm_price * 0.7) + (adjusted_ml_price * 0.3)
+                if llm_conf >= 0.5:
+                    predicted_price = (llm_price * 0.85) + (adjusted_ml_price * 0.15)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.3) + (adjusted_ml_price * 0.7)
-                    data_source = "ML Model + LLM Blend"
+                    predicted_price = (llm_price * 0.6) + (adjusted_ml_price * 0.4)
+                    data_source = "LLM Market Aware + ML Blend"
             else:
                 predicted_price = adjusted_ml_price
                 data_source = "Enhanced ML Model"
@@ -1885,12 +1885,12 @@ async def predict_price(request: PricePredictionRequest):
             
             # 3. Blend with LLM Price
             if llm_price > 0:
-                if llm_conf > 0.7:
-                    predicted_price = (llm_price * 0.8) + (adjusted_ml_price * 0.2)
+                if llm_conf >= 0.5:
+                    predicted_price = (llm_price * 0.85) + (adjusted_ml_price * 0.15)
                     data_source = "LLM Market Aware + ML Blend"
                 else:
-                    predicted_price = (llm_price * 0.4) + (adjusted_ml_price * 0.6)
-                    data_source = "ML Model + LLM Blend"
+                    predicted_price = (llm_price * 0.6) + (adjusted_ml_price * 0.4)
+                    data_source = "LLM Market Aware + ML Blend"
             else:
                 predicted_price = adjusted_ml_price
                 data_source = "ML Model"

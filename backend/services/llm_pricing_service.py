@@ -239,6 +239,21 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                         pass
                     return None
                 gsmarena_url = await loop.run_in_executor(None, _ddg_find)
+                
+                # Double fallback using raw HTML if ddgs fails due to rate limits
+                if not gsmarena_url:
+                    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                        ddg_html_url = f"https://html.duckduckgo.com/html/?q=site:gsmarena.com+{urllib.parse.quote_plus(title)}+specifications"
+                        res = await client.get(ddg_html_url, headers=headers)
+                        if res.status_code == 200:
+                            urls = re.findall(r'href="([^"]+gsmarena\.com/[^"]+-\d+\.php)"', res.text)
+                            for u in urls:
+                                # HTML duckduckgo wraps urls in redirecters
+                                decoded_match = re.search(r'uddg=(https?://www\.gsmarena\.com/[^&]+)', urllib.parse.unquote(u))
+                                final_url = decoded_match.group(1) if decoded_match else u
+                                if re.match(r'^https://www\.gsmarena\.com/[a-zA-Z0-9_-]+-\d+\.php$', final_url):
+                                    gsmarena_url = final_url
+                                    break
             except Exception as e:
                 print(f"DDG fallback discovery failed: {e}")
 
@@ -355,7 +370,21 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                 results = await loop.run_in_executor(None, _run)
                 return [f"[{r.get('title','')}] {r.get('body','')}" for r in results if r.get('body')]
             except Exception as e:
-                print(f"DDG fallback error: {e}")
+                print(f"DDG ddgs error, falling back to httpx: {e}")
+                # Fallback to HTML DuckDuckGo
+                try:
+                    import httpx
+                    import re
+                    import urllib.parse
+                    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                        html_url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote_plus(q)}"
+                        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                        res = await client.get(html_url, headers=headers)
+                        if res.status_code == 200:
+                            snippets = re.findall(r'<a class="result__snippet[^>]*>(.*?)</a>', res.text, re.IGNORECASE | re.DOTALL)
+                            return [re.sub(r'<[^>]+>', '', s).strip() for s in snippets[:3]]
+                except Exception as e2:
+                    print(f"DDG httpx fallback error: {e2}")
                 return []
 
         all_results = await asyncio.gather(*[search_one(q) for q in queries])
@@ -461,7 +490,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
         category_guidance = {
             "mobile": (
                 "You MUST include these exact keys: 'RAM', 'Storage', 'Color'.\n"
-                "- RAM: actual RAM options this specific model ships with (e.g. '8 GB', '12 GB').\n"
+                "- RAM: actual RAM options this specific model ships with (e.g. '8 GB', '12 GB'). CRITICAL: If the title is for a modern phone like Samsung Galaxy A55 or A56, DO NOT output 6 GB. They ship with '8 GB' and '12 GB' primarily.\n"
                 "- Storage: actual storage options (e.g. '128 GB', '256 GB').\n"
                 "- Color: the FULL official color names for this model (e.g. 'Awesome Navy', 'Awesome Iceblue')."
             ),
