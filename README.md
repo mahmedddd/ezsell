@@ -1,73 +1,114 @@
-# Welcome to your Lovable project
+# EzSell 🛒🤖
 
-## Project info
+![EzSell Platform](https://img.shields.io/badge/Status-Active-success)
+![React](https://img.shields.io/badge/React-18.x-blue)
+![Vite](https://img.shields.io/badge/Vite-5.x-purple)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110-teal)
+![Python](https://img.shields.io/badge/Python-3.10+-yellow)
 
-**URL**: https://lovable.dev/projects/bf5cf8e1-94ab-4c3d-9177-16aa1ab58946
+**EzSell** is a next-generation, AI-powered online marketplace exclusively designed for buying and selling Mobiles, Laptops, and Furniture in Pakistan. It integrates advanced machine learning and AI features to provide a highly secure, intuitive, and modern user experience.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🌟 Key Features
 
-**Use Lovable**
+### 🤖 Intelligent In-App AI Assistant
+A built-in, context-aware chatbot (powered by **Groq LLaMA-3.1-8b**) that acts as a 24/7 personal consultant:
+- Explains the fraud system and helps users fix rejected listings.
+- Analyzes live scraped CSV data to provide used market price ranges (Min/Median/Max) vs. new retail prices.
+- Suggests furniture design styles, room color combinations, and AR viewing instructions.
+- Guides users through navigation and troubleshooting seamlessly via a futuristic glassmorphic UI widget.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bf5cf8e1-94ab-4c3d-9177-16aa1ab58946) and start prompting.
+### 🛡️ Smart Fraud Protection & Validation System
+Listings undergo rigorous automated screening before going live:
+- **Duplicate Detection**: Advanced content hashing prevents spam and identical listings.
+- **AI Vision Checks**: Uses CLIP models to verify that uploaded images actually match the selected category (no laptops in the mobiles section!).
+- **Scam Keyword Detection**: Automatically flags suspicious descriptions ("advance payment", "gift card", etc.).
+- **Price Anomaly Detection**: Prevents extreme low-balling or unrealistic pricing by comparing the listing price to AI predictions.
 
-Changes made via Lovable will be committed automatically to this repo.
+### 💰 AI Price Prediction Engine
+- Real-time market value estimation for devices and furniture based on scraped data (OLX Pakistan) and ML benchmarks.
+- Helps sellers price their items competitively and buyers know if they're getting a fair deal.
 
-**Use your preferred IDE**
+### 🛋️ Augmented Reality (AR) / 3D Viewer
+- View furniture directly in your physical space!
+- Integrated with 2D-to-3D generation pipelines to allow buyers to accurately visualize furniture scale and style before purchasing.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Technology Stack
 
-Follow these steps:
+**Frontend:**
+- [React](https://reactjs.org/) + [TypeScript](https://www.typescriptlang.org/)
+- [Vite](https://vitejs.dev/) (Build Tool & Dev Server)
+- [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/) (Styling & Components)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+**Backend:**
+- [FastAPI](https://fastapi.tiangolo.com/) (High-performance Python API)
+- [PostgreSQL](https://www.postgresql.org/) + [SQLAlchemy](https://www.sqlalchemy.org/) (Database & ORM)
+- [Groq API](https://groq.com/) (LLaMA-3.1-8b for the Chatbot and validation services)
+- `sentence-transformers`, `scikit-learn` (Local Semantic Embeddings & ML)
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### 1. Clone the repository
+```bash
 git clone <YOUR_GIT_URL>
+cd ezsell
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2. Frontend Setup
+Make sure you have [Node.js](https://nodejs.org/) installed (v18+ recommended).
+```bash
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 3. Backend Setup
+Make sure you have [Python 3.10+](https://www.python.org/) installed.
+```bash
+# Navigate to backend directory
+cd backend
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
 
-**Use GitHub Codespaces**
+# Install requirements
+pip install -r requirements.txt
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Configure Environment Variables
+# Copy .env.example to .env and fill in your keys (Database, Groq, JWT Secret, etc.)
+cp .env.example .env
 
-## What technologies are used for this project?
+# Start the FastAPI server
+uvicorn main:app --reload
+```
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🌍 Deployment (EC2 / Production)
 
-## How can I deploy this project?
+The application is configured to run on an Ubuntu EC2 instance utilizing Nginx as a reverse proxy for both the compiled React frontend and the FastAPI backend service.
 
-Simply open [Lovable](https://lovable.dev/projects/bf5cf8e1-94ab-4c3d-9177-16aa1ab58946) and click on Share -> Publish.
+### Quick Deploy (Backend Services)
+To deploy backend changes, run the included setup script:
+```bash
+bash backend/ec2_chatbot_setup.sh
+```
+This script automates pulling code, upgrading packages, building the frontend, restarting Nginx, and reloading the `ezsell.service` daemon.
 
-## Can I connect a custom domain to my Lovable project?
+*(Note: Ensure your `.env` secrets, especially `GROQ_CHATBOT_API_KEY`, are properly set on your EC2 instance since they are excluded from version control.)*
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🤝 Contributing
+Contributions are welcome! Please ensure you test locally before pushing changes to the main branch. Make sure not to commit any `.env` files or API keys.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📄 License
+This project is licensed under the MIT License.

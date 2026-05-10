@@ -83,6 +83,7 @@ export default function EzSellChatbot() {
     'AR viewing help 🪑',
   ]);
   const [hasUnread, setHasUnread] = useState(false);
+  const [isFabHovered, setIsFabHovered] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -208,8 +209,8 @@ export default function EzSellChatbot() {
           40% { transform:scale(1); opacity:1; }
         }
         @keyframes ezFabGlow {
-          0%,100% { box-shadow:0 0 0 0 hsl(210 56% 37%/0.5),0 4px 20px hsl(210 56% 37%/0.4); }
-          50% { box-shadow:0 0 0 10px hsl(210 56% 37%/0),0 4px 20px hsl(210 56% 37%/0.6); }
+          0%,100% { box-shadow:0 0 0 0 hsl(210 56% 37%/0.5),0 6px 28px hsl(210 56% 37%/0.45); }
+          50% { box-shadow:0 0 0 12px hsl(210 56% 37%/0),0 6px 28px hsl(210 56% 37%/0.7); }
         }
         @keyframes ezPanelIn {
           from { opacity:0; transform:translateY(20px) scale(0.96); }
@@ -303,32 +304,68 @@ export default function EzSellChatbot() {
         <button
           id="ezsell-chatbot-fab"
           onClick={openChat}
-          aria-label="Open EzSell Assistant"
+          aria-label="Chat with AI Assistant"
+          onMouseEnter={() => setIsFabHovered(true)}
+          onMouseLeave={() => setIsFabHovered(false)}
           style={{
-            position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-            width: 58, height: 58, borderRadius: '50%', border: 'none',
-            background: 'linear-gradient(135deg,hsl(210 56% 32%),hsl(212 47% 44%))',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'ezFabGlow 2.5s ease-in-out infinite',
-            transition: 'transform 0.2s',
+            position: 'fixed', bottom: 28, right: 28, zIndex: 9999,
+            height: 68,
+            width: isFabHovered ? 240 : 68,
+            borderRadius: isFabHovered ? 34 : '50%',
+            border: 'none',
+            background: isFabHovered
+              ? 'linear-gradient(135deg,hsl(210 56% 28%),hsl(212 47% 40%))'
+              : 'linear-gradient(135deg,hsl(210 56% 32%),hsl(212 47% 44%))',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: isFabHovered ? 10 : 0,
+            overflow: 'hidden',
+            animation: isFabHovered ? 'none' : 'ezFabGlow 2.5s ease-in-out infinite',
+            transition: 'width 0.35s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.35s ease, background 0.2s ease, box-shadow 0.2s ease',
+            boxShadow: isFabHovered
+              ? '0 8px 32px hsl(210 56% 37%/0.55), 0 2px 8px hsl(210 56% 37%/0.3)'
+              : undefined,
+            paddingInline: isFabHovered ? 22 : 0,
           }}
-          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
-          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          {/* Bot icon */}
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {/* Bot icon — scales up slightly on hover */}
+          <svg
+            width={isFabHovered ? 28 : 30}
+            height={isFabHovered ? 28 : 30}
+            viewBox="0 0 24 24" fill="none" stroke="white"
+            strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+            style={{ flexShrink: 0, transition: 'all 0.3s ease' }}
+          >
             <rect x="3" y="11" width="18" height="10" rx="2"/>
             <path d="M12 11V7"/>
             <circle cx="12" cy="5" r="2"/>
             <line x1="8" y1="15" x2="8" y2="17"/>
             <line x1="16" y1="15" x2="16" y2="17"/>
           </svg>
+
+          {/* Label — fades in on hover */}
+          <span style={{
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: "'Plus Jakarta Sans','Inter',sans-serif",
+            whiteSpace: 'nowrap',
+            opacity: isFabHovered ? 1 : 0,
+            transform: isFabHovered ? 'translateX(0)' : 'translateX(-8px)',
+            transition: 'opacity 0.25s ease 0.1s, transform 0.25s ease 0.1s',
+            letterSpacing: '0.01em',
+          }}>
+            Chat with AI Assistant
+          </span>
+
           {/* Unread badge */}
           {hasUnread && (
             <span style={{
-              position: 'absolute', top: 4, right: 4,
-              width: 12, height: 12, borderRadius: '50%',
-              background: '#ef4444', border: '2px solid hsl(210 56% 32%)',
+              position: 'absolute', top: 10, right: 10,
+              width: 13, height: 13, borderRadius: '50%',
+              background: '#ef4444',
+              border: '2px solid hsl(210 56% 32%)',
+              flexShrink: 0,
             }} />
           )}
         </button>
