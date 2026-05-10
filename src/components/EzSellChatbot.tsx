@@ -421,7 +421,7 @@ export default function EzSellChatbot() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
                 <span style={{ color: 'hsl(210 20% 72%)', fontSize: 12 }}>
-                  {isStreaming ? 'Typing...' : 'Online · llama-3.1-8b'}
+                  {isStreaming ? 'Typing...' : 'Online'}
                 </span>
               </div>
             </div>
