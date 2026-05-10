@@ -25,7 +25,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import {
-  // Camera, Smartphone, Scan, ChevronRight, X, Loader2,
+  Camera, Smartphone, Scan, ChevronRight, X, Loader2,
   Ruler, Move, RotateCw, ZoomIn, Info, CheckCircle2,
   AlertTriangle, Sparkles, Box, Eye, QrCode, ExternalLink,
   Vibrate, Zap, LayoutGrid, ArrowDownCircle, MousePointer2
