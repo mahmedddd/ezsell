@@ -341,7 +341,7 @@ export default function ProductDetail() {
                       {listing.is_sold && <Badge variant="destructive">Sold</Badge>}
                     </div>
                   </div>
-                  <div className="text-3xl md:text-4xl font-black tracking-tighter text-[#2E6091] break-words overflow-hidden max-w-full">
+                  <div className="text-3xl md:text-4xl font-black tracking-tighter text-primary break-words overflow-hidden max-w-full">
                     {formatCurrency(listing.price)}
                   </div>
                 </div>

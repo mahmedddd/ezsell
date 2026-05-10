@@ -398,7 +398,7 @@ export default function Listings() {
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{listing.description}</p>
                           <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
-                            <span className="text-lg font-black text-[#2E6091] tracking-tighter">{formatCurrency(listing.price)}</span>
+                            <span className="text-lg font-black text-primary tracking-tighter">{formatCurrency(listing.price)}</span>
                             {condOk && (
                               <Badge className={`${condClass(condNum)} border text-[10px] font-semibold rounded-full`}>
                                 {getConditionLabel(condNum)} {condNum}/10

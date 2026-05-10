@@ -408,7 +408,7 @@ export default function Home() {
                         <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                           {listing.title}
                         </h3>
-                        <p className="text-base font-black text-[#2E6091] tracking-tighter mt-0.5">
+                        <p className="text-base font-black text-primary tracking-tighter mt-0.5">
                           {formatCurrency(listing.price)}
                         </p>
                         <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/30">

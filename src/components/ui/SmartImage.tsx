@@ -46,7 +46,6 @@ export function SmartImage({
         <img
           src={src}
           alt={alt}
-          loading={priority === 'eager' ? 'eager' : 'lazy'}
           fetchPriority={priority === 'eager' ? 'high' : 'auto'}
           decoding="async"
           onLoad={() => setLoaded(true)}
