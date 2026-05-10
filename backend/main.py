@@ -10,7 +10,7 @@ from routers import (
     users, listings, predictions_advanced as predictions, ar_customization,
     ar_customization_enhanced, google_auth, 
     messages, favorites, approvals, recommendations, analytics, ar_assets,
-    support, notifications
+    support, notifications, chatbot
 )
 from core.config import settings
 
@@ -124,6 +124,7 @@ app.include_router(recommendations.router, prefix=settings.API_V1_STR, tags=["Re
 app.include_router(analytics.router, prefix=settings.API_V1_STR, tags=["Analytics"])
 app.include_router(notifications.router, prefix=settings.API_V1_STR, tags=["Notifications"])
 app.include_router(ar_assets.router, prefix=settings.API_V1_STR, tags=["AR Assets"])
+app.include_router(chatbot.router, prefix=settings.API_V1_STR + "/chatbot", tags=["Chatbot"])
 
 @app.get("/")
 def read_root():

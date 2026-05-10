@@ -21,19 +21,23 @@ import NotFound from "./pages/NotFound";
 import CompleteProfile from "./pages/CompleteProfile";
 
 import Navigation from "./components/Navigation";
+import EzSellChatbot from "./components/EzSellChatbot";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
+const HIDE_ON = ["/login", "/signup", "/forgot-password", "/complete-profile"];
+
 const NavigationLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const hideNavigationOn = ["/login", "/signup", "/forgot-password", "/complete-profile"];
-  const shouldHideNavigation = hideNavigationOn.includes(location.pathname);
+  const shouldHide = HIDE_ON.includes(location.pathname);
 
   return (
     <>
-      {!shouldHideNavigation && <Navigation />}
+      {!shouldHide && <Navigation />}
       {children}
+      {/* EzSell AI Assistant — persistent on all non-auth pages */}
+      {!shouldHide && <EzSellChatbot />}
     </>
   );
 };
