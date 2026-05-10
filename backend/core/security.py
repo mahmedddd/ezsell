@@ -47,10 +47,12 @@ def get_current_user(
     if user is None:
         raise credentials_exception
     
-    # Update last_seen
-    from datetime import datetime
-    user.last_seen = datetime.utcnow()
-    db.commit()
+    # Update last_seen only if more than 5 minutes have passed to prevent SQLite locks
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if not user.last_seen or (now - user.last_seen) > timedelta(minutes=5):
+        user.last_seen = now
+        db.commit()
     
     return user
 
