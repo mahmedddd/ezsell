@@ -247,23 +247,14 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
 
         # --- Stage 2: Fetch and parse the spec table ---
         try:
-            # Enhanced headers to mimic a real browser session
-            spec_headers = {
+            # Reverted to simpler headers that worked for the user previously
+            headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Accept-Language": "en-US,en;q=0.5",
-                "Referer": "https://www.gsmarena.com/",
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "same-origin",
-                "Upgrade-Insecure-Requests": "1"
             }
-            
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-                response = await client.get(gsmarena_url, headers=spec_headers)
-                if response.status_code != 200:
-                    print(f"GSMArena spec page fetch failed: {response.status_code}")
-                    return {}
+            async with httpx.AsyncClient(timeout=12.0, follow_redirects=True) as client:
+                response = await client.get(gsmarena_url, headers=headers)
                 html = response.text
 
             specs: Dict[str, List[str]] = {}
