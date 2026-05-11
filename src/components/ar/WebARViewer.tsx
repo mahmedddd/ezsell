@@ -1016,7 +1016,7 @@ export function WebARViewer({
                           onClick={() => {
                             if (viewMode !== 'fast') {
                               setViewMode('fast');
-                              setModelLoading(true);
+                              // Removed setModelLoading(true) to allow cached procedural model to load instantly
                             }
                           }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#2E6091]' : 'text-gray-500 hover:text-gray-700'
@@ -1029,7 +1029,7 @@ export function WebARViewer({
                           onClick={() => {
                             if (viewMode !== 'advanced') {
                               setViewMode('advanced');
-                              setModelLoading(true);
+                              // Removed setModelLoading(true) to allow cached Tripo model to load instantly
                             }
                           }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#2E6091] text-white shadow' : 'text-gray-500 hover:text-gray-700'
