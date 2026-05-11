@@ -1719,34 +1719,48 @@ export async function generateFurnitureGLB(
   }
 
   // ── Final Grounding & Centering ─────────────────────────────────────────────
-  // Simplified hierarchy for better USDZ conversion compatibility on iOS.
+  // CRITICAL: Compute bounding box using ONLY structural (MeshStandardMaterial) meshes.
+  // MeshBasicMaterial shadow planes (from addGroundShadow helpers) must be excluded,
+  // otherwise bbox.min.y is pushed away from the true furniture bottom, causing
+  // the model to float in AR when model-viewer aligns bounding-box-min to the floor plane.
   const bbox = new THREE.Box3();
-  bbox.setFromObject(group); 
-  
+  group.updateWorldMatrix(true, true);
+  group.traverse((obj: THREE.Object3D) => {
+    if (!(obj as THREE.Mesh).isMesh) return;
+    const mesh = obj as THREE.Mesh;
+    const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    // Skip transparent helper planes — they must NOT influence the ground anchor
+    if (!mat || !(mat as THREE.MeshStandardMaterial).isMeshStandardMaterial) return;
+    const meshBox = new THREE.Box3().setFromObject(mesh);
+    bbox.union(meshBox);
+  });
+
   const center = new THREE.Vector3();
   bbox.getCenter(center);
-  
-  // Shift the group so its absolute lowest point is at Y=0 and it's centered on X/Z
-  // This is the CRITICAL anchor point for AR placement.
+
+  // Shift so the absolute lowest structural vertex is exactly at Y=0 (AR floor anchor)
+  // and the model is centred on X/Z so it spins around its own axis in preview
   group.position.set(-center.x, -bbox.min.y, -center.z);
   scene.add(group);
 
   // ── Contact-shadow decal ──────────────────────────────────────────────────
+  // Placed at Y=0 (coplanar with the floor anchor) so it does NOT add any geometry
+  // above or below Y=0 that would confuse model-viewer's AR bounding-box placement.
   {
     const W = dims.w / 100;
     const D = dims.l / 100;
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.45,
       depthWrite: false,
     });
     const shadowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 1.15, D * 1.15),
+      new THREE.PlaneGeometry(W * 1.12, D * 1.12),
       shadowMat,
     );
     shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = 0.002; // Slightly higher to ensure visibility on all surfaces
+    shadowPlane.position.y = 0; // Exactly at the floor anchor — no bbox inflation
     scene.add(shadowPlane);
   }
 

@@ -857,10 +857,12 @@ export function WebARViewer({
     return "";
   };
 
-  // ── AR launch: directly invoke model-viewer's activateAR ──────────────────
+  // ── AR launch ───────────────────────────────────────────────────────────────
   const launchAR = () => {
     const mv = modelViewerRef.current;
     if (!mv) return;
+    setWallNear(false);
+    setGroundLocked(false);
     try {
       mv.activateAR();
     } catch {
@@ -871,6 +873,74 @@ export function WebARViewer({
       });
     }
   };
+
+  // ── model-viewer AR event handlers ────────────────────────────────────────
+  const handleArStatus = useCallback((e: Event) => {
+    const status = (e as CustomEvent).detail?.status as string | undefined;
+    if (status === 'session-started') {
+      setArStatus('session-started');
+      triggerHaptic('light');
+      setScanPhase('tilting');
+    } else if (status === 'not-presenting') {
+      setArStatus('');
+      setGroundLocked(false);
+      setWallNear(false);
+    }
+  }, []);
+
+  const handleObjectPlaced = useCallback(() => {
+    setArStatus('object-placed');
+    setGroundLocked(true);
+    // Strong ramping buzz to confirm the furniture is locked to the floor
+    triggerHaptic('ground-lock');
+  }, []);
+
+  /**
+   * Polls model-viewer's internal hit-test matrix every 200ms while in AR.
+   * When the model's yaw (Y rotation) is within 15° of a 90° multiple,
+   * it is aligned to a wall axis — fire wall-snap haptic (throttled to 2 s).
+   */
+  const startWallDetection = useCallback(() => {
+    const mv = modelViewerRef.current;
+    if (!mv) return;
+    const id = setInterval(() => {
+      try {
+        const pose = mv.getPose?.();
+        if (!pose) return;
+        // Extract Y rotation from the 4x4 model matrix
+        const m = pose.transform.matrix;
+        // atan2 of rotation matrix elements m[8] and m[10] gives yaw
+        const yaw = Math.atan2(m[8], m[10]) * (180 / Math.PI);
+        const nearWall = [0, 90, 180, -90, -180].some(a => Math.abs(((yaw - a + 180) % 360) - 180) < 15);
+        setWallNear(nearWall);
+        const now = Date.now();
+        if (nearWall && now - lastWallSnapRef.current > 2000) {
+          lastWallSnapRef.current = now;
+          triggerHaptic('wall-snap');
+        }
+      } catch { /* pose API not available on all devices */ }
+    }, 200);
+    return () => clearInterval(id);
+  }, []);
+
+  // Attach AR events once the model-viewer ref is available
+  useEffect(() => {
+    const mv = modelViewerRef.current;
+    if (!mv) return;
+    mv.addEventListener('ar-status', handleArStatus);
+    mv.addEventListener('ar-tracking', (e: Event) => {
+      const tracking = (e as CustomEvent).detail?.status;
+      if (tracking === 'tracking' && scanPhase !== 'placed') {
+        setScanPhase('placed');
+        triggerHaptic('medium');
+      }
+    });
+    mv.addEventListener('object-placed', handleObjectPlaced);
+    return () => {
+      mv.removeEventListener('ar-status', handleArStatus);
+      mv.removeEventListener('object-placed', handleObjectPlaced);
+    };
+  }, [modelViewerRef.current, handleArStatus, handleObjectPlaced]);
 
   // ── model-viewer "ar-modes" string ────────────────────────────────────────
   const arModesAttr = caps.isChecked
@@ -1082,17 +1152,17 @@ export function WebARViewer({
                         )}
                       </div>
 
-                      {/* AR status badge */}
-                      {arStatus === 'session-started' && (
-                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-green-500/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
-                          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                          Scanning floor…
+                      {/* AR status badges — reinforce haptic events visually */}
+                      {arStatus === 'session-started' && !groundLocked && (
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-black/70 backdrop-blur text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
+                          <span className="w-2 h-2 rounded-full bg-[#4591CB] animate-ping" />
+                          {wallNear ? '⊞ Wall detected' : 'Scanning floor…'}
                         </div>
                       )}
-                      {arStatus === 'object-placed' && (
-                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-[#2E6091]/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow">
+                      {groundLocked && (
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-green-600/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow animate-in fade-in duration-300">
                           <CheckCircle2 className="h-3.5 w-3.5" />
-                          Placed!
+                          Floor locked
                         </div>
                       )}
 
@@ -1140,30 +1210,42 @@ export function WebARViewer({
                         {/* Custom AR button inside model-viewer slot */}
                         <button
                           slot="ar-button"
-                          className="
-                            absolute bottom-4 right-4
-                            flex items-center gap-2
-                            bg-[#2E6091] hover:bg-[#1E4166] active:scale-95
-                            text-white font-semibold text-sm
-                            px-4 py-2.5 rounded-2xl
-                            shadow-xl shadow-black/20
-                            transition-all duration-150
-                            z-20
-                          "
-                          style={{ position: 'absolute', bottom: '16px', right: '16px', zIndex: 20 }}
+                          onClick={() => { startWallDetection(); triggerHaptic('light'); }}
+                          style={{
+                            position: 'absolute',
+                            bottom: '16px',
+                            right: '16px',
+                            zIndex: 20,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'linear-gradient(135deg,#2E6091,#1E4166)',
+                            color: '#fff',
+                            fontWeight: '700',
+                            fontSize: '14px',
+                            padding: '10px 20px',
+                            borderRadius: '18px',
+                            border: 'none',
+                            boxShadow: '0 8px 24px rgba(46,96,145,0.4)',
+                            cursor: 'pointer',
+                          }}
                         >
-                          <Camera className="h-4 w-4" />
+                          <Camera style={{ width: 16, height: 16 }} />
                           View in AR
                         </button>
 
-                        {/* AR prompt slot — shown inside the native AR session (WebXR) */}
+                        {/* AR prompt slot — dynamic state-aware guidance shown inside WebXR session */}
                         <div slot="ar-prompt" style={{
                           position: 'absolute',
                           bottom: '80px',
                           left: '50%',
                           transform: 'translateX(-50%)',
-                          background: 'rgba(0,0,0,0.72)',
-                          backdropFilter: 'blur(8px)',
+                          background: groundLocked
+                            ? 'rgba(22,163,74,0.88)'
+                            : wallNear
+                              ? 'rgba(46,96,145,0.92)'
+                              : 'rgba(0,0,0,0.72)',
+                          backdropFilter: 'blur(10px)',
                           borderRadius: '20px',
                           padding: '12px 20px',
                           color: '#fff',
@@ -1171,15 +1253,34 @@ export function WebARViewer({
                           fontWeight: '800',
                           whiteSpace: 'nowrap',
                           letterSpacing: '0.02em',
-                          border: '1px solid rgba(255,255,255,0.25)',
+                          border: groundLocked
+                            ? '1px solid rgba(134,239,172,0.4)'
+                            : wallNear
+                              ? '1px solid rgba(147,197,253,0.4)'
+                              : '1px solid rgba(255,255,255,0.2)',
                           pointerEvents: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
                           boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                          transition: 'background 0.3s, border 0.3s',
                         } as any}>
-                          <div className="w-2 h-2 rounded-full bg-[#4591CB] animate-ping" />
-                          <span>Point at floor &amp; tap to place</span>
+                          {groundLocked ? (
+                            <>
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#86efac' }} />
+                              <span>Placed on floor • Drag to reposition</span>
+                            </>
+                          ) : wallNear ? (
+                            <>
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#93c5fd', animation: 'pulse 1s infinite' }} />
+                              <span>✓ Wall aligned • Tap floor to place</span>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4591CB', animation: 'ping 1s infinite' }} />
+                              <span>Point at floor • Move near wall to snap</span>
+                            </>
+                          )}
                         </div>
 
                         {/* Loading slot */}
