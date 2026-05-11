@@ -96,7 +96,7 @@ export function ChatWindow({
     loadMessages();
     checkBlockedStatus();
     setImgError(false);
-    const interval = setInterval(loadMessages, 3000); // Poll every 3 seconds
+    const interval = setInterval(loadMessages, 8000); // Poll every 8 seconds (reduced from 3s for AWS performance)
     return () => clearInterval(interval);
   }, [listingId, sellerId]);
 
@@ -211,6 +211,23 @@ export function ChatWindow({
       return;
     }
 
+    // Optimistic UI: show message immediately so it feels instant on mobile
+    const tempId = -(Date.now());
+    const optimisticMsg: Message = {
+      id: tempId,
+      content: contentToSend,
+      sender_id: currentUserId,
+      receiver_id: sellerId,
+      listing_id: listingId,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    const prevMessageText = newMessage;
+    setNewMessage('');
+    setOfferAmount('');
+    setIsOffering(false);
+
     setSending(true);
     try {
       const message = await messageService.sendMessage({
@@ -218,12 +235,13 @@ export function ChatWindow({
         receiver_id: sellerId,
         listing_id: listingId,
       });
-      setMessages([...messages, message]);
-      setNewMessage('');
-      setOfferAmount('');
-      setIsOffering(false);
+      // Replace optimistic placeholder with the real message from server
+      setMessages(prev => prev.map(m => m.id === tempId ? message : m));
     } catch (error) {
       console.error('Failed to send message:', error);
+      // Roll back: remove optimistic message and restore the input
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setNewMessage(prevMessageText);
     } finally {
       setSending(false);
     }

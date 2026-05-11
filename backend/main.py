@@ -1,6 +1,7 @@
 # Main application entry point (RELOAD TRIGGER: manual restart)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
@@ -42,6 +43,9 @@ app.add_middleware(
     same_site="lax",
     https_only=False  # Set to True in production with HTTPS
 )
+
+# Compress all responses >= 500 bytes — cuts JSON payload size 60-80% on mobile
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Set all CORS enabled origins
 # NOTE: "*" cannot be used together with allow_credentials=True (browsers block it).

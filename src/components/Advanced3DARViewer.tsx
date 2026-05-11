@@ -3013,6 +3013,7 @@ export function Advanced3DARViewer({ listingId, listingTitle, category, price, f
               
               <Canvas 
                 shadows="soft"
+                frameloop="demand"
                 camera={{ position: [5, 4, 8], fov: 50 }}
                 gl={{
                   antialias: true,
@@ -3026,7 +3027,7 @@ export function Advanced3DARViewer({ listingId, listingTitle, category, price, f
                   gl.shadowMap.enabled = true;
                   gl.shadowMap.type = THREE.PCFSoftShadowMap;
                 }}
-                dpr={[1, 2]}
+                dpr={[1, 1.5]}
                 performance={{ min: 0.5 }}
               >
                 <Suspense fallback={null}>

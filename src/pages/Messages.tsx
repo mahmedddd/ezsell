@@ -41,7 +41,7 @@ export default function Messages() {
 
   useEffect(() => {
     loadConversations();
-    const interval = setInterval(loadConversations, 5000); // Poll every 5 seconds
+    const interval = setInterval(loadConversations, 10000); // Poll every 10 seconds (reduced from 5s for AWS performance)
     return () => clearInterval(interval);
   }, []);
 

@@ -197,14 +197,13 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       }
     };
 
-    // Temporarily bypassing cache to ensure live scraped results always show during testing
-    // if (dynamicDropdownCache.current[cacheKey]) {
-    //   const cached = dynamicDropdownCache.current[cacheKey];
-    //   setDropdownOptions(cached);
-    //   setManualOverride(false);
-    //   syncPrepopulations(cached);
-    //   return;
-    // }
+    if (dynamicDropdownCache.current[cacheKey]) {
+      const cached = dynamicDropdownCache.current[cacheKey];
+      setDropdownOptions(cached);
+      setManualOverride(false);
+      syncPrepopulations(cached);
+      return;
+    }
 
     try {
       const params = new URLSearchParams({ category, title });
@@ -233,12 +232,11 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     }
 
     const cacheKey = `${category}|${title.toLowerCase()}|${material.toLowerCase()}`;
-    // Bypassing frontend cache to ensure updated backend strict rules are hit every time
-    // const cachedResult = titleValidationCache.current[cacheKey];
-    // if (cachedResult && cachedResult.message !== "Validation temporarily unavailable, proceeding.") {
-    //   setTitleValidation(cachedResult);
-    //   return;
-    // }
+    const cachedResult = titleValidationCache.current[cacheKey];
+    if (cachedResult && cachedResult.message !== "Validation temporarily unavailable, proceeding.") {
+      setTitleValidation(cachedResult);
+      return;
+    }
 
     setValidatingTitle(true);
     try {

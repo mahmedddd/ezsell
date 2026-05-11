@@ -78,12 +78,11 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
 
   if (imagePath.startsWith('http')) return imagePath;
 
-  const v = `?v=${new Date().getTime()}`;
   if (imagePath.startsWith('/uploads')) {
-    return `${API_BASE_URL}${imagePath}${v}`;
+    return `${API_BASE_URL}${imagePath}`;
   }
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${API_BASE_URL}${cleanPath}${v}`;
+  return `${API_BASE_URL}${cleanPath}`;
 };
 
 // Session management for anonymous tracking
