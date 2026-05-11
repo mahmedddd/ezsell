@@ -1710,37 +1710,39 @@ export async function generateFurnitureGLB(
   // We wrap the furniture in a root group so we can offset the furniture
   // to be perfectly centered at (0,0) and sitting at Y=0 without affecting
   // the exported scene's origin.
+  // Edge Case: Lights and targets are at (0,0,0) — we MUST ignore them when
+  // calculating the furniture's bounding box to avoid a mid-air offset.
   const root = new THREE.Group();
   root.name = "FurnitureRoot";
   
-  const bbox = new THREE.Box3().setFromObject(group);
+  const bbox = new THREE.Box3();
+  bbox.setFromObject(group); // Only calculate bounds of the furniture group
+  
   const center = new THREE.Vector3();
   bbox.getCenter(center);
   
-  // Shift the group so its bottom-center is at (0,0,0) relative to the root
+  // Shift the group so its absolute lowest point is at Y=0 and it's centered on X/Z
   group.position.set(-center.x, -bbox.min.y, -center.z);
   root.add(group);
   scene.add(root);
 
   // ── Contact-shadow decal: a soft dark plane at exactly Y=0 ────────────────
+  // This helps "ground" the object in AR environments where native shadows are weak.
   {
     const W = dims.w / 100;
     const D = dims.l / 100;
-    const shadowMat = new THREE.MeshStandardMaterial({
+    const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
-      roughness: 1.0,
-      metalness: 0.0,
       transparent: true,
-      opacity: 0.55,  // Darker for better anchoring
+      opacity: 0.38,  // Subtle but present
       depthWrite: false,
-      blending: THREE.MultiplyBlending, // Better integration with floor tiles
     });
     const shadowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 1.02, D * 1.02),
+      new THREE.PlaneGeometry(W * 1.15, D * 1.15), // Slightly larger than object for soft falloff
       shadowMat,
     );
     shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = 0.0001; // Extremely close to 0 to avoid floating
+    shadowPlane.position.y = 0.001; // Tiny offset to prevent z-fighting with real floor
     scene.add(shadowPlane);
   }
 

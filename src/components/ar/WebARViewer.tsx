@@ -1102,8 +1102,8 @@ export function WebARViewer({
                         ar-scale="fixed"
                         camera-controls
                         touch-action="pan-y"
-                        shadow-intensity={(viewMode === 'advanced') ? 1.5 : 2.8}
-                        shadow-softness={0}
+                        shadow-intensity={4.0}
+                        shadow-softness={1.0}
                         environment-image="neutral"
                         exposure={1.2}
                         auto-rotate
