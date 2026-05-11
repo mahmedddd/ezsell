@@ -572,61 +572,63 @@ function buildBed(dims: FurnitureDimensions): THREE.Group {
   const g = new THREE.Group();
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
 
-  // Fully-upholstered platform bed — every visible face tagged 'upholstery' so
-  // the product-image CanvasTexture (and primary colour) covers the whole frame.
-  const fabricMat = pbr(0xC09060, 0.93);  // warm caramel default — overridden by texture
+  const fabricMat = pbr(0xC09060, 0.93);
   const mattMat = pbr(0xf5f5f0, 0.92);
   const sheetMat = pbr(0xfafaf5, 0.90);
   const pillowMat = pbr(0xfefefe, 0.88);
-  const backingMat = pbr(0x8a6040, 0.75);  // thin structural backing panel
+  const backingMat = pbr(0x8a6040, 0.75);
 
-  const PLATFORM_H = Math.max(0.30, H * 0.52);  // thick padded platform (no legs visible)
-  const MATT_H = Math.max(0.18, H * 0.30);
-  const HEAD_H = Math.max(0.68, H * 1.12);
-  const HEAD_T = 0.13;
-  const FOOT_H = PLATFORM_H + 0.10;
-  const FOOT_T = HEAD_T * 0.80;
+  const PLATFORM_H = Math.max(0.28, H * 0.48);
+  const MATT_H = Math.max(0.18, H * 0.32);
+  const HEAD_H = Math.max(0.75, H * 1.25);
+  const HEAD_T = 0.14;
+  const FOOT_H = PLATFORM_H + 0.08;
+  const FOOT_T = HEAD_T * 0.70;
 
-  // ── Platform base (thick, fully upholstered, sits on the floor) ─────────────
+  // ── Platform base ──────────────────────────────────────────────────────────
   at(g, tag(box(W, PLATFORM_H, D, fabricMat), 'upholstery'), 0, PLATFORM_H / 2, 0);
 
-  // ── Mattress ─────────────────────────────────────────────────────────────────
-  at(g, tag(box(W * 0.97, MATT_H, D * 0.97, mattMat), 'mattress'),
+  // ── Side Rails ─────────────────────────────────────────────────────────────
+  const railT = 0.08;
+  at(g, tag(box(railT, PLATFORM_H * 1.05, D, fabricMat), 'upholstery'), -(W / 2 - railT / 2), PLATFORM_H / 2, 0);
+  at(g, tag(box(railT, PLATFORM_H * 1.05, D, fabricMat), 'upholstery'), (W / 2 - railT / 2), PLATFORM_H / 2, 0);
+
+  // ── Mattress ───────────────────────────────────────────────────────────────
+  at(g, tag(box(W * 0.92, MATT_H, D * 0.96, mattMat), 'mattress'),
     0, PLATFORM_H + MATT_H / 2, 0);
 
-  // ── Duvet / sheet ─────────────────────────────────────────────────────────────
-  at(g, tag(box(W * 0.93, MATT_H * 0.48, D * 0.60, sheetMat), 'cushion'),
-    0, PLATFORM_H + MATT_H + MATT_H * 0.24, D * 0.07);
+  // ── Duvet / sheet ──────────────────────────────────────────────────────────
+  at(g, tag(box(W * 0.94, MATT_H * 0.45, D * 0.65, sheetMat), 'cushion'),
+    0, PLATFORM_H + MATT_H + MATT_H * 0.22, D * 0.10);
 
-  // ── Headboard — vertical bubble/channel segments ─────────────────────────────
-  // Each panel represents one rounded bolster section of a tufted/bubble headboard.
-  const N_HEAD = Math.max(4, Math.round(W / 0.21));
+  // ── Headboard ──────────────────────────────────────────────────────────────
+  const N_HEAD = Math.max(4, Math.round(W / 0.18));
   const hSegW = W / N_HEAD;
   for (let i = 0; i < N_HEAD; i++) {
     const sx = -W / 2 + hSegW * (i + 0.5);
-    at(g, tag(box(hSegW * 0.86, HEAD_H, HEAD_T, fabricMat), 'upholstery'),
+    at(g, tag(box(hSegW * 0.90, HEAD_H, HEAD_T, fabricMat), 'upholstery'),
       sx, HEAD_H / 2, -(D / 2 + HEAD_T / 2));
   }
-  // Thin backing panel that structurally connects the segments (slightly recessed)
-  at(g, tag(box(W, HEAD_H * 0.97, HEAD_T * 0.28, backingMat), 'frame'),
-    0, HEAD_H / 2, -(D / 2 + HEAD_T * 0.90));
+  at(g, tag(box(W, HEAD_H * 0.98, HEAD_T * 0.20, backingMat), 'frame'),
+    0, HEAD_H / 2, -(D / 2 + HEAD_T * 0.95));
 
-  // ── Footboard — lower matching bubble panels ──────────────────────────────────
-  const N_FOOT = Math.max(3, Math.round(W / 0.26));
+  // ── Footboard ──────────────────────────────────────────────────────────────
+  const N_FOOT = Math.max(3, Math.round(W / 0.22));
   const fSegW = W / N_FOOT;
   for (let i = 0; i < N_FOOT; i++) {
     const fx = -W / 2 + fSegW * (i + 0.5);
-    at(g, tag(box(fSegW * 0.84, FOOT_H, FOOT_T, fabricMat), 'upholstery'),
+    at(g, tag(box(fSegW * 0.88, FOOT_H, FOOT_T, fabricMat), 'upholstery'),
       fx, FOOT_H / 2, D / 2 + FOOT_T / 2);
   }
-  at(g, tag(box(W, FOOT_H * 0.97, FOOT_T * 0.28, backingMat), 'frame'),
-    0, FOOT_H / 2, D / 2 + FOOT_T * 0.90);
 
-  // ── Pillows ───────────────────────────────────────────────────────────────────
-  const pillW = W * 0.38, pillH = 0.12, pillD = 0.26;
-  for (const xs of [-1, 1] as const) {
+  // ── Pillows (Dynamic Count based on Width) ─────────────────────────────────
+  const nPillows = W < 1.1 ? 1 : (W > 1.9 ? 3 : 2);
+  const pillW = Math.min(0.65, W * 0.35), pillH = 0.14, pillD = 0.30;
+  const pillSpacing = W / (nPillows + 1);
+  for (let i = 0; i < nPillows; i++) {
+    const px = -W / 2 + pillSpacing * (i + 1);
     at(g, tag(box(pillW, pillH, pillD, pillowMat), 'mattress'),
-      xs * W * 0.22, PLATFORM_H + MATT_H + pillH / 2, -(D / 2 - pillD / 2 - 0.08));
+      px, PLATFORM_H + MATT_H + pillH / 2, -(D / 2 - pillD / 2 - 0.12));
   }
   return g;
 }
@@ -992,6 +994,30 @@ export function resolveSmartDimensions(
   description?: string | null,
 ): FurnitureDimensions {
   const text = `${title ?? ''} ${description ?? ''}`.toLowerCase();
+
+  // ── Robust Dimension Parser (extracts 72x78, 6x6.5 ft, etc.) ────────────────
+  // Looks for common patterns: [val] x [val] [unit]
+  const dimRegex = /(\d+(?:\.\d+)?)\s*(?:x|by|\*)\s*(\d+(?:\.\d+)?)\s*(ft|feet|in|inch|cm|m)?/i;
+  const match = text.match(dimRegex);
+  if (match) {
+    let w = parseFloat(match[1]);
+    let l = parseFloat(match[2]);
+    const unit = (match[3] || '').toLowerCase();
+
+    // Normalise to CM
+    if (unit === 'ft' || unit === 'feet') { w *= 30.48; l *= 30.48; }
+    else if (unit === 'in' || unit === 'inch') { w *= 2.54; l *= 2.54; }
+    else if (unit === 'm') { w *= 100; l *= 100; }
+
+    // Sanity Check: If they specified 72x78 without units, it's almost certainly inches
+    if (!unit && w > 12 && w < 100 && l > 12 && l < 100) { w *= 2.54; l *= 2.54; }
+    // If they specified 6x6.5 without units, it's feet
+    if (!unit && w < 12 && l < 12) { w *= 30.48; l *= 30.48; }
+
+    if (w > 10 && l > 10) {
+      return { w: Math.round(w), l: Math.round(l), h: FURNITURE_DEFAULTS[type].h };
+    }
+  }
 
   if (type === 'bed') {
     if (/king[\s-]*size|king[\s-]*bed|\bking\b/.test(text)) return { l: 203, w: 193, h: 55 };
@@ -1706,62 +1732,41 @@ export async function generateFurnitureGLB(
     });
   }
 
-  // ── Final Grounding & Centering (Robust Root-Wrap Method) ────────────────
-  // We wrap the furniture in a root group so we can offset the furniture
-  // to be perfectly centered at (0,0) and sitting at Y=0 without affecting
-  // the exported scene's origin.
-  // Edge Case: Lights and targets are at (0,0,0) — we MUST ignore them when
-  // calculating the furniture's bounding box to avoid a mid-air offset.
-  const root = new THREE.Group();
-  root.name = "FurnitureRoot";
-  
+  // ── Final Grounding & Centering ─────────────────────────────────────────────
+  // Simplified hierarchy for better USDZ conversion compatibility on iOS.
   const bbox = new THREE.Box3();
-  bbox.setFromObject(group); // Only calculate bounds of the furniture group
+  bbox.setFromObject(group); 
   
   const center = new THREE.Vector3();
   bbox.getCenter(center);
   
   // Shift the group so its absolute lowest point is at Y=0 and it's centered on X/Z
+  // This is the CRITICAL anchor point for AR placement.
   group.position.set(-center.x, -bbox.min.y, -center.z);
-  root.add(group);
-  scene.add(root);
+  scene.add(group);
 
-  // ── Contact-shadow decal: a soft dark plane at exactly Y=0 ────────────────
-  // This helps "ground" the object in AR environments where native shadows are weak.
+  // ── Contact-shadow decal ──────────────────────────────────────────────────
   {
     const W = dims.w / 100;
     const D = dims.l / 100;
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.38,  // Subtle but present
+      opacity: 0.45,
       depthWrite: false,
     });
     const shadowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 1.15, D * 1.15), // Slightly larger than object for soft falloff
+      new THREE.PlaneGeometry(W * 1.15, D * 1.15),
       shadowMat,
     );
     shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = 0.001; // Tiny offset to prevent z-fighting with real floor
+    shadowPlane.position.y = 0.002; // Slightly higher to ensure visibility on all surfaces
     scene.add(shadowPlane);
   }
 
-  // ── Lighting Optimization ──────────────────────────────────────────────────
-  const key = new THREE.DirectionalLight(0xffffff, 2.0);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.8);
-  const rim = new THREE.DirectionalLight(0xffffff, 0.4);
-  const bnc = new THREE.DirectionalLight(0xffffff, 0.4); 
-  
-  key.position.set(1, 4, 2);
-  fill.position.set(-2, 2, -1);
-  rim.position.set(0, 1, -3);
-  bnc.position.set(0, -2, 0); // Pure bottom fill to stop "black voids" under legs
-
-  [key, fill, rim, bnc].forEach((l) => {
-    l.target.position.set(0, 0, 0);
-    l.add(l.target);
-    scene.add(l);
-  });
+  // NOTE: We NO LONGER add internal lights to the scene. 
+  // AR viewers (QuickLook/SceneViewer) provide their own lighting. 
+  // Adding lights here confuses the bounding box and scale on many mobile viewers.
 
   return new Promise((resolve, reject) => {
     const exporter = new GLTFExporter();
@@ -1772,7 +1777,7 @@ export async function generateFurnitureGLB(
         resolve(URL.createObjectURL(blob));
       },
       (error: unknown) => reject(error),
-      { binary: true, includeCustomExtensions: true },
+      { binary: true },
     );
   });
 }

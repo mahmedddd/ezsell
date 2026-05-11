@@ -1054,23 +1054,23 @@ export function WebARViewer({
                         <span className="text-[8px] font-bold text-gray-500 mt-1 uppercase tracking-tighter">Human Scale</span>
                       </div>
 
-                      {/* Ground Grid for Depth Perception */}
-                      <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
-                        style={{ 
-                          backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
-                          backgroundSize: '50px 50px',
-                          perspective: '1000px',
-                          transform: 'rotateX(60deg) translateY(100px)',
-                          transformOrigin: 'bottom'
-                        }} 
-                      />
+                      {/* Dynamic Room Scanning Guidance */}
+                      {step === 'scanning' && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 animate-in fade-in duration-700">
+                          <div className="relative">
+                            <div className="w-40 h-40 rounded-full border border-white/30 animate-[ping_3s_linear_infinite]" />
+                            <div className="absolute inset-0 m-auto w-28 h-28 rounded-full border-2 border-white/50 animate-pulse" />
+                            <div className="absolute inset-0 m-auto w-3 h-3 bg-white rounded-full shadow-[0_0_20px_#fff]" />
+                          </div>
+                        </div>
+                      )}
 
                       {/* Dimension overlay */}
                       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
                         <DimensionPill dims={dims} />
                         {fType === 'bed' && (
-                          <Badge variant="secondary" className="bg-white/90 backdrop-blur text-[9px] font-black uppercase tracking-widest text-[#2E6091] py-0.5 px-2 w-fit shadow-sm">
-                            {dims.w >= 180 ? 'King Size' : dims.w >= 150 ? 'Queen Size' : 'Single Bed'}
+                          <Badge variant="secondary" className="bg-white/90 backdrop-blur text-[9px] font-black uppercase tracking-widest text-[#2E6091] py-0.5 px-2 w-fit shadow-sm border border-[#2E6091]/10">
+                            {dims.w >= 190 ? 'King Size' : dims.w >= 150 ? 'Queen Size' : dims.w >= 110 ? 'Double Bed' : 'Single Bed'}
                           </Badge>
                         )}
                       </div>
@@ -1102,7 +1102,7 @@ export function WebARViewer({
                         ar-scale="fixed"
                         camera-controls
                         touch-action="pan-y"
-                        shadow-intensity={4.0}
+                        shadow-intensity={6.0}
                         shadow-softness={1.0}
                         environment-image="neutral"
                         exposure={1.2}
@@ -1121,11 +1121,12 @@ export function WebARViewer({
                           width: '100%',
                           height: '100%',
                           minHeight: '38vh',
+                          backgroundColor: 'transparent',
                           '--poster-color': 'transparent',
-                          background: 'transparent',
                           opacity: modelLoading ? 0.3 : 1,
                           filter: modelLoading ? 'blur(4px)' : 'none',
                           transition: 'all 0.4s ease-in-out',
+                          display: 'block',
                         } as any}
                       >
                         {/* Custom AR button inside model-viewer slot */}
