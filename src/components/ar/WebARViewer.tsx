@@ -1378,7 +1378,7 @@ export function WebARViewer({
                       {step === 'model_ready' && (
                         <div className="mt-4 pt-4 border-t border-gray-100">
                           {aiStage === 'idle' || aiStage === 'error' ? (
-                            <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2007] to-[#1a4510] p-5 rounded-2xl">
+                            <div className="relative overflow-hidden bg-gradient-to-br from-[#0a1628] to-[#1c2e4a] p-5 rounded-2xl">
                               {/* Sparkle shimmer background */}
                               <div className="absolute inset-0 opacity-10 pointer-events-none"
                                 style={{ backgroundImage: 'radial-gradient(circle at 20% 40%, #4591CB 0%, transparent 60%), radial-gradient(circle at 80% 70%, #2E6091 0%, transparent 50%)' }} />
@@ -1440,7 +1440,7 @@ export function WebARViewer({
                             </div>
                           ) : (
                             /* ── Rich 2D→3D Conversion Loading Screen ── */
-                            <div className="relative overflow-hidden bg-gradient-to-br from-[#0d2007] to-[#1a4510] rounded-2xl p-5 animate-in fade-in zoom-in duration-300">
+                            <div className="relative overflow-hidden bg-gradient-to-br from-[#0a1628] to-[#1c2e4a] rounded-2xl p-5 animate-in fade-in zoom-in duration-300">
                               {/* Rotating orbital rings */}
                               <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-20">
                                 <div className="w-48 h-48 rounded-full border-2 border-[#4591CB] animate-spin" style={{ animationDuration: '8s' }} />

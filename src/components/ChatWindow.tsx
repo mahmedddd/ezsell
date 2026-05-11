@@ -410,7 +410,7 @@ export function ChatWindow({
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="text-xs font-semibold text-gray-900 truncate">{listingTitle}</span>
-            {listingPrice && <span className="text-[11px] text-[#2E6091] font-bold">Rs {listingPrice.toLocaleString()}</span>}
+            {listingPrice && <span className="text-[11px] text-black font-bold">Rs {listingPrice.toLocaleString()}</span>}
           </div>
         </Link>
         <Link to={`/product/${listingId}`} className="text-[#2E6091] hover:text-[#1E4166] p-2">

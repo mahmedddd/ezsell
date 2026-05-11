@@ -341,7 +341,7 @@ export default function ProductDetail() {
                       {listing.is_sold && <Badge variant="destructive">Sold</Badge>}
                     </div>
                   </div>
-                  <div className="text-3xl md:text-4xl font-black tracking-tighter text-[#2E6091] break-words overflow-hidden max-w-full">
+                  <div className="text-3xl md:text-4xl font-black tracking-tighter text-black break-words overflow-hidden max-w-full">
                     {formatCurrency(listing.price)}
                   </div>
                 </div>
@@ -525,7 +525,7 @@ export default function ProductDetail() {
                       </div>
                     </div>
                     <CardContent className="p-2.5">
-                      <p className="text-xs font-black tracking-tighter text-[#2E6091] mb-1">{formatCurrency(item.price)}</p>
+                      <p className="text-xs font-black tracking-tighter text-black mb-1">{formatCurrency(item.price)}</p>
                       <h3 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight group-hover:text-[#2E6091]">{item.title}</h3>
                     </CardContent>
                   </Card>
