@@ -569,10 +569,10 @@ export function WebARViewer({
             const fullUrl = getFullUrl(status.local_url);
             // Append a cache-buster so model-viewer fetches the new file, not a stale cache
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
+            
+            // CRITICAL: Set loading true BEFORE changing mode/URL to ensure loader covers the transition
+            setModelLoading(true);
             setTripoUrl(bustedUrl);
-            // Do NOT set modelLoading=true here — let model-viewer's progress event handle it
-            // so there's no artificial delay and the model appears as soon as it parses
-
             setViewMode('advanced');
             setStep('model_ready');
 
@@ -738,8 +738,11 @@ export function WebARViewer({
       mv.addEventListener('load', onLoad);
       mv.addEventListener('error', onError);
 
-      // Safety net: if load event never fires within 8s, clear the spinner
-      safetyTimer = setTimeout(() => setModelLoading(false), 8000);
+      // Safety net: if load event never fires within 45s (for heavy AI models), clear the spinner
+      safetyTimer = setTimeout(() => {
+        console.warn('[WebARViewer] Model load timeout reached.');
+        setModelLoading(false);
+      }, 45000);
 
       return () => {
         mv.removeEventListener('ar-status', onARStatus);
@@ -753,7 +756,7 @@ export function WebARViewer({
     return () => {
       cancelAnimationFrame(rafId);
     };
-  }, [isSheetOpen, toast]);
+  }, [isSheetOpen, toast, viewMode, tripoUrl]);
 
   // ── TF.js room-object detection (runs once camera access is obtained) ─────
   const runObjectDetection = useCallback(async () => {
@@ -1063,6 +1066,7 @@ export function WebARViewer({
 
                       {/* ── model-viewer element ── */}
                       <model-viewer
+                        key={`${viewMode}-${tripoUrl || 'none'}`}
                         ref={modelViewerRef as any}
                         src={(viewMode === 'advanced' && tripoUrl) ? tripoUrl : proceduralUrl || undefined}
                         ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
@@ -1142,12 +1146,28 @@ export function WebARViewer({
 
                       {/* Transition Loading Overlay */}
                       {modelLoading && (
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/60 backdrop-blur-sm animate-in fade-in duration-300">
-                          <div className="bg-white p-4 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3">
-                            <Loader2 className="h-6 w-6 animate-spin text-[#2E6091]" />
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                              Loading {viewMode === 'advanced' ? '3D Model' : 'Fast View'}...
-                            </p>
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-md animate-in fade-in duration-500">
+                          <div className="bg-white p-6 rounded-[32px] shadow-2xl border border-gray-100 flex flex-col items-center gap-4 text-center">
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-full border-4 border-[#2E6091]/10 border-t-[#2E6091] animate-spin" />
+                              <Loader2 className="absolute inset-0 m-auto h-5 w-5 text-[#2E6091] animate-pulse" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-[11px] font-black text-[#2E6091] uppercase tracking-widest animate-pulse">
+                                Initializing {viewMode === 'advanced' ? 'Advanced 3D' : 'Fast View'}
+                              </p>
+                              <p className="text-[10px] text-gray-400 font-medium">Downloading assets from cluster...</p>
+                            </div>
+                            
+                            {/* Failsafe button if stuck */}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setModelLoading(false)}
+                              className="mt-2 text-[9px] font-bold text-gray-300 hover:text-[#2E6091] h-auto py-1"
+                            >
+                              Tap to bypass if stuck
+                            </Button>
                           </div>
                         </div>
                       )}
