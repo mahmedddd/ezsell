@@ -108,13 +108,32 @@ type ARStep =
 
 type ScanPhase = 'tilting' | 'sweeping' | 'ready_to_place';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type ScanPhase = 'tilting' | 'tracking' | 'placed';
+type AIStage = 'idle' | 'generating' | 'polling' | 'promoting' | 'complete' | 'failed';
+
+// ─── Utility Components ───────────────────────────────────────────────────────
+
+const DimensionPill = ({ dims, showImperial = false }: { dims: FurnitureDimensions; showImperial?: boolean }) => {
+  const toFt = (cm: number) => (cm / 30.48).toFixed(1);
+  return (
+    <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-gray-100 animate-in fade-in slide-in-from-left duration-500">
+      <div className="w-2 h-2 rounded-full bg-[#2E6091] animate-pulse" />
+      <span className="text-[10px] font-black text-gray-800 tracking-tight uppercase">
+        {dims.w}×{dims.l} cm
+        {showImperial && (
+          <>
+            <span className="text-gray-400 mx-1.5 font-normal">|</span>
+            <span className="text-[#2E6091]">{toFt(dims.w)}′×{toFt(dims.l)}′ ft</span>
+          </>
+        )}
+      </span>
+    </div>
+  );
+};
 
 function cmLabel(dims: FurnitureDimensions) {
   return `${dims.w} × ${dims.l} × ${dims.h} cm`;
 }
-
-type AIStage = 'idle' | 'detecting' | 'generating' | 'polling' | 'downloading' | 'success' | 'error';
 
 function mLabel(dims: FurnitureDimensions) {
   return `${(dims.w / 100).toFixed(2)}m × ${(dims.l / 100).toFixed(2)}m × ${(dims.h / 100).toFixed(2)}m`;
@@ -222,16 +241,6 @@ function CompatibilityBadge({ caps }: { caps: ReturnType<typeof useARSupport> })
   );
 }
 
-/** Dimension pill shown in the model viewer header */
-function DimensionPill({ dims }: { dims: FurnitureDimensions }) {
-  return (
-    <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm border border-gray-100">
-      <Ruler className="h-3.5 w-3.5 text-[#2E6091]" />
-      <span className="text-xs font-semibold text-gray-800">{cmLabel(dims)}</span>
-    </div>
-  );
-}
-
 /** Desktop QR prompt — guides user to open on phone */
 function DesktopQRHint({ url }: { url: string }) {
   return (
@@ -266,8 +275,8 @@ function ScanningOverlay({ phase, hint }: { phase: ScanPhase; hint: string }) {
         <div className="w-40 h-40 rounded-full border-2 border-white/30 border-t-[#4591CB] animate-spin" />
         <div className="absolute inset-0 flex items-center justify-center">
           {phase === 'tilting' && <ArrowDownCircle className="h-12 w-12 text-white/80 animate-bounce" />}
-          {phase === 'sweeping' && <Scan className="h-12 w-12 text-white/80 animate-pulse" />}
-          {phase === 'ready_to_place' && <MousePointer2 className="h-12 w-12 text-[#4591CB] animate-bounce" />}
+          {phase === 'tracking' && <Scan className="h-12 w-12 text-white/80 animate-pulse" />}
+          {phase === 'placed' && <MousePointer2 className="h-12 w-12 text-[#4591CB] animate-bounce" />}
         </div>
       </div>
 
@@ -275,8 +284,8 @@ function ScanningOverlay({ phase, hint }: { phase: ScanPhase; hint: string }) {
         <p className="text-white font-medium text-base mb-1.5">{hint}</p>
         <div className="flex justify-center gap-1.5 mt-2.5">
           <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'tilting' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
-          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'sweeping' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
-          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'ready_to_place' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'tracking' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
+          <div className={`h-1 w-6 rounded-full transition-all duration-300 ${phase === 'placed' ? 'bg-[#4591CB] w-10' : 'bg-white/20'}`} />
         </div>
       </div>
     </div>
@@ -538,7 +547,7 @@ export function WebARViewer({
       setAiProgress(15);
     } catch (err: any) {
       console.error('[WebARViewer] AI Start failed:', err);
-      setAiStage('error');
+      setAiStage('failed');
 
       const errorMessage = err?.response?.data?.detail || err?.message || "Could not start AI generation. Please try again later.";
 
@@ -564,7 +573,7 @@ export function WebARViewer({
           // The backend already downloaded it to local_url
           if (status.local_url) {
             setAiProgress(100);
-            setAiStage('success');
+            setAiStage('complete');
 
             const fullUrl = getFullUrl(status.local_url);
             // Append a cache-buster so model-viewer fetches the new file, not a stale cache
@@ -590,7 +599,7 @@ export function WebARViewer({
               description: "AI generation complete — your model is loading now.",
             });
           } else {
-            setAiStage('error');
+            setAiStage('failed');
             toast({
               title: "AI Generation Failed",
               description: "Model generated but failed to download to server. Please try again.",
@@ -598,7 +607,7 @@ export function WebARViewer({
             });
           }
         } else if (status.status === 'FAILED') {
-          setAiStage('error');
+          setAiStage('failed');
           toast({
             title: "AI Generation Failed",
             description: status.error || "Generation failed at Tripo AI.",
@@ -610,7 +619,7 @@ export function WebARViewer({
         }
       } catch (err: any) {
         console.error('[WebARViewer] Polling error:', err);
-        setAiStage('error');
+        setAiStage('failed');
 
         const errorMessage = err?.response?.data?.detail || err?.message || "Lost connection to the generation server. Please try again.";
 
@@ -825,13 +834,13 @@ export function WebARViewer({
         const next = prev + 1;
         // Coaching phases
         if (next === 4 && scanPhase === 'tilting') {
-          setScanPhase('sweeping');
+          setScanPhase('tracking');
           triggerHaptic('light');
         }
         // Check if tracking has picked up a floor (hit-test found)
         const mv = modelViewerRef.current;
-        if (mv?.arTracking === 'tracking' && scanPhase !== 'ready_to_place') {
-          setScanPhase('ready_to_place');
+        if (mv?.arTracking === 'tracking' && scanPhase !== 'placed') {
+          setScanPhase('placed');
           triggerHaptic('medium');
         }
         return next;
@@ -843,8 +852,8 @@ export function WebARViewer({
 
   const getScanHint = () => {
     if (scanPhase === 'tilting') return "Point camera at the floor";
-    if (scanPhase === 'sweeping') return "Scan slowly side to side";
-    if (scanPhase === 'ready_to_place') return "Tap the floor to place furniture";
+    if (scanPhase === 'tracking') return "Scan slowly side to side";
+    if (scanPhase === 'placed') return "Tap the floor to place furniture";
     return "";
   };
 
@@ -1016,7 +1025,6 @@ export function WebARViewer({
                           onClick={() => {
                             if (viewMode !== 'fast') {
                               setViewMode('fast');
-                              // Removed setModelLoading(true) to allow cached procedural model to load instantly
                             }
                           }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#2E6091]' : 'text-gray-500 hover:text-gray-700'
@@ -1029,7 +1037,6 @@ export function WebARViewer({
                           onClick={() => {
                             if (viewMode !== 'advanced') {
                               setViewMode('advanced');
-                              // Removed setModelLoading(true) to allow cached Tripo model to load instantly
                             }
                           }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'advanced' ? 'bg-[#2E6091] text-white shadow' : 'text-gray-500 hover:text-gray-700'
@@ -1067,7 +1074,7 @@ export function WebARViewer({
 
                       {/* Dimension overlay */}
                       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-                        <DimensionPill dims={dims} />
+                        <DimensionPill dims={dims} showImperial />
                         {fType === 'bed' && (
                           <Badge variant="secondary" className="bg-white/90 backdrop-blur text-[9px] font-black uppercase tracking-widest text-[#2E6091] py-0.5 px-2 w-fit shadow-sm border border-[#2E6091]/10">
                             {dims.w >= 190 ? 'King Size' : dims.w >= 150 ? 'Queen Size' : dims.w >= 110 ? 'Double Bed' : 'Single Bed'}
@@ -1102,10 +1109,11 @@ export function WebARViewer({
                         ar-scale="fixed"
                         camera-controls
                         touch-action="pan-y"
-                        shadow-intensity={6.0}
+                        shadow-intensity={8.0}
                         shadow-softness={1.0}
                         environment-image="neutral"
                         exposure={1.2}
+                        field-of-view="35deg"
                         auto-rotate
                         auto-rotate-delay={2000}
                         rotation-per-second="15deg"

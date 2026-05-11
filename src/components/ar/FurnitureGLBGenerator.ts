@@ -75,24 +75,24 @@ export const FURNITURE_TYPE_LABELS: Record<FurnitureType, string> = {
 
 /** Real-world default dimensions in cm for each type */
 export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDimensions> = {
-  sofa: { l: 90, w: 220, h: 85 },
-  armchair: { l: 80, w: 85, h: 90 },
-  chair: { l: 50, w: 48, h: 88 },
-  dining_chair: { l: 50, w: 48, h: 95 },
-  office_chair: { l: 65, w: 65, h: 120 },
-  table: { l: 80, w: 160, h: 75 },
-  dining_table: { l: 90, w: 180, h: 76 },
-  coffee_table: { l: 60, w: 120, h: 45 },
-  desk: { l: 70, w: 140, h: 75 },
-  bed: { l: 210, w: 160, h: 55 },
-  wardrobe: { l: 55, w: 120, h: 210 },
-  bookshelf: { l: 30, w: 90, h: 180 },
-  cabinet: { l: 45, w: 90, h: 90 },
-  dresser: { l: 50, w: 110, h: 115 },
-  ottoman: { l: 60, w: 70, h: 45 },
-  lamp: { l: 40, w: 40, h: 155 },
-  sideboard: { l: 48, w: 150, h: 85 },
-  generic: { l: 60, w: 80, h: 70 },
+  sofa: { l: 95, w: 230, h: 88 },
+  armchair: { l: 85, w: 90, h: 95 },
+  chair: { l: 55, w: 50, h: 92 },
+  dining_chair: { l: 55, w: 50, h: 105 },
+  office_chair: { l: 70, w: 70, h: 125 },
+  table: { l: 85, w: 165, h: 76 },
+  dining_table: { l: 100, w: 195, h: 76 },
+  coffee_table: { l: 65, w: 125, h: 48 },
+  desk: { l: 75, w: 150, h: 76 },
+  bed: { l: 215, w: 183, h: 62 }, // Standard 6x7 ft / King size
+  wardrobe: { l: 60, w: 135, h: 215 },
+  bookshelf: { l: 35, w: 95, h: 185 },
+  cabinet: { l: 50, w: 95, h: 95 },
+  dresser: { l: 55, w: 120, h: 125 },
+  ottoman: { l: 65, w: 75, h: 48 },
+  lamp: { l: 45, w: 45, h: 165 },
+  sideboard: { l: 52, w: 160, h: 88 },
+  generic: { l: 65, w: 85, h: 75 },
 };
 
 // â”€â”€â”€ Smart Type Resolution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -176,6 +176,23 @@ function legs4(g: THREE.Group, W: number, D: number, legH: number, legR: number,
     leg.userData.part = 'leg';
     g.add(leg);
   }
+}
+
+/**
+ * Adds a subtle, low-opacity ground plane to simulate soft ambient occlusion
+ * where large objects meet the floor. Greatly improves AR grounding.
+ */
+function addGroundShadow(g: THREE.Group, W: number, D: number) {
+  const shadowMat = new THREE.MeshBasicMaterial({ 
+    color: 0x000000, 
+    transparent: true, 
+    opacity: 0.12,
+    depthWrite: false
+  });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(W * 1.08, D * 1.08), shadowMat);
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.y = 0.001; // Just above the grid
+  g.add(plane);
 }
 
 /**
@@ -276,69 +293,65 @@ function buildSofa(dims: FurnitureDimensions, d: ProductDetails): THREE.Group {
   const g = new THREE.Group();
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
 
-  const fabricMat = pbr(0xb8a898, 0.92);
-  const cushMat = pbr(0xcab9a8, 0.95);
-  const bCushMat = pbr(0xd0c0b0, 0.95);
-  const legMat = pbr(0x3d2b1a, 0.65);
+  const fabricMat = pbr(0xb8a898, 0.90);
+  const cushMat = pbr(0xcab9a8, 0.93);
+  const bCushMat = pbr(0xd0c0b0, 0.93);
+  const legMat = pbr(0x2a1a0a, 0.55);
 
-  const LEG_H = 0.12, ARM_W = W * 0.09, ARM_H = H * 0.70;
-  const SEAT_P = H * 0.20, SEAT_C = H * 0.16;
-  const BACK_T = D * 0.20, BACK_H = H * 0.60;
+  const LEG_H = 0.10, ARM_W = Math.min(0.24, W * 0.12), ARM_H = H * 0.68;
+  const SEAT_P = H * 0.22, SEAT_C = H * 0.18;
+  const BACK_T = Math.min(0.22, D * 0.25), BACK_H = H * 0.65;
   const INNER = W - ARM_W * 2;
-  // Explicit seat count from text beats width-based auto-guess
+  
   const N = d.seatCount > 0
     ? Math.max(1, Math.min(d.seatCount, Math.round(INNER / 0.35)))
-    : Math.max(2, Math.min(7, Math.round(INNER / 0.65)));
+    : Math.max(2, Math.min(5, Math.round(INNER / 0.60)));
 
-  // Seat platform
+  // ── Seat platform ──────────────────────────────────────────────────────────
   at(g, tag(box(W, SEAT_P, D, fabricMat), 'upholstery'), 0, LEG_H + SEAT_P / 2, 0);
-  // Backrest panel
+  
+  // ── Backrest panel ─────────────────────────────────────────────────────────
   at(g, tag(box(W, BACK_H, BACK_T, fabricMat), 'upholstery'), 0, LEG_H + SEAT_P + BACK_H / 2, D / 2 - BACK_T / 2);
 
-  // Armrests + top caps (right arm skipped when L-shaped — chaise connects there)
+  // ── Armrests ───────────────────────────────────────────────────────────────
   for (const s of [-1, 1] as const) {
     if (d.isLshaped && s === 1) continue;
-    at(g, tag(box(ARM_W, ARM_H, D, fabricMat), 'upholstery'), s * (W / 2 - ARM_W / 2), LEG_H + ARM_H / 2, 0);
-    at(g, tag(box(ARM_W * 1.05, 0.04, D * 1.02, pbr(0xa09080, 0.70)), 'trim'), s * (W / 2 - ARM_W / 2), LEG_H + ARM_H + 0.02, 0);
+    at(g, tag(box(ARM_W, ARM_H, D * 0.98, fabricMat), 'upholstery'), s * (W / 2 - ARM_W / 2), LEG_H + ARM_H / 2, 0);
   }
 
-  // Seat cushions
-  const cushW = INNER / N, cushD = D - BACK_T - 0.04;
+  // ── Seat cushions ──────────────────────────────────────────────────────────
+  const cushW = INNER / N, cushD = D - BACK_T - 0.02;
   for (let i = 0; i < N; i++) {
-    const cx = -INNER / 2 + cushW * i + cushW / 2;
-    at(g, tag(box(cushW * 0.91, SEAT_C, cushD, cushMat), 'cushion'), cx, LEG_H + SEAT_P + SEAT_C / 2, -BACK_T * 0.1);
+    const cx = -INNER / 2 + cushW * (i + 0.5);
+    const cushion = tag(box(cushW * 0.94, SEAT_C, cushD, cushMat), 'cushion');
+    // Organic tilt
+    cushion.rotation.x = (Math.random() - 0.5) * 0.02;
+    at(g, cushion, cx, LEG_H + SEAT_P + SEAT_C / 2, -BACK_T * 0.05);
   }
 
-  // Back cushions (leaning against backrest)
-  const bCH = BACK_H * 0.78, bCD = BACK_T * 0.55;
+  // ── Back cushions ──────────────────────────────────────────────────────────
+  const bCH = BACK_H * 0.85, bCD = BACK_T * 0.60;
   for (let i = 0; i < N; i++) {
-    const cx = -INNER / 2 + cushW * i + cushW / 2;
-    at(g, tag(box(cushW * 0.88, bCH, bCD, bCushMat), 'cushion'), cx, LEG_H + SEAT_P + bCH / 2, D / 2 - BACK_T + bCD / 2);
+    const cx = -INNER / 2 + cushW * (i + 0.5);
+    const cushion = tag(box(cushW * 0.92, bCH, bCD, bCushMat), 'cushion');
+    // Lean variance
+    cushion.rotation.z = (Math.random() - 0.5) * 0.03;
+    at(g, cushion, cx, LEG_H + SEAT_P + bCH / 2, D / 2 - BACK_T + bCD / 2);
   }
 
-  legs4(g, W, D, LEG_H, 0.025, legMat);
+  legs4(g, W, D, LEG_H, 0.03, legMat);
+  addGroundShadow(g, W, D);
 
-  // ── L-shaped chaise extension ────────────────────────────────────────────────────
-  // The chaise attaches at the RIGHT end of the main sofa and extends deeper.
+  // ── L-shaped chaise ────────────────────────────────────────────────────────
   if (d.isLshaped) {
-    const cW = D + 0.30;          // chaise Z length (deeper than main sofa)
-    const cD = W * 0.36;          // chaise X width (one section of seating)
-    const cx = W / 2 + cD / 2 - ARM_W * 0.5;  // X: overlaps slightly with right arm stub
-    const cz = cW / 2 - D / 2;               // Z: front edge flush with main sofa front
+    const cW = D * 1.8;
+    const cD = W * 0.38;
+    const cx = W / 2 + cD / 2 - ARM_W * 0.4;
+    const cz = cW / 2 - D / 2;
 
     at(g, tag(box(cD, SEAT_P, cW, fabricMat), 'upholstery'), cx, LEG_H + SEAT_P / 2, cz);
-    // Chaise back — outer right wall
     at(g, tag(box(BACK_T, BACK_H, cW, fabricMat), 'upholstery'), cx + cD / 2 - BACK_T / 2, LEG_H + SEAT_P + BACK_H / 2, cz);
-    // Chaise seat cushion
-    at(g, tag(box(cD - BACK_T - 0.03, SEAT_C, cW * 0.90, cushMat), 'cushion'), cx - BACK_T * 0.5, LEG_H + SEAT_P + SEAT_C / 2, cz);
-    // Far-end armrest
-    at(g, tag(box(cD - BACK_T, ARM_H * 0.65, ARM_W, fabricMat), 'upholstery'), cx - BACK_T * 0.5, LEG_H + (ARM_H * 0.65) / 2, cz + cW / 2 - ARM_W / 2);
-    // Chaise legs
-    for (const [xs, zs] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
-      const legMesh = tag(cyl(0.025, 0.025, LEG_H, legMat), 'leg');
-      legMesh.position.set(cx + xs * (cD / 2 - 0.05), LEG_H / 2, cz + zs * (cW / 2 - 0.05));
-      g.add(legMesh);
-    }
+    at(g, tag(box(cD - BACK_T - 0.02, SEAT_C, cW * 0.94, cushMat), 'cushion'), cx - BACK_T * 0.5, LEG_H + SEAT_P + SEAT_C / 2, cz);
   }
 
   return g;
@@ -368,9 +381,12 @@ function buildArmchair(dims: FurnitureDimensions): THREE.Group {
   }
 
   at(g, tag(box(INNER * 0.92, SEAT_C, D - BACK_T - 0.04, cushMat), 'cushion'), 0, LEG_H + SEAT_P + SEAT_C / 2, -BACK_T * 0.1);
-  at(g, tag(box(INNER * 0.88, BACK_H * 0.78, BACK_T * 0.55, cushMat), 'cushion'), 0, LEG_H + SEAT_P + BACK_H * 0.78 / 2, D / 2 - BACK_T + BACK_T * 0.55 / 2);
+  const bCush = tag(box(INNER * 0.88, BACK_H * 0.78, BACK_T * 0.55, cushMat), 'cushion');
+  bCush.rotation.z = 0.02; // Slight organic lean
+  at(g, bCush, 0, LEG_H + SEAT_P + BACK_H * 0.78 / 2, D / 2 - BACK_T + BACK_T * 0.55 / 2);
 
   legs4(g, W, D, LEG_H, 0.022, legMat);
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -429,6 +445,7 @@ function buildDiningChair(dims: FurnitureDimensions): THREE.Group {
   for (const [xs, zs] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
     at(g, tag(cyl(0.02, 0.022, legH, woodMat), 'leg'), xs * (W / 2 - 0.025), legH / 2, zs * (D / 2 - 0.025));
   }
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -438,32 +455,41 @@ function buildOfficeChair(dims: FurnitureDimensions): THREE.Group {
   const g = new THREE.Group();
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
 
-  const fabricMat = pbr(0x2a2a2a, 0.85);
-  const plasticMat = pbr(0x1a1a1a, 0.60, 0.10);
-  const metalMat = pbr(0x909090, 0.30, 0.80);
+  const fabricMat = pbr(0x2a2a2a, 0.88);
+  const plasticMat = pbr(0x1a1a1a, 0.45, 0.05);
+  const metalMat = pbr(0xa0a0a0, 0.25, 0.82);
 
-  const SEAT_H = H * 0.40, BACK_H = H * 0.46;
-  const baseH = 0.06, poleH = SEAT_H - baseH - 0.04;
+  const SEAT_H = H * 0.42, BACK_H = H * 0.52;
+  const baseR = 0.32, hubH = 0.08, poleH = SEAT_H - hubH - 0.05;
 
-  // 5-spoke base
-  at(g, tag(new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, baseH, 5), plasticMat), 'frame'), 0, baseH / 2, 0);
-  // Wheels
+  // ── 5-star base with hub ──────────────────────────────────────────────────
+  at(g, tag(cyl(0.05, 0.06, hubH, plasticMat), 'frame'), 0, hubH / 2, 0);
   for (let i = 0; i < 5; i++) {
     const a = (i / 5) * Math.PI * 2;
-    const w = tag(new THREE.Mesh(new THREE.SphereGeometry(0.034, 6, 4), plasticMat), 'frame');
-    w.position.set(Math.cos(a) * 0.25, 0.034, Math.sin(a) * 0.25);
-    g.add(w);
+    const spoke = tag(box(baseR, 0.03, 0.045, plasticMat), 'frame');
+    spoke.rotation.y = a;
+    spoke.position.set(Math.cos(a) * baseR / 2, hubH * 0.6, Math.sin(a) * baseR / 2);
+    g.add(spoke);
+    
+    // Wheel
+    const wheel = tag(cyl(0.035, 0.035, 0.04, plasticMat, 8), 'frame');
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(Math.cos(a) * baseR, 0.035, Math.sin(a) * baseR);
+    g.add(wheel);
   }
-  // Gas lift
-  at(g, tag(cyl(0.034, 0.04, poleH, metalMat), 'frame'), 0, baseH + poleH / 2, 0);
-  // Seat + back
+
+  // ── Gas lift pole ──────────────────────────────────────────────────────────
+  at(g, tag(cyl(0.028, 0.032, poleH, metalMat), 'frame'), 0, hubH + poleH / 2, 0);
+
+  // ── Seat & Back ────────────────────────────────────────────────────────────
   at(g, tag(box(W, 0.08, D, fabricMat), 'upholstery'), 0, SEAT_H + 0.04, 0);
-  at(g, tag(box(W * 0.88, BACK_H, 0.10, fabricMat), 'upholstery'), 0, SEAT_H + 0.08 + BACK_H / 2, -(D / 2 - 0.08));
-  // Lumbar bump
-  at(g, tag(box(W * 0.58, BACK_H * 0.28, 0.04, pbr(0x333333, 0.9)), 'upholstery'), 0, SEAT_H + 0.08 + BACK_H * 0.24, -(D / 2 - 0.13));
-  // Armrests
+  at(g, tag(box(W * 0.90, BACK_H, 0.08, fabricMat), 'upholstery'), 0, SEAT_H + 0.08 + BACK_H / 2, -(D / 2 - 0.06));
+
+  // ── Armrests ───────────────────────────────────────────────────────────────
   for (const s of [-1, 1] as const) {
-    at(g, tag(box(0.055, 0.035, D * 0.48, plasticMat), 'frame'), s * (W / 2 + 0.026), SEAT_H + 0.12, 0);
+    const armX = s * (W / 2 + 0.04);
+    at(g, tag(box(0.03, 0.22, 0.03, plasticMat), 'frame'), armX, SEAT_H + 0.15, 0); // Vertical
+    at(g, tag(box(0.08, 0.03, D * 0.45, plasticMat), 'upholstery'), armX, SEAT_H + 0.26, 0); // Pad
   }
   return g;
 }
@@ -508,6 +534,7 @@ function buildDiningTable(dims: FurnitureDimensions, d: ProductDetails): THREE.G
       at(g, tag(cyl(0.028, 0.038, legH, legMat, 4), 'leg'), xs * (W / 2 - 0.05), legH / 2, zs * (D / 2 - 0.05));
     }
   }
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -563,6 +590,7 @@ function buildDesk(dims: FurnitureDimensions): THREE.Group {
     at(g, tag(box(pedW * 0.88, pedH * 0.25, 0.018, topMat), 'trim'), W / 2 - pedW / 2 - 0.01, dy, pedD / 2 + 0.009);
     at(g, tag(box(0.04, 0.01, 0.01, handleMat), 'decorative'), W / 2 - pedW / 2 - 0.01, dy, pedD / 2 + 0.025);
   }
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -627,9 +655,12 @@ function buildBed(dims: FurnitureDimensions): THREE.Group {
   const pillSpacing = W / (nPillows + 1);
   for (let i = 0; i < nPillows; i++) {
     const px = -W / 2 + pillSpacing * (i + 1);
-    at(g, tag(box(pillW, pillH, pillD, pillowMat), 'mattress'),
-      px, PLATFORM_H + MATT_H + pillH / 2, -(D / 2 - pillD / 2 - 0.12));
+    const pillow = tag(box(pillW, pillH, pillD, pillowMat), 'mattress');
+    pillow.rotation.z = (Math.random() - 0.5) * 0.05; // Organic toss
+    at(g, pillow, px, PLATFORM_H + MATT_H + pillH / 2, -(D / 2 - pillD / 2 - 0.12));
   }
+  
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -659,75 +690,43 @@ function buildWardrobe(dims: FurnitureDimensions, nDoors: number): THREE.Group {
   const g = new THREE.Group();
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
 
-  // Dark warm-wood defaults — overridden by product canvas / k-means colour
   const bodyMat = pbr(0x7a4520, 0.65);
-  const doorMat = pbr(0x8a5228, 0.62, 0.04);
-  const handleMat = pbr(0xb8b8bc, 0.22, 0.88);  // brushed silver
-  const t = 0.022;
+  const doorMat = pbr(0x8a5228, 0.60, 0.02);
+  const handleMat = pbr(0xc0c0c0, 0.25, 0.88);
+  const t = 0.024;
 
-  const footH = 0.060;
+  const footH = 0.08;
   const bH = H - footH;
   const cy = footH + bH / 2;
 
-  // ── Carcass panels (all 'frame' → receive primary product colour) ──────────
-  at(g, tag(box(W, bH, t, bodyMat), 'frame'), 0, cy, -(D / 2 - t / 2));  // back
-  at(g, tag(box(t, bH, D, bodyMat), 'frame'), -(W / 2 - t / 2), cy, 0);           // left side
-  at(g, tag(box(t, bH, D, bodyMat), 'frame'), (W / 2 - t / 2), cy, 0);           // right side
-  at(g, tag(box(W, t, D, bodyMat), 'frame'), 0, H - t / 2, 0);              // top
-  at(g, tag(box(W, t, D, bodyMat), 'frame'), 0, footH + t / 2, 0);                  // bottom
+  // ── Carcass ────────────────────────────────────────────────────────────────
+  at(g, tag(box(W, bH, t, bodyMat), 'frame'), 0, cy, -(D / 2 - t / 2));
+  at(g, tag(box(t, bH, D, bodyMat), 'frame'), -(W / 2 - t / 2), cy, 0);
+  at(g, tag(box(t, bH, D, bodyMat), 'frame'), (W / 2 - t / 2), cy, 0);
+  at(g, tag(box(W, t, D, bodyMat), 'frame'), 0, H - t / 2, 0);
+  at(g, tag(box(W, t, D, bodyMat), 'frame'), 0, footH + t / 2, 0);
 
-  // Thin vertical dividers between door bays
-  if (nDoors > 1) {
-    const doorWDiv = (W - t * (nDoors + 1)) / nDoors;
-    for (let i = 1; i < nDoors; i++) {
-      const divX = -W / 2 + t * (i + 0.5) + doorWDiv * i;
-      at(g, tag(box(t, bH * 0.99, D * 0.18, bodyMat), 'frame'), divX, cy, D / 2 - D * 0.09);
+  // ── Doors & Handles ────────────────────────────────────────────────────────
+  if (nDoors > 0) {
+    const doorW = (W - t * (nDoors + 1)) / nDoors;
+    const doorH = bH * 0.985;
+    for (let i = 0; i < nDoors; i++) {
+      const dx = -W / 2 + t * (i + 1) + doorW * (i + 0.5);
+      at(g, tag(box(doorW * 0.98, doorH, 0.02, doorMat), 'trim'), dx, footH + t + doorH / 2, D / 2 + 0.01);
+      
+      // Panel line detail
+      at(g, tag(box(doorW * 0.85, 0.005, 0.005, bodyMat), 'frame'), dx, footH + t + doorH * 0.75, D / 2 + 0.021);
+      at(g, tag(box(doorW * 0.85, 0.005, 0.005, bodyMat), 'frame'), dx, footH + t + doorH * 0.25, D / 2 + 0.021);
+
+      // Handle
+      const hSide = (i < nDoors / 2) ? 1 : -1;
+      at(g, tag(box(0.015, 0.18, 0.025, handleMat), 'decorative'), dx + hSide * (doorW * 0.35), footH + bH * 0.55, D / 2 + 0.035);
     }
   }
 
-  if (nDoors === 0) {
-    // Walk-in: base plinth only, no front doors
-    at(g, tag(box(W + 0.02, footH, D + 0.015, pbr(0x3a1a08, 0.75)), 'frame'), 0, footH / 2, 0);
-    return g;
-  }
-
-  // ── Door panels + arch handles ────────────────────────────────────────────
-  const doorW = (W - t * (nDoors + 1)) / nDoors;
-  const doorH = bH * 0.990;
-  const doorT = 0.020;
-
-  for (let i = 0; i < nDoors; i++) {
-    const dx = -W / 2 + t * (i + 1) + doorW * (i + 0.5);
-
-    // Door face — 'trim' → receives primary colour (wood grain texture)
-    at(g, tag(box(doorW, doorH, doorT, doorMat), 'trim'), dx, footH + doorH / 2 + t, D / 2 + doorT / 2);
-
-    // Arch/C-shape handle: two vertical arms + one horizontal crossbar at top
-    // Opening side: left-half doors open right, right-half doors open left
-    const openSide = (i < nDoors / 2) ? 1 : -1;
-    const hx = dx + openSide * (doorW * 0.28);
-    const hy = footH + bH * 0.57;
-    const archH = 0.110;
-    const armGap = 0.011;  // gap between the two vertical arms
-    const hz = D / 2 + doorT + 0.015;
-
-    // Left vertical arm
-    at(g, tag(cyl(0.005, 0.005, archH, handleMat, 8), 'decorative'), hx - armGap / 2, hy, hz);
-    // Right vertical arm
-    at(g, tag(cyl(0.005, 0.005, archH, handleMat, 8), 'decorative'), hx + armGap / 2, hy, hz);
-    // Top horizontal crossbar (cylinder rotated 90° around Z)
-    const crossBar = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, armGap + 0.010, 8), handleMat);
-    crossBar.rotation.z = Math.PI / 2;
-    crossBar.position.set(hx, hy + archH / 2, hz);
-    crossBar.userData.part = 'decorative';
-    g.add(crossBar);
-
-    // Lock — small disc below handle
-    at(g, tag(cyl(0.011, 0.011, 0.013, handleMat, 8), 'decorative'), hx, footH + bH * 0.43, D / 2 + doorT + 0.007);
-  }
-
-  // ── Base plinth (flat-base style — no visible legs) ───────────────────────
-  at(g, tag(box(W + 0.02, footH, D + 0.015, pbr(0x3a1a08, 0.75)), 'frame'), 0, footH / 2, 0);
+  // Plinth base
+  at(g, tag(box(W * 1.01, footH, D * 1.01, pbr(0x3a1a08, 0.7)), 'frame'), 0, footH / 2, 0);
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -804,6 +803,7 @@ function buildCabinet(dims: FurnitureDimensions): THREE.Group {
 
   // Small feet
   legs4(g, W, D, footH, 0.018, pbr(0x4a3520, 0.7), 0.04);
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -814,99 +814,78 @@ function buildDresser(dims: FurnitureDimensions, d: ProductDetails): THREE.Group
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
 
   const bodyMat = pbr(0xd4aa70, 0.65);
-  const drawerMat = pbr(0xdcb878, 0.52, 0.02);
-  const handleMat = pbr(0xc0c0c0, 0.25, 0.85);
-  const t = 0.020;
+  const drawerMat = pbr(0xdcb878, 0.55, 0.02);
+  const handleMat = pbr(0xb0b0b4, 0.25, 0.88);
+  const t = 0.022;
 
-  const footH = 0.06;
-  const bH = H - footH;
-  const cy = footH + bH / 2;
-  // Drawer rows: explicit from text (e.g. "6 drawer" → 3 rows) beats default 4
-  const N_ROWS = d.drawerRows > 0 ? d.drawerRows : 4;
+  const footH = 0.08, bH = H - footH, cy = footH + bH / 2;
+  const N_ROWS = d.drawerRows > 0 ? d.drawerRows : 3;
   const drawH = (bH - t * (N_ROWS + 1)) / N_ROWS;
 
-  // Body
+  // ── Carcass ────────────────────────────────────────────────────────────────
   at(g, tag(box(W, bH, t, bodyMat), 'frame'), 0, cy, -(D / 2 - t / 2));
   at(g, tag(box(t, bH, D, bodyMat), 'frame'), -(W / 2 - t / 2), cy, 0);
   at(g, tag(box(t, bH, D, bodyMat), 'frame'), (W / 2 - t / 2), cy, 0);
-  at(g, tag(box(W, t, D, bodyMat), 'frame'), 0, H - t / 2, 0);
-  at(g, tag(box(W, t, D, bodyMat), 'frame'), 0, footH + t / 2, 0);
-  // Overhanging top surface
-  at(g, tag(box(W + 0.02, t * 1.6, D + 0.02, pbr(0xdcb878, 0.48, 0.03)), 'trim'), 0, H + t * 0.8, 0);
+  at(g, tag(box(W + 0.02, 0.04, D + 0.02, pbr(0xdcb878, 0.50)), 'trim'), 0, H - 0.02, 0);
 
-  // Drawer fronts (2 columns × 4 rows)
+  // ── Drawer Fronts ──────────────────────────────────────────────────────────
   const dFW = (W - t * 3) / 2;
   for (let row = 0; row < N_ROWS; row++) {
     const dy = footH + t + row * (drawH + t) + drawH / 2;
     for (const col of [-1, 1] as const) {
       const dx = col * W / 4;
-      at(g, tag(box(dFW * 0.91, drawH * 0.84, 0.018, drawerMat), 'trim'), dx, dy, D / 2 + 0.009);
-      at(g, tag(box(0.04, 0.011, 0.011, handleMat), 'decorative'), dx, dy, D / 2 + 0.024);
+      at(g, tag(box(dFW * 0.94, drawH * 0.92, 0.015, drawerMat), 'trim'), dx, dy, D / 2 + 0.008);
+      // Horizontal handle
+      at(g, tag(box(0.08, 0.012, 0.015, handleMat), 'decorative'), dx, dy, D / 2 + 0.024);
     }
   }
 
-  legs4(g, W, D, footH, 0.016, pbr(0x3a2510, 0.7), 0.04);
+  legs4(g, W, D, footH, 0.025, pbr(0x2a1a0a, 0.5));
+  addGroundShadow(g, W, D);
   return g;
 }
-
-// ─── OTTOMAN ───────────────────────────────────────────────────────────────────
 
 function buildOttoman(dims: FurnitureDimensions, d: ProductDetails): THREE.Group {
   const g = new THREE.Group();
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
 
-  const fabricMat = pbr(0x8a7a6a, 0.90);
-  const topMat = pbr(0xa09080, 0.92);
-  const legMat = pbr(0x2a1a0a, 0.60);
+  const fabricMat = pbr(0x8a7a6a, 0.92);
+  const cushionMat = pbr(0xa09080, 0.95);
+  const legMat = pbr(0x2a1a0a, 0.55);
 
-  const LEG_H = 0.08, BODY_H = H * 0.70, TOP_H = H - LEG_H - BODY_H;
+  const footH = 0.12, bodyH = H - footH;
 
   if (d.isRoundOttoman) {
-    // ── Round pouf / circular ottoman ────────────────────────────────────────
-    const radius = Math.min(W, D) / 2;
-    at(g, tag(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, BODY_H, 24), fabricMat), 'upholstery'), 0, LEG_H + BODY_H / 2, 0);
-    at(g, tag(new THREE.Mesh(new THREE.CylinderGeometry(radius + 0.015, radius + 0.015, TOP_H + 0.015, 24), topMat), 'cushion'), 0, LEG_H + BODY_H + (TOP_H + 0.015) / 2, 0);
-    at(g, tag(box(0.07, 0.014, 0.07, pbr(0x706050, 0.95)), 'trim'), 0, LEG_H + BODY_H + TOP_H + 0.02, 0);
-    legs4(g, W, D, LEG_H, 0.018, legMat, 0.055);
+    const R = Math.min(W, D) / 2;
+    at(g, tag(cyl(R, R, bodyH * 0.8, fabricMat, 24), 'upholstery'), 0, footH + bodyH * 0.4, 0);
+    at(g, tag(cyl(R * 1.05, R * 1.05, bodyH * 0.25, cushionMat, 24), 'cushion'), 0, footH + bodyH * 0.9, 0);
   } else {
-    // ── Rectangular ottoman ───────────────────────────────────────────────────
-    at(g, tag(box(W, BODY_H, D, fabricMat), 'upholstery'), 0, LEG_H + BODY_H / 2, 0);
-    at(g, tag(box(W + 0.03, TOP_H + 0.03, D + 0.03, topMat), 'cushion'), 0, LEG_H + BODY_H + (TOP_H + 0.03) / 2, 0);
-    at(g, tag(box(0.07, 0.014, 0.07, pbr(0x706050, 0.95)), 'trim'), 0, LEG_H + BODY_H + TOP_H + 0.04, 0);
-    legs4(g, W, D, LEG_H, 0.018, legMat, 0.055);
+    at(g, tag(box(W, bodyH * 0.8, D, fabricMat), 'upholstery'), 0, footH + bodyH * 0.4, 0);
+    at(g, tag(box(W * 1.05, bodyH * 0.25, D * 1.05, cushionMat), 'cushion'), 0, footH + bodyH * 0.9, 0);
   }
+
+  legs4(g, W, D, footH, 0.03, legMat);
   return g;
 }
-
-// ─── FLOOR LAMP ────────────────────────────────────────────────────────────────
 
 function buildLamp(dims: FurnitureDimensions): THREE.Group {
   const g = new THREE.Group();
   const H = dims.h / 100;
 
-  const metalMat = pbr(0x909090, 0.30, 0.85);
-  const baseMat = pbr(0x888888, 0.40, 0.70);
-  const shadeMat = pbr(0xfff3d0, 0.80);
+  const metalMat = pbr(0x909094, 0.25, 0.85);
+  const shadeMat = pbr(0xfefae0, 0.85);
 
-  at(g, tag(new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.27, 0.05, 16), baseMat), 'frame'), 0, 0.025, 0);
+  // Base
+  at(g, tag(cyl(0.20, 0.22, 0.04, metalMat, 16), 'frame'), 0, 0.02, 0);
+  // Pole
+  const poleH = H * 0.75;
+  at(g, tag(cyl(0.015, 0.015, poleH, metalMat, 12), 'frame'), 0, 0.04 + poleH / 2, 0);
+  // Shade
+  const shadeH = 0.35, shadeR = 0.22;
+  at(g, tag(cyl(shadeR * 0.7, shadeR, shadeH, shadeMat, 16, true), 'decoration_skip'), 0, H - shadeH / 2, 0);
+  // Bulb
+  at(g, tag(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffffaa, emissive: 0xffaa00, emissiveIntensity: 1 })), 'decoration_skip'), 0, H - shadeH * 0.6, 0);
 
-  const poleH = H * 0.76;
-  at(g, tag(cyl(0.014, 0.014, poleH, metalMat, 12), 'frame'), 0, 0.05 + poleH / 2, 0);
-
-  // Shade (open-bottom truncated cone) — tagged decoration_skip to preserve warm amber color
-  const shade = tag(new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.27, 0.34, 16, 1, true), shadeMat), 'decoration_skip');
-  shade.position.set(0, H * 0.76 + 0.05 + 0.17, 0);
-  g.add(shade);
-  // Shade top cap
-  at(g, tag(new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.012, 16), metalMat), 'frame'), 0, H * 0.76 + 0.05 + 0.34, 0);
-
-  // Glowing bulb — always preserve emissive, skip color override
-  const bulb = tag(new THREE.Mesh(
-    new THREE.SphereGeometry(0.038, 8, 8),
-    new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0xffee88, emissiveIntensity: 1.6 })
-  ), 'decoration_skip');
-  bulb.position.set(0, H * 0.76 + 0.05 + 0.06, 0);
-  g.add(bulb);
   return g;
 }
 
@@ -946,6 +925,7 @@ function buildSideboard(dims: FurnitureDimensions): THREE.Group {
   for (const [xs, zs] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
     at(g, tag(cyl(0.019, 0.028, legH, pbr(0x5c3d1e, 0.60), 4), 'leg'), xs * (W / 2 - 0.06), legH / 2, zs * (D / 2 - 0.06));
   }
+  addGroundShadow(g, W, D);
   return g;
 }
 
@@ -954,9 +934,15 @@ function buildSideboard(dims: FurnitureDimensions): THREE.Group {
 function buildGeneric(dims: FurnitureDimensions): THREE.Group {
   const g = new THREE.Group();
   const W = dims.w / 100, D = dims.l / 100, H = dims.h / 100;
-  // Single body block — tagged 'frame' so the hard-furniture branch applies
-  // the product primary colour + image-derived roughness to the whole surface.
-  at(g, tag(box(W, H, D, pbr(0xd4b896, 0.80)), 'frame'), 0, H / 2, 0);
+  
+  // High-fidelity generic block with beveled appearance
+  const bodyMat = pbr(0xd4b896, 0.80);
+  const trimMat = pbr(0xe5c8a6, 0.75);
+  
+  at(g, tag(box(W, H * 0.96, D, bodyMat), 'frame'), 0, H * 0.48, 0);
+  at(g, tag(box(W * 1.02, 0.035, D * 1.02, trimMat), 'trim'), 0, H - 0.017, 0);
+  
+  legs4(g, W, D, 0.05, pbr(0x2a1a0a, 0.6));
   return g;
 }
 
@@ -1752,7 +1738,7 @@ export async function generateFurnitureGLB(
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.55,
       depthWrite: false,
     });
     const shadowPlane = new THREE.Mesh(
