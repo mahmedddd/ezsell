@@ -439,6 +439,10 @@ export function WebARViewer({
 
   const modelViewerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // AR placement state — declared BEFORE early return to satisfy Rules of Hooks
+  const [wallNear, setWallNear] = useState(false);
+  const [groundLocked, setGroundLocked] = useState(false);
+  const lastWallSnapRef = useRef(0);
 
   // Only render for furniture
   if (category?.toLowerCase() !== 'furniture') return null;
@@ -813,15 +817,16 @@ export function WebARViewer({
   }, [isSheetOpen, step, caps.hasCamera, runObjectDetection]);
 
   // ── Haptic Feedback Helper ────────────────────────────────────────────────
-  const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'warning' | 'error') => {
+  const triggerHaptic = (type: 'light' | 'medium' | 'success' | 'warning' | 'error' | 'ground-lock' | 'wall-snap') => {
     if (!('vibrate' in navigator)) return;
-
     switch (type) {
-      case 'light': navigator.vibrate(10); break;
-      case 'medium': navigator.vibrate(20); break;
-      case 'success': navigator.vibrate([20, 30, 40]); break;
-      case 'warning': navigator.vibrate([50, 100]); break;
-      case 'error': navigator.vibrate([100, 50, 100]); break;
+      case 'light':       navigator.vibrate(10); break;
+      case 'medium':      navigator.vibrate(25); break;
+      case 'ground-lock': navigator.vibrate([8, 20, 30, 15, 60]); break;
+      case 'wall-snap':   navigator.vibrate([15, 10, 40]); break;
+      case 'success':     navigator.vibrate([20, 30, 60]); break;
+      case 'warning':     navigator.vibrate([50, 100]); break;
+      case 'error':       navigator.vibrate([100, 50, 100]); break;
     }
   };
 
