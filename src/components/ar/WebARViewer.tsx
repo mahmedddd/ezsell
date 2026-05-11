@@ -1044,10 +1044,35 @@ export function WebARViewer({
                     </div>
 
                     {/* model-viewer canvas area */}
-                    <div className="relative flex-1 bg-gradient-to-b from-gray-50 to-gray-100" style={{ minHeight: '38vh' }}>
+                    <div className="relative flex-1 bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden" style={{ minHeight: '38vh' }}>
+                      {/* Scale Perspective Reference (Human Silhouette) */}
+                      <div className="absolute bottom-4 left-4 z-10 flex flex-col items-center opacity-30 pointer-events-none grayscale">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full border-2 border-gray-400 mb-0.5" />
+                          <div className="w-10 h-16 rounded-t-3xl border-2 border-gray-400" />
+                        </div>
+                        <span className="text-[8px] font-bold text-gray-500 mt-1 uppercase tracking-tighter">Human Scale</span>
+                      </div>
+
+                      {/* Ground Grid for Depth Perception */}
+                      <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
+                        style={{ 
+                          backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
+                          backgroundSize: '50px 50px',
+                          perspective: '1000px',
+                          transform: 'rotateX(60deg) translateY(100px)',
+                          transformOrigin: 'bottom'
+                        }} 
+                      />
+
                       {/* Dimension overlay */}
-                      <div className="absolute top-3 left-3 z-10">
+                      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
                         <DimensionPill dims={dims} />
+                        {fType === 'bed' && (
+                          <Badge variant="secondary" className="bg-white/90 backdrop-blur text-[9px] font-black uppercase tracking-widest text-[#2E6091] py-0.5 px-2 w-fit shadow-sm">
+                            {dims.w >= 180 ? 'King Size' : dims.w >= 150 ? 'Queen Size' : 'Single Bed'}
+                          </Badge>
+                        )}
                       </div>
 
                       {/* AR status badge */}
@@ -1083,11 +1108,14 @@ export function WebARViewer({
                         exposure={1.2}
                         auto-rotate
                         auto-rotate-delay={2000}
-                        rotation-per-second="10deg"
+                        rotation-per-second="15deg"
                         camera-orbit="-30deg 75deg auto"
+                        min-camera-orbit="auto 0deg auto"
+                        interpolation-decay={200}
                         interaction-prompt="auto"
                         loading="eager"
                         reveal="auto"
+                        onPointerDown={() => triggerHaptic('light')}
                         draco-decoder-base-path="https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
                         style={{
                           width: '100%',
@@ -1131,13 +1159,18 @@ export function WebARViewer({
                           padding: '12px 20px',
                           color: '#fff',
                           fontSize: '13px',
-                          fontWeight: '700',
+                          fontWeight: '800',
                           whiteSpace: 'nowrap',
-                          letterSpacing: '0.01em',
-                          border: '1px solid rgba(255,255,255,0.15)',
+                          letterSpacing: '0.02em',
+                          border: '1px solid rgba(255,255,255,0.25)',
                           pointerEvents: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
                         } as any}>
-                          👇 Point at floor &amp; tap to place
+                          <div className="w-2 h-2 rounded-full bg-[#4591CB] animate-ping" />
+                          <span>Point at floor &amp; tap to place</span>
                         </div>
 
                         {/* Loading slot */}
