@@ -639,25 +639,29 @@ export function WebARViewer({
             const fullUrl = getFullUrl(status.local_url);
             // Append a cache-buster so model-viewer fetches the new file, not a stale cache
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
-            
-            // CRITICAL: Set loading true BEFORE changing mode/URL to ensure loader covers the transition
-            setModelLoading(true);
-            setTripoUrl(bustedUrl);
-            setViewMode('advanced');
-            setStep('model_ready');
 
-            // Auto-switch to AR tab so user sees the new model immediately
-            setActiveTab('ar');
+            // ── Pre-warm the browser cache with an eager fetch BEFORE handing
+            //    the URL to model-viewer. This ensures model-viewer gets an
+            //    instant cache-hit instead of waiting for a cold network download.
+            const prime = bustedUrl
+              ? fetch(bustedUrl, { credentials: 'include', cache: 'default' }).catch(() => {})
+              : Promise.resolve();
 
-            // Reset aiStage after a short delay so the UI cleans up nicely
-            setTimeout(() => setAiStage('idle'), 800);
-
-            // Notify parent to refresh assets
-            onModelGenerated?.();
+            prime.finally(() => {
+              if (!isMounted) return;
+              // Transition to the new model — cache is already warm
+              setModelLoading(false); // no spinner — model loads instantly from cache
+              setTripoUrl(bustedUrl);
+              setViewMode('advanced');
+              setStep('model_ready');
+              setActiveTab('ar');
+              setTimeout(() => setAiStage('idle'), 800);
+              onModelGenerated?.();
+            });
 
             toast({
               title: "✨ 3D Model Ready!",
-              description: "AI generation complete — your model is loading now.",
+              description: "AI generation complete — switching to photorealistic view.",
             });
           } else {
             setAiStage('failed');
@@ -787,9 +791,13 @@ export function WebARViewer({
         setBuildProgress(Math.round(p * 100));
         if (p > 0 && p < 1) {
           setModelLoading(true);
-          // Reset safety timer on every progress tick
+          // Safety net: if no further progress events arrive for 8s, clear the spinner
           clearTimeout(safetyTimer);
-          safetyTimer = setTimeout(() => setModelLoading(false), 6000);
+          safetyTimer = setTimeout(() => setModelLoading(false), 8000);
+        } else if (p >= 1) {
+          // Progress reached 100% — immediately clear loading state
+          clearTimeout(safetyTimer);
+          setModelLoading(false);
         }
       };
 
@@ -1015,6 +1023,41 @@ export function WebARViewer({
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
+      {/*
+        ── Hidden Advanced-3D GLB Preloader ────────────────────────────────────
+        Renders an invisible model-viewer element outside the Sheet so that the
+        GLB download starts immediately when the listing page loads — using
+        model-viewer's own internal fetch + cache pipeline.  By the time the
+        user taps "View in Your Room" and the Sheet mounts, model-viewer inside
+        the Sheet will get an instant cache-hit instead of a cold download.
+
+        • loading="eager"  → begins fetch immediately (no wait for IntersectionObserver)
+        • reveal="manual"  → never shows a poster/image — stays invisible
+        • style width/height 1px prevents the element from affecting layout
+        This element re-mounts (key changes) whenever tripoUrl changes so it
+        always preloads the latest generated model URL.
+      */}
+      {tripoUrl && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            width: 0,
+            height: 0,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+            opacity: 0,
+          }}
+        >
+          <model-viewer
+            key={`preload-${tripoUrl}`}
+            src={tripoUrl}
+            loading="eager"
+            reveal="manual"
+            style={{ width: '1px', height: '1px', display: 'block' } as any}
+          />
+        </div>
+      )}
       {/* ─── Trigger Button ─────────────────────────────────────────────── */}
       <button
         onClick={handleOpen}
@@ -1349,30 +1392,36 @@ export function WebARViewer({
                         <div slot="progress-bar" style={{ display: 'none' }} />
                       </model-viewer>
 
-                      {/* Transition Loading Overlay */}
+                      {/* Transition Loading Overlay — shows real download progress */}
                       {modelLoading && (
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-md animate-in fade-in duration-500">
-                          <div className="bg-white p-6 rounded-[32px] shadow-2xl border border-gray-100 flex flex-col items-center gap-4 text-center">
-                            <div className="relative">
-                              <div className="w-12 h-12 rounded-full border-4 border-[#2E6091]/10 border-t-[#2E6091] animate-spin" />
-                              <Loader2 className="absolute inset-0 m-auto h-5 w-5 text-[#2E6091] animate-pulse" />
+                        <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-4 pt-2 animate-in slide-in-from-bottom duration-300 pointer-events-none">
+                          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex flex-col gap-2">
+                            {/* Header row */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full border-2 border-[#2E6091]/20 border-t-[#2E6091] animate-spin flex-shrink-0" />
+                                <span className="text-[11px] font-black text-[#2E6091] uppercase tracking-widest">
+                                  {viewMode === 'advanced' ? 'Loading 3D Model' : 'Loading Fast View'}
+                                </span>
+                              </div>
+                              {buildProgress > 0 && (
+                                <span className="text-[11px] font-bold text-[#2E6091]">{buildProgress}%</span>
+                              )}
                             </div>
-                            <div className="space-y-1">
-                              <p className="text-[11px] font-black text-[#2E6091] uppercase tracking-widest animate-pulse">
-                                Initializing {viewMode === 'advanced' ? 'Advanced 3D' : 'Fast View'}
-                              </p>
-                              <p className="text-[10px] text-gray-400 font-medium">Downloading assets from cluster...</p>
+                            {/* Progress track */}
+                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-[#2E6091] to-[#4591CB] rounded-full transition-all duration-300"
+                                style={{ width: buildProgress > 0 ? `${buildProgress}%` : '15%', animation: buildProgress === 0 ? 'pulse 1.5s ease-in-out infinite' : 'none' }}
+                              />
                             </div>
-                            
-                            {/* Failsafe button if stuck */}
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            {/* Bypass */}
+                            <button
                               onClick={() => setModelLoading(false)}
-                              className="mt-2 text-[9px] font-bold text-gray-300 hover:text-[#2E6091] h-auto py-1"
+                              className="pointer-events-auto text-[9px] text-gray-300 hover:text-[#2E6091] text-right leading-none mt-0.5 transition-colors"
                             >
-                              Tap to bypass if stuck
-                            </Button>
+                              Tap here if stuck
+                            </button>
                           </div>
                         </div>
                       )}
