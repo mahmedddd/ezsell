@@ -150,6 +150,9 @@ class PricePredictionRequest(BaseModel):
     is_touchscreen: Optional[bool] = False
     # Furniture fields
     material: Optional[str] = ""
+    frame_material: Optional[str] = ""
+    furniture_style: Optional[str] = ""
+    storage_type: Optional[str] = ""
     furniture_type: Optional[str] = ""
     furniture_subtype: Optional[str] = ""  # e.g., king_size, queen_size for bed; dining, coffee for table
     seating_capacity: Optional[int] = 0

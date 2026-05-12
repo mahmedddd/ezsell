@@ -123,7 +123,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     // === MOBILE + LAPTOP ===
     if (k.includes('ram') || k.includes('memory') && !k.includes('storage')) return 'ram';
     if (k.includes('storage') || k.includes('rom') || k.includes('ssd') || k.includes('disk') || k.includes('hdd')) {
-      return category === 'furniture' ? 'has_storage' : 'storage';
+      return category === 'furniture' ? 'storage_type' : 'storage';
     }
     if (k.includes('camera') || k.includes('megapixel') || k.includes('mp')) return 'camera';
     if (k.includes('processor') || k.includes('cpu') || k.includes('chipset')) return 'processor';
@@ -189,6 +189,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
           }
           // string fields: val stays as the raw string
           formDataUpdates[schemaKey] = val;
+          if (schemaKey === 'storage_type' && typeof val === 'string' && val.toLowerCase() !== 'no storage') {
+            formDataUpdates.has_storage = true;
+          }
         }
       });
 
@@ -1418,7 +1421,11 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                               } else if (booleanFields.includes(schemaKey)) {
                                 val = v.toLowerCase().includes('yes') || v.toLowerCase().includes('included') || v.toLowerCase().includes('true');
                               }
-                              setFormData(prev => ({ ...prev, [schemaKey]: val }));
+                              const extraUpdates: any = {};
+                              if (schemaKey === 'storage_type' && typeof val === 'string' && val.toLowerCase() !== 'no storage') {
+                                extraUpdates.has_storage = true;
+                              }
+                              setFormData(prev => ({ ...prev, [schemaKey]: val, ...extraUpdates }));
                             }}
                           >
                             <SelectTrigger>
