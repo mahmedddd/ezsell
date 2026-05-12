@@ -145,14 +145,33 @@ function detectARModesAttr(supportedModes: string[]): string {
 
 function getFullUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
 
-  // For mobile devices, we MUST prefix relative paths with the backend IP
-  // otherwise the browser tries to hit the phone's localhost.
+  // Blob and data URIs are safe to use as-is
+  if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+
   const base = typeof window !== 'undefined' ? (window as any).BACKEND_URL || API_BASE_URL : API_BASE_URL;
   const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
 
+  if (url.startsWith('http')) {
+    try {
+      // If the URL is absolute, rewrite its origin to match the current backend.
+      // This prevents issues where old IPs (e.g. from previous wifi sessions) are stored in the DB.
+      const parsedUrl = new URL(url);
+      const parsedBase = new URL(cleanBase);
+      
+      // Only rewrite if it looks like a media path from our backend, 
+      // otherwise it might be a genuinely external URL (like an S3 bucket).
+      if (parsedUrl.pathname.includes('/media/')) {
+        return `${cleanBase}${parsedUrl.pathname}${parsedUrl.search}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  }
+
+  // Handle relative paths
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
   return `${cleanBase}${cleanUrl}`;
 }
 
@@ -1232,6 +1251,20 @@ export function WebARViewer({
                         <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-green-600/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow animate-in fade-in duration-300">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Floor locked
+                        </div>
+                      )}
+
+                      {/* ── Loading Overlay ── */}
+                      {modelLoading && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/50 backdrop-blur-[2px] animate-in fade-in duration-300">
+                          <div className="flex flex-col items-center gap-3 bg-white/90 px-6 py-4 rounded-2xl shadow-lg border border-gray-100">
+                            <Loader2 className="h-8 w-8 text-[#2E6091] animate-spin" />
+                            <div className="text-center">
+                              <p className="text-[11px] font-bold text-gray-800 uppercase tracking-wider">Downloading Model</p>
+                              <p className="text-[10px] text-gray-500 font-medium mt-0.5">{buildProgress}% Complete</p>
+                            </div>
+                            <Progress value={buildProgress} className="w-32 h-1.5 bg-gray-200" />
+                          </div>
                         </div>
                       )}
 
