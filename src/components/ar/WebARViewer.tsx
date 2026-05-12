@@ -405,16 +405,20 @@ export function WebARViewer({
       const url = getFullUrl(arAssets.model_glb_url);
       setTripoUrl(url);
       setViewMode('advanced');
-      // Preload the GLB in the background so it's in browser cache when sheet opens
+      // ── Eager background fetch of the GLB so the browser caches it ──────
+      // Using fetch() is more reliable than <link rel="preload"> for binary
+      // assets served from a different origin — the response goes into the
+      // HTTP cache which model-viewer will hit when it later requests the URL.
       if (url) {
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'fetch';
-        link.href = url;
-        link.crossOrigin = 'anonymous';
-        document.head.appendChild(link);
-        // Remove after 30s — it will have loaded by then
-        setTimeout(() => link.parentNode?.removeChild(link), 30000);
+        // Only fetch if not already cached (HEAD first to avoid re-downloading)
+        fetch(url, { method: 'HEAD', credentials: 'include' })
+          .then(res => {
+            // If not cached or expired, prime the cache with a full GET
+            if (!res.ok || res.headers.get('x-from-cache') !== 'true') {
+              return fetch(url, { credentials: 'include', cache: 'force-cache' });
+            }
+          })
+          .catch(() => { /* non-fatal — model will still load on demand */ });
       }
     }
     if (arAssets?.model_usdz_url) {
@@ -455,9 +459,62 @@ export function WebARViewer({
 
   const subtypeText = (furnitureSubtype ?? '').replace(/_/g, ' ');
 
+  /**
+   * Canonical bed-size subtype string (lower-cased) extracted from:
+   *   1. furnitureSubtype DB field (most reliable — set at listing time)
+   *   2. listing title / description free text
+   * Returns '' when this is not a bed or size is unknown.
+   */
+  const bedSizeKey: string = useMemo(() => {
+    if (fType !== 'bed') return '';
+    const st = (furnitureSubtype ?? '').toLowerCase();
+    if (/king/.test(st)) return 'king';
+    if (/queen/.test(st)) return 'queen';
+    if (/double/.test(st)) return 'double';
+    if (/single|twin/.test(st)) return 'single';
+    // Fallback: parse title + description
+    const text = `${listingTitle ?? ''} ${listingDescription ?? ''}`.toLowerCase();
+    if (/king[\s-]*size|king[\s-]*bed|\bking\b/.test(text)) return 'king';
+    if (/queen[\s-]*size|queen[\s-]*bed|\bqueen\b/.test(text)) return 'queen';
+    if (/double[\s-]*bed|full[\s-]*size|\bdouble\b/.test(text)) return 'double';
+    if (/single[\s-]*bed|twin[\s-]*bed|\bsingle\b|\btwin\b/.test(text)) return 'single';
+    return '';
+  }, [fType, furnitureSubtype, listingTitle, listingDescription]);
+
+  /** Human-readable size badge label — only for beds. */
+  const bedSizeLabel: string = useMemo(() => {
+    switch (bedSizeKey) {
+      case 'king':   return 'King Size';
+      case 'queen':  return 'Queen Size';
+      case 'double': return 'Double Bed';
+      case 'single': return 'Single Bed';
+      default:       return '';
+    }
+  }, [bedSizeKey]);
+
+  /**
+   * Canonical dimensions for this listing.
+   *
+   * Priority for beds:
+   *   1. If we know the explicit bed-size subtype, always use the canonical
+   *      industry-standard dimensions for that size — this overrides any
+   *      stored dimensionsCm / arAssets.dimensions_cm that may have been
+   *      persisted with wrong values (e.g. generic 183×183 for a king bed).
+   *   2. Otherwise fall through to: stored dimensionsCm → arAssets → smart resolver.
+   */
   const dims: FurnitureDimensions = useMemo(() => {
+    // For beds with an explicit size key, use canonical measurements
+    if (fType === 'bed' && bedSizeKey) {
+      const canonical: Record<string, FurnitureDimensions> = {
+        king:   { l: 203, w: 193, h: 55 },
+        queen:  { l: 200, w: 153, h: 55 },
+        double: { l: 190, w: 135, h: 55 },
+        single: { l: 190, w: 90,  h: 55 },
+      };
+      if (canonical[bedSizeKey]) return canonical[bedSizeKey];
+    }
     return dimensionsCm ?? arAssets?.dimensions_cm ?? resolveSmartDimensions(fType, listingTitle, `${listingDescription ?? ''} ${subtypeText}`);
-  }, [dimensionsCm, arAssets?.dimensions_cm, fType, listingTitle, listingDescription, subtypeText]);
+  }, [fType, bedSizeKey, dimensionsCm, arAssets?.dimensions_cm, listingTitle, listingDescription, subtypeText]);
 
   // ── Build (or fetch) the GLB ───────────────────────────────────────────────
   const prepareModel = useCallback(async () => {
@@ -1150,9 +1207,9 @@ export function WebARViewer({
                       {/* Dimension overlay */}
                       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
                         <DimensionPill dims={dims} showImperial />
-                        {fType === 'bed' && (
+                        {fType === 'bed' && bedSizeLabel && (
                           <Badge variant="secondary" className="bg-white/90 backdrop-blur text-[9px] font-black uppercase tracking-widest text-[#2E6091] py-0.5 px-2 w-fit shadow-sm border border-[#2E6091]/10">
-                            {dims.w >= 190 ? 'King Size' : dims.w >= 150 ? 'Queen Size' : dims.w >= 110 ? 'Double Bed' : 'Single Bed'}
+                            {bedSizeLabel}
                           </Badge>
                         )}
                       </div>
