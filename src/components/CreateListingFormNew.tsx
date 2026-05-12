@@ -90,9 +90,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     has_backlit_keyboard: false,
     // Furniture specs
     material: '',
-    frame_material: '',
-    furniture_style: '',
-    storage_type: '',
     furniture_type: '',
     furniture_subtype: '',
     seating_capacity: 0,
@@ -123,7 +120,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     // === MOBILE + LAPTOP ===
     if (k.includes('ram') || k.includes('memory') && !k.includes('storage')) return 'ram';
     if (k.includes('storage') || k.includes('rom') || k.includes('ssd') || k.includes('disk') || k.includes('hdd')) {
-      return category === 'furniture' ? 'storage_type' : 'storage';
+      return category === 'furniture' ? 'has_storage' : 'storage';
     }
     if (k.includes('camera') || k.includes('megapixel') || k.includes('mp')) return 'camera';
     if (k.includes('processor') || k.includes('cpu') || k.includes('chipset')) return 'processor';
@@ -140,9 +137,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     if (k.includes('material') || k.includes('upholstery') || k.includes('fabric')) return 'material';
     if (k.includes('mattress')) return 'has_mattress';
     if (k.includes('seating') || k.includes('capacity') || k.includes('seats') || k.includes('seater')) return 'seating_capacity';
-    if (k.includes('style') || k.includes('design')) return 'furniture_style';
+    if (k.includes('style') || k.includes('design')) return 'furniture_type';
     if (k.includes('door') || k.includes('compartment') || k.includes('subtype')) return 'furniture_subtype';
-    if (k.includes('frame')) return 'frame_material';
+    if (k.includes('frame')) return 'material'; // frame material → material
     if (k === 'size' && category === 'furniture') return 'furniture_subtype';
     if (k.includes('chair') || k.includes('seat_type') || k.includes('type')) return 'furniture_type';
     if (k.includes('mirror') || k.includes('shelf') || k.includes('shelv')) return 'furniture_subtype';
@@ -166,7 +163,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       const formDataUpdates: Record<string, any> = {};
       const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size', 'battery', 'generation'];
       const booleanFields = ['has_mattress', 'has_storage', 'is_imported', 'is_handmade', 'is_antique'];
-      const stringFields = ['color', 'brand', 'furniture_brand', 'processor', 'gpu', 'material', 'furniture_type', 'furniture_subtype', 'frame_material', 'furniture_style', 'storage_type'];
+      const stringFields = ['color', 'brand', 'furniture_brand', 'processor', 'gpu', 'material', 'furniture_type', 'furniture_subtype'];
 
       Object.entries(dropdowns).forEach(([key, options]: [string, any]) => {
         const lowerTitle = title.toLowerCase();
@@ -189,9 +186,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
           }
           // string fields: val stays as the raw string
           formDataUpdates[schemaKey] = val;
-          if (schemaKey === 'storage_type' && typeof val === 'string' && val.toLowerCase() !== 'no storage') {
-            formDataUpdates.has_storage = true;
-          }
         }
       });
 
@@ -380,9 +374,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         is_touchscreen: !!existingData.is_touchscreen,
         has_backlit_keyboard: !!existingData.has_backlit_keyboard,
         material: existingData.material || '',
-        frame_material: existingData.frame_material || '',
-        furniture_style: existingData.furniture_style || '',
-        storage_type: existingData.storage_type || '',
         furniture_type: existingData.furniture_type || '',
         furniture_subtype: existingData.furniture_subtype || '',
         seating_capacity: typeof existingData.seating_capacity === 'number' ? existingData.seating_capacity : 0,
@@ -627,7 +618,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       formData.title, formData.category, formData.condition, formData.description,
       formData.material, formData.ram, formData.storage, formData.processor,
       formData.gpu, formData.generation, formData.furniture_type, formData.furniture_subtype,
-      formData.frame_material, formData.furniture_style, formData.storage_type,
       formData.seating_capacity, formData.has_pta, formData.has_warranty, formData.has_box,
       formData.has_5g, formData.has_amoled, formData.has_ssd, formData.is_gaming,
       formData.is_touchscreen, formData.is_antique, formData.is_handmade, formData.is_imported,
@@ -665,7 +655,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     formData.has_ssd, formData.is_gaming, formData.is_touchscreen,
     formData.gpu, formData.processor, formData.generation,
     formData.furniture_type, formData.furniture_subtype, formData.seating_capacity,
-    formData.frame_material, formData.furniture_style, formData.storage_type,
     formData.is_antique, formData.is_handmade, formData.is_imported, formData.has_storage,
     dynamicSpecsKey,
   ]);
@@ -718,35 +707,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     e.target.value = '';
   };
 
-  const removeImage = (indexToRemove: number) => {
-    // 1. Remove from imageFiles and imagePreviews
-    setImageFiles(prev => {
-      const updated = [...prev];
-      updated.splice(indexToRemove, 1);
-      return updated;
-    });
-
-    setImagePreviews(prev => {
-      const updated = [...prev];
-      updated.splice(indexToRemove, 1);
-      return updated;
-    });
-
-    // 2. Adjust imageValidations (shift indices down)
-    setImageValidations(prev => {
-      const updated: any = {};
-      Object.entries(prev).forEach(([key, val]) => {
-        const idx = parseInt(key);
-        if (idx < indexToRemove) {
-          updated[idx] = val;
-        } else if (idx > indexToRemove) {
-          updated[idx - 1] = val;
-        }
-      });
-      return updated;
-    });
-  };
-
   const handlePredictPrice = async () => {
     if (!titleValidation || !titleValidation.is_valid) {
       setPredictionError('Please provide a valid title with relevant product information');
@@ -796,9 +756,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       } else if (formData.category === 'furniture') {
         Object.assign(requestData, {
           material: formData.material,
-          frame_material: formData.frame_material,
-          furniture_style: formData.furniture_style,
-          storage_type: formData.storage_type,
           furniture_type: formData.furniture_type,
           furniture_subtype: formData.furniture_subtype,
           seating_capacity: formData.seating_capacity,
@@ -1335,20 +1292,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                             <span className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                               {index + 1}
                             </span>
-
-                            {/* Remove Individual Image Button */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                removeImage(index);
-                              }}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors z-10 opacity-0 group-hover:opacity-100"
-                              title="Remove image"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </button>
                           </div>
                         ))}
                       </div>
@@ -1464,11 +1407,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                               } else if (booleanFields.includes(schemaKey)) {
                                 val = v.toLowerCase().includes('yes') || v.toLowerCase().includes('included') || v.toLowerCase().includes('true');
                               }
-                              const extraUpdates: any = {};
-                              if (schemaKey === 'storage_type' && typeof val === 'string' && val.toLowerCase() !== 'no storage') {
-                                extraUpdates.has_storage = true;
-                              }
-                              setFormData(prev => ({ ...prev, [schemaKey]: val, ...extraUpdates }));
+                              setFormData(prev => ({ ...prev, [schemaKey]: val }));
                             }}
                           >
                             <SelectTrigger>
@@ -1775,21 +1714,22 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="wood">General Wood</SelectItem>
-                              <SelectItem value="solid_sheesham">Solid Sheesham Wood</SelectItem>
-                              <SelectItem value="teak_wood">Teak Wood (Sagwan)</SelectItem>
-                              <SelectItem value="ash_wood">Ash Wood</SelectItem>
-                              <SelectItem value="walnut_wood">Walnut Wood</SelectItem>
-                              <SelectItem value="mdf_lasani">MDF / Lasani</SelectItem>
-                              <SelectItem value="uv_board">UV / Tactile Board</SelectItem>
-                              <SelectItem value="acrylic">Acrylic Finish</SelectItem>
-                              <SelectItem value="metal_iron">Metal / Iron</SelectItem>
+                              <SelectItem value="solid_wood">Solid Wood</SelectItem>
+                              <SelectItem value="sheesham">Sheesham / Rosewood</SelectItem>
+                              <SelectItem value="teak">Teak Wood</SelectItem>
+                              <SelectItem value="oak">Oak Wood</SelectItem>
+                              <SelectItem value="walnut">Walnut</SelectItem>
+                              <SelectItem value="mahogany">Mahogany</SelectItem>
+                              <SelectItem value="mdf">MDF / Engineered Wood</SelectItem>
+                              <SelectItem value="metal">Metal</SelectItem>
                               <SelectItem value="stainless_steel">Stainless Steel</SelectItem>
-                              <SelectItem value="tempered_glass">Tempered Glass</SelectItem>
-                              <SelectItem value="velvet">Premium Velvet</SelectItem>
-                              <SelectItem value="fabric">Italian / Turkish Fabric</SelectItem>
+                              <SelectItem value="glass">Glass</SelectItem>
+                              <SelectItem value="fabric">Fabric</SelectItem>
+                              <SelectItem value="velvet">Velvet</SelectItem>
                               <SelectItem value="leather">Genuine Leather</SelectItem>
-                              <SelectItem value="faux_leather">Faux Leather / Rexine</SelectItem>
-                              <SelectItem value="marble_italian">Italian / Carrara Marble</SelectItem>
+                              <SelectItem value="faux_leather">Faux / PU Leather</SelectItem>
+                              <SelectItem value="marble">Marble</SelectItem>
+                              <SelectItem value="rattan">Rattan / Bamboo</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1970,47 +1910,6 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                         )}
 
                         <div>
-                          <Label>Furniture Style</Label>
-                          <Select value={formData.furniture_style} onValueChange={(v) => setFormData({ ...formData, furniture_style: v })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select style (e.g., Modern, Antique)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="modern">Modern / Contemporary</SelectItem>
-                              <SelectItem value="traditional">Traditional / Classic</SelectItem>
-                              <SelectItem value="antique">Antique / Vintage</SelectItem>
-                              <SelectItem value="chinioti">Chinioti / Carved</SelectItem>
-                              <SelectItem value="minimalist">Minimalist</SelectItem>
-                              <SelectItem value="industrial">Industrial</SelectItem>
-                              <SelectItem value="rustic">Rustic / Farmhouse</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Frame Material</Label>
-                          <Select value={formData.frame_material} onValueChange={(v) => setFormData({ ...formData, frame_material: v })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select frame material" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="solid_sheesham">Solid Sheesham Wood</SelectItem>
-                              <SelectItem value="teak_wood">Teak Wood (Sagwan)</SelectItem>
-                              <SelectItem value="ash_wood">Ash Wood</SelectItem>
-                              <SelectItem value="walnut_wood">Walnut Wood</SelectItem>
-                              <SelectItem value="mdf_lasani">MDF / Lasani</SelectItem>
-                              <SelectItem value="particle_board">Particle Board / Chipboard</SelectItem>
-                              <SelectItem value="metal_iron">Wrought Iron / Metal</SelectItem>
-                              <SelectItem value="brass">Brass / Metallic</SelectItem>
-                              <SelectItem value="upholstered">Upholstered / Fully Covered</SelectItem>
-                              <SelectItem value="bamboo_cane">Bamboo / Cane</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
                           <Label>Seating Capacity (if applicable)</Label>
                           <Select value={String(formData.seating_capacity)} onValueChange={(v) => setFormData({ ...formData, seating_capacity: parseInt(v) })}>
                             <SelectTrigger>
@@ -2088,33 +1987,14 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                         </div>
                       )}
 
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={formData.has_storage}
-                            onCheckedChange={(checked) => setFormData({ ...formData, has_storage: checked as boolean })}
-                          />
-                          <Label className="font-normal cursor-pointer">In-built Storage</Label>
-                        </div>
-                        {formData.has_storage && (
-                          <div className="pl-6 pt-1">
-                            <Label className="text-xs mb-1 block">Storage Type</Label>
-                            <Select value={formData.storage_type} onValueChange={(v) => setFormData({ ...formData, storage_type: v })}>
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Select storage type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="drawers">Drawers</SelectItem>
-                                <SelectItem value="hydraulic">Hydraulic / Lift-up</SelectItem>
-                                <SelectItem value="box">Box Storage</SelectItem>
-                                <SelectItem value="shelves">Shelves</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={formData.has_storage}
+                          onCheckedChange={(checked) => setFormData({ ...formData, has_storage: checked as boolean })}
+                        />
+                        <Label className="font-normal cursor-pointer">In-built Storage</Label>
                       </div>
-                      <div className="flex items-center space-x-2 h-fit mt-1">
+                      <div className="flex items-center space-x-2">
                         <Checkbox
                           checked={formData.is_antique}
                           onCheckedChange={(checked) => setFormData({ ...formData, is_antique: checked as boolean })}

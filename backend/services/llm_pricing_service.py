@@ -141,9 +141,11 @@ RULE 2 — LAPTOPS (category=laptop):
 ❌ INVALID: Brand alone ("Dell"), category word alone ("Laptop", "Gaming Laptop"), adjective phrases ("Nice Laptop", "Fast Laptop"), or any mobile/furniture-related terms without a laptop brand+model.
 
 RULE 3 — FURNITURE (category=furniture):
-✅ VALID: Any clear furniture item name. Qualifiers (size, material, style) are HIGHLY RECOMMENDED for better pricing but NOT strictly required if the item type is clear.
-   Examples: "Sofa", "Bed", "King Size Bed", "L-Shape Sofa", "Chinioti Wardrobe", "Wooden Dining Table"
-❌ INVALID: Adjective-only ("Nice", "Old", "Big") without the furniture type, or any mobile/laptop-related titles.
+✅ VALID: Furniture TYPE clearly named, with at least ONE qualifier (size, material, style, brand, seating count).
+   Examples: "King Size Bed", "L-Shape Sofa", "5 Seater Sofa", "Chinioti Wardrobe", "Office Chair", "Wooden Dining Table", "6 Seater Dining Set"
+   — "Office Chair", "Gaming Chair", "Dining Chair" ARE valid (type qualifier present).
+   — A bare furniture word with NO qualifier ("Sofa", "Bed", "Table", "Chair") is INVALID.
+❌ INVALID: Bare type word only, adjective-only ("Nice Sofa", "Old Chair", "Big Bed"), or any mobile/laptop-related titles.
 
 CRITICAL RULES (ALL categories):
 - NEVER approve a title that is clearly from a different category.
@@ -158,9 +160,6 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
   "message": "Title looks good! Ready to predict price." or specific rejection reason,
   "missing_fields": [] or ["Model name", "Size qualifier"] (informational hints only),
   "suggested_title": "same as input if valid, improved version if vague",
-  "hints": {{
-    "example": "Provide an example of a good title for this specific product, e.g. 'Modern 5 Seater L-Shape Velvet Sofa'"
-  }},
   "extracted_specs": {{}} (any specs extractable from title/description)
 }}
 """
@@ -422,287 +421,64 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
         t_lower = title.lower()
         if any(w in t_lower for w in ["sofa", "couch", "settee", "l-shape", "l shape", "sectional"]):
             furniture_type_hint = (
-                "This is a SOFA. You MUST include: 'Seating Capacity', 'Material', 'Style', 'Upholstery Type', 'Frame Material'.\n"
-                "- Seating Capacity: '1 Seater', '2 Seater', '3 Seater', '4 Seater', '5 Seater (3+1+1)', '6 Seater (3+2+1)', '7 Seater (3+2+1+1)', 'L-Shape (5 Seater)', 'L-Shape (7 Seater)'.\n"
-                "- Material: 'Premium Velvet', 'Italian Fabric', 'Genuine Leather', 'Faux Leather / Rexine', 'Suede', 'Cotton Blend', 'Linen', 'Microfiber', 'Jute / Textured Fabric', 'Turkish Fabric'.\n"
-                "- Style: 'Modern / Contemporary', 'Traditional / Classic', 'Chinioti / Carved', 'L-Shape / Corner', 'Reclinable', 'Sofa Cum Bed', 'Minimalist', 'Industrial', 'Chesterfield', 'Victorian'.\n"
-                "- Upholstery Type: 'Master MoltyFoam (High Density)', 'Spring Cushion', 'Memory Foam', 'Fiber Fill', 'Latex Layered'.\n"
-                "- Frame Material: 'Solid Sheesham Wood', 'Teak Wood (Sagwan)', 'Ash Wood', 'Walnut Wood', 'Kail Wood', 'MDF / Lasani', 'Metal Frame (Iron)', 'Wrought Iron', 'Upholstered / Fully Covered'."
+                "This is a SOFA. You MUST include: 'Seating Capacity', 'Material', 'Style', 'Upholstery Type'.\n"
+                "- Seating Capacity: '1 Seater', '2 Seater', '3 Seater', '4 Seater', '5 Seater', '6 Seater', '7 Seater'.\n"
+                "- Material: 'Velvet', 'Fabric', 'Leather', 'Rexine', 'Suede', 'Cotton Blend'.\n"
+                "- Style: 'Modern', 'Traditional', 'Chinioti', 'L-Shape', 'Corner', 'Reclinable', 'Sofa Cum Bed'.\n"
+                "- Upholstery Type: 'Foam Cushion', 'Spring Cushion', 'High-Density Foam', 'Memory Foam', 'Fiber Fill'.\n"
+                "Also add 'Frame Material': 'Solid Wood', 'MDF', 'Metal Frame'."
             )
-        elif any(w in t_lower for w in ["bed", "king", "queen", "double bed", "single bed", "bunk", "mattress"]):
+        elif any(w in t_lower for w in ["bed", "king", "queen", "double bed", "single bed", "bunk"]):
             furniture_type_hint = (
-                "This is a BED or MATTRESS. You MUST include: 'Size', 'Frame Material', 'Storage Type', 'Mattress Type'.\n"
-                "- Size: 'Single (36\" x 72\")', 'Single (42\" x 78\")', 'Double (48\" x 72\")', 'Queen (60\" x 78\")', 'King (72\" x 78\")', 'King (72\" x 84\")', 'Super King (84\" x 84\")'.\n"
-                "- Frame Material: 'Solid Sheesham Wood', 'Teak Wood (Sagwan)', 'Oak Wood', 'Ash Wood', 'Walnut Wood', 'MDF / Lasani', 'Particle Board / Chipboard', 'Wrought Iron / Metal', 'Upholstered / Tufted Headboard', 'Bamboo / Cane'.\n"
-                "- Storage Type: 'No Storage', '2 Side Drawers', '4 Side Drawers', 'Front Drawer', 'Hydraulic / Gas-Lift Storage', 'Box / Lift-up Storage', 'Headboard Storage'.\n"
-                "- Mattress Type: 'Master MoltyFoam', 'Diamond Foam', 'Orthopedic / Medical', 'Pocket Spring (Luxury)', 'Bonnell Spring', 'Memory Foam', 'Latex Foam', 'Not Included'.\n"
-                "- Style: 'Modern Platform', 'Classic Chinioti', 'Tufted Headboard', 'Divan Style', 'Sleigh Bed', 'Minimalist', 'Floating Bed'."
+                "This is a BED. You MUST include: 'Size', 'Frame Material', 'Storage', 'Mattress Included'.\n"
+                "- Size: 'Single (36x72)', 'Double (48x72)', 'Queen (60x72)', 'King (72x72)', 'King (72x84)'.\n"
+                "- Frame Material: 'Solid Wood', 'Sheesham Wood', 'MDF', 'Metal', 'Upholstered'.\n"
+                "- Storage: 'No Storage', 'Side Drawers', 'Hydraulic Storage', 'Box Storage'.\n"
+                "- Mattress Included: 'Yes - Spring Mattress', 'Yes - Foam Mattress', 'Not Included'.\n"
+                "Also add 'Style': 'Modern', 'Classic', 'Chinioti Carved', 'Divan Style', 'Platform Bed'."
             )
         elif any(w in t_lower for w in ["dining", "dining table", "dining set"]):
             furniture_type_hint = (
-                "This is a DINING TABLE/SET. You MUST include: 'Seating Capacity', 'Table Shape', 'Top Material', 'Set Composition'.\n"
-                "- Seating Capacity: '2 Seats (Bistro)', '4 Seats', '6 Seats', '8 Seats', '10 Seats', '12 Seats'.\n"
-                "- Table Shape: 'Rectangular', 'Round', 'Oval', 'Square', 'Extendable'.\n"
-                "- Top Material: 'Solid Sheesham', 'Teak Wood', 'Tempered Glass (12mm)', 'Marble Top (Carrara/Italian)', 'Granite Top', 'MDF with Veneer', 'Inlaid / Marquetry', 'Brass / Metallic Finish'.\n"
-                "- Set Composition: 'Table Only', 'Table + 4 Chairs', 'Table + 6 Chairs', 'Table + 8 Chairs', 'Table + Chairs + Bench', 'Table + Chairs + Buffet'.\n"
-                "- Style: 'Modern / Contemporary', 'Traditional', 'Chinioti Carved', 'Industrial / Metal', 'Minimalist', 'Rustic', 'Mid-Century Modern'."
+                "This is a DINING TABLE/SET. You MUST include: 'Seats', 'Shape', 'Material', 'Chair Included'.\n"
+                "- Seats: '4 Seats', '6 Seats', '8 Seats', '10 Seats', '12 Seats'.\n"
+                "- Shape: 'Rectangular', 'Round', 'Oval', 'Square'.\n"
+                "- Material: 'Solid Wood', 'Sheesham Wood', 'Glass Top', 'Marble Top', 'MDF', 'Metal Legs'.\n"
+                "- Chair Included: 'Yes - 4 Chairs', 'Yes - 6 Chairs', 'Chairs Not Included'.\n"
+                "Also add 'Style': 'Modern', 'Traditional', 'Chinioti', 'Industrial'."
             )
         elif any(w in t_lower for w in ["wardrobe", "almirah", "closet", "cupboard"]):
             furniture_type_hint = (
-                "This is a WARDROBE/ALMIRAH. You MUST include: 'Number of Doors', 'Primary Material', 'Mirror/Glass', 'Storage Features'.\n"
-                "- Number of Doors: '1 Door', '2 Doors', '3 Doors', '4 Doors', '6 Doors', 'Sliding Doors (2 Track)', 'Sliding Doors (3 Track)'.\n"
-                "- Primary Material: 'Solid Sheesham Wood', 'Ash Wood', 'MDF / Lasani', 'UV Coated Board', 'Acrylic Finish', 'Metal / Steel', 'Plastic / Portable'.\n"
-                "- Mirror: 'No Mirror', 'Full Length Mirror', 'Partial Mirror', 'Frosted Glass'.\n"
-                "- Storage Features: 'Hanging Rail + Shelves', 'Drawers Included', 'Locker / Safe Included', 'Shoe Rack Included'.\n"
-                "- Style: 'Built-in / Fitted', 'Freestanding Modern', 'Chinioti Carved', 'Minimalist'."
+                "This is a WARDROBE/ALMIRAH. You MUST include: 'Doors', 'Material', 'Mirror', 'Compartments'.\n"
+                "- Doors: '2 Doors', '3 Doors', '4 Doors', 'Sliding Doors'.\n"
+                "- Material: 'Solid Wood', 'MDF', 'Steel/Metal', 'Engineered Wood'.\n"
+                "- Mirror: 'With Full Mirror', 'With Half Mirror', 'No Mirror'.\n"
+                "- Compartments: 'Hanging + Shelves', 'Shelves Only', 'With Drawers', 'Full Shelves'.\n"
+                "Also add 'Style': 'Modern', 'Classic', 'Walk-in Style', 'Chinioti Carved'."
             )
-        elif any(w in t_lower for w in ["desk", "study table", "study desk", "office desk", "computer table", "computer desk", "writing table"]):
+        elif any(w in t_lower for w in ["desk", "study desk", "office desk", "computer desk"]):
             furniture_type_hint = (
-                "This is a DESK. You MUST include: 'Material', 'Size', 'Storage Options', 'Type'.\n"
-                "- Material: 'Solid Wood (Sheesham/Ash)', 'MDF / Lasani', 'Glass Top with Metal', 'Laminated Board', 'Acrylic'.\n"
-                "- Size: 'Small (3 Feet)', 'Standard (4 Feet)', 'Large (5 Feet)', 'Extra Large (6 Feet)', 'L-Shape / Executive'.\n"
-                "- Storage Options: 'No Storage', 'Single Drawer', 'Side Pedestal (3 Drawers)', 'Attached Bookshelf', 'Keyboard Tray'.\n"
-                "- Type: 'Study Table', 'Office Desk', 'Executive Desk', 'Gaming Desk (RGB)', 'Standing Desk (Height Adjustable)'."
+                "This is a DESK. You MUST include: 'Material', 'Size', 'Storage', 'Style'.\n"
+                "- Material: 'Solid Wood', 'MDF', 'Glass Top', 'Metal Frame', 'Laminated Board'.\n"
+                "- Size: 'Small (80-100cm)', 'Medium (100-120cm)', 'Large (120-150cm)', 'L-Shape'.\n"
+                "- Storage: 'No Storage', 'With Drawers', 'With Shelves', 'With Cabinet'.\n"
+                "- Style: 'Modern', 'Executive', 'Study', 'Gaming Desk', 'Standing Desk'."
             )
-        elif any(w in t_lower for w in ["chair", "stool", "recliner", "office chair", "gaming chair"]):
+        elif any(w in t_lower for w in ["chair", "stool", "office chair"]):
             furniture_type_hint = (
-                "This is a CHAIR. You MUST include: 'Chair Type', 'Upholstery Material', 'Base Material', 'Features'.\n"
-                "- Chair Type: 'Ergonomic Office Chair', 'Executive High-Back', 'Gaming Chair', 'Dining Chair', 'Accent / Bedroom Chair', 'Rocking Chair', 'Bar Stool', 'Recliner'.\n"
-                "- Upholstery Material: 'Breathable Mesh', 'Premium Fabric', 'Genuine Leather', 'Faux Leather / PU', 'Velvet', 'Plastic', 'Wooden Seat'.\n"
-                "- Base Material: 'Chrome / Steel (5-Star)', 'Heavy-Duty Nylon', 'Solid Wood Legs', 'Wrought Iron Legs', 'Sled Base'.\n"
-                "- Features: 'Gas Lift (Height Adjustable)', 'Tilt Mechanism', '360 Swivel', 'Lumbar Support', 'Fixed (No Adjustments)', 'Armrests Included'."
+                "This is a CHAIR. You MUST include: 'Type', 'Material', 'Adjustable Height', 'Armrest'.\n"
+                "- Type: 'Office Chair', 'Gaming Chair', 'Dining Chair', 'Accent Chair', 'Recliner', 'Bar Stool'.\n"
+                "- Material: 'Mesh', 'Fabric', 'Leather', 'Rexine', 'Velvet', 'Plastic'.\n"
+                "- Adjustable Height: 'Yes - Gas Lift', 'Fixed Height'.\n"
+                "- Armrest: 'With Armrests', 'No Armrests', 'Adjustable Armrests'."
             )
         else:
             furniture_type_hint = (
-                "For this FURNITURE item, include: 'Material', 'Style', 'Color / Finish', 'Condition Detail'.\n"
-                "- Material: 'Solid Wood (Sheesham/Teak/Ash)', 'MDF / Lasani', 'Metal / Iron', 'Leather / Fabric', 'Rattan / Cane', 'Marble / Glass'.\n"
-                "- Style: 'Modern', 'Traditional', 'Antique / Vintage', 'Chinioti Carved', 'Minimalist', 'Industrial'.\n"
-                "- Color/Finish: 'Walnut Brown', 'Natural Teak', 'Ivory / Off-White', 'Charcoal Black', 'Dark Grey', 'Beige / Cream'.\n"
-                "- Condition Detail: 'Brand New (Unused)', 'Like New', 'Good Condition (Minor Wear)', 'Fair (Visible Wear)'."
+                "For this FURNITURE item, You MUST include: 'Material', 'Style', 'Color/Finish'.\n"
+                "- Material: 'Solid Wood', 'MDF', 'Metal', 'Leather', 'Fabric', 'Velvet', 'Rattan', 'Plastic'.\n"
+                "- Style: 'Modern', 'Traditional', 'Antique', 'Chinioti', 'Minimalist', 'Industrial'.\n"
+                "- Color/Finish: 'Dark Walnut', 'Light Oak', 'White', 'Black', 'Beige', 'Grey'.\n"
+                "Also add any other relevant specification fields for this specific furniture item."
             )
-
-        # --- FURNITURE: Return hardcoded Pakistani-market dropdowns instantly (no LLM needed) ---
-        if category == "furniture":
-            FRAME_MATS = [
-                "Solid Sheesham Wood", "Teak Wood (Sagwan)", "Ash Wood",
-                "Walnut Wood", "Kail Wood", "MDF / Lasani",
-                "Particle Board / Chipboard", "Wrought Iron / Metal",
-                "Upholstered / Fully Covered", "Bamboo / Cane", "Other"
-            ]
-            COLORS = [
-                "Walnut Brown", "Dark Mahogany", "Natural Teak", "Antique Oak",
-                "Ivory / Off-White", "Charcoal Black", "Dark Grey", "Beige / Cream",
-                "Royal Blue", "Maroon / Burgundy", "Olive Green", "Custom Order"
-            ]
-            STYLES = [
-                "Modern / Contemporary", "Traditional / Classic",
-                "Chinioti / Carved", "Minimalist", "Industrial / Rustic",
-                "Mid-Century Modern", "Victorian", "Scandinavian"
-            ]
-            BRANDS = [
-                "Interwood", "Chiniot Furniture", "Ahmed Furniture",
-                "Habitt", "Roshanali", "HRH Clay", "Sheesham Studio",
-                "Homez", "Local / Unbranded", "Custom Made"
-            ]
-
-            if any(w in t_lower for w in ["sofa", "couch", "settee", "l-shape", "l shape", "sectional"]):
-                return {
-                    "Seating Capacity": [
-                        "1 Seater", "2 Seater", "3 Seater", "4 Seater",
-                        "5 Seater (3+1+1)", "6 Seater (3+2+1)",
-                        "7 Seater (3+2+1+1)", "L-Shape (5 Seater)", "L-Shape (7 Seater)"
-                    ],
-                    "Material": [
-                        "Premium Velvet", "Italian Fabric", "Turkish Fabric",
-                        "Genuine Leather", "Faux Leather / Rexine",
-                        "Suede", "Microfiber", "Cotton Blend", "Linen"
-                    ],
-                    "Style": [
-                        "Modern / Contemporary", "Traditional / Classic",
-                        "Chinioti / Carved", "L-Shape / Corner", "Reclinable",
-                        "Sofa Cum Bed", "Chesterfield", "Victorian", "Minimalist"
-                    ],
-                    "Upholstery Fill": [
-                        "Master MoltyFoam (High Density)", "Spring Cushion",
-                        "Memory Foam", "Fiber Fill", "Latex Layered"
-                    ],
-                    "Frame Material": FRAME_MATS,
-                    "Color": COLORS,
-                    "Brand": BRANDS,
-                }
-            elif "mattress" in t_lower:
-                return {
-                    "Size": [
-                        "Single (36 x 72 inches)", "Single (42 x 78 inches)",
-                        "Double (48 x 72 inches)", "Queen (60 x 78 inches)",
-                        "King (72 x 78 inches)", "King (72 x 84 inches)", "Super King (84 x 84 inches)"
-                    ],
-                    "Mattress Type": [
-                        "Master MoltyFoam (Standard)", "Master Molty Ortho (Orthopedic)",
-                        "Diamond Foam", "Spring Mattress (Bonnell)",
-                        "Pocket Spring (Luxury)", "Memory Foam",
-                        "Latex Foam", "Dual Comfort (Soft + Firm)"
-                    ],
-                    "Thickness": [
-                        "4 Inch", "5 Inch", "6 Inch", "8 Inch", "10 Inch", "12 Inch"
-                    ],
-                    "Brand": [
-                        "Master Molty Foam", "Diamond Foam", "Serene Foam",
-                        "SleepFit", "Spring Air", "Local Brand"
-                    ],
-                }
-            elif any(w in t_lower for w in ["king", "queen", "double bed", "single bed", "bunk bed", "bed frame", "divan", "bed"]):
-                return {
-                    "Size": [
-                        "Single (36 x 72 inches)", "Single (42 x 78 inches)",
-                        "Double (48 x 72 inches)", "Queen (60 x 78 inches)",
-                        "King (72 x 78 inches)", "King (72 x 84 inches)", "Super King (84 x 84 inches)"
-                    ],
-                    "Frame Material": FRAME_MATS,
-                    "Storage Type": [
-                        "No Storage", "2 Side Drawers", "4 Side Drawers",
-                        "Front Drawer", "Hydraulic / Gas-Lift Storage",
-                        "Box / Lift-up Storage", "Headboard Storage"
-                    ],
-                    "Mattress Included": [
-                        "Not Included", "Master MoltyFoam (Included)",
-                        "Diamond Foam (Included)", "Orthopedic Foam (Included)"
-                    ],
-                    "Style": [
-                        "Modern Platform", "Classic Chinioti", "Tufted Headboard",
-                        "Divan Style", "Sleigh Bed", "Minimalist", "Floating Bed"
-                    ],
-                    "Color / Finish": COLORS,
-                    "Brand": BRANDS,
-                }
-            elif any(w in t_lower for w in ["dining table", "dining set", "dining chair", "dining"]):
-                return {
-                    "Seating Capacity": [
-                        "2 Seats (Bistro)", "4 Seats", "6 Seats",
-                        "8 Seats", "10 Seats", "12 Seats"
-                    ],
-                    "Table Shape": ["Rectangular", "Round", "Oval", "Square", "Extendable"],
-                    "Top Material": [
-                        "Solid Sheesham", "Teak Wood", "Tempered Glass (12mm)",
-                        "Italian Marble", "Granite", "MDF with Veneer",
-                        "Inlaid / Marquetry", "Acrylic / High Gloss"
-                    ],
-                    "Set Composition": [
-                        "Table Only", "Table + 4 Chairs", "Table + 6 Chairs",
-                        "Table + 8 Chairs", "Table + Chairs + Bench",
-                        "Table + Chairs + Buffet / Crockery Unit"
-                    ],
-                    "Style": STYLES,
-                    "Color / Finish": COLORS,
-                    "Brand": BRANDS,
-                }
-            elif any(w in t_lower for w in ["wardrobe", "almirah", "closet", "cupboard"]):
-                return {
-                    "Number of Doors": [
-                        "1 Door", "2 Doors", "3 Doors", "4 Doors", "6 Doors",
-                        "Sliding Doors (2 Track)", "Sliding Doors (3 Track)"
-                    ],
-                    "Primary Material": [
-                        "Solid Sheesham Wood", "Ash Wood", "MDF / Lasani",
-                        "UV Coated Board", "Acrylic Finish", "Tactile Board",
-                        "Particle Board / Chipboard", "Metal / Steel", "Plastic (Portable)"
-                    ],
-                    "Mirror": [
-                        "No Mirror", "Full Length Mirror", "Partial Mirror", "Frosted Glass"
-                    ],
-                    "Storage Features": [
-                        "Hanging Rail + Shelves", "Drawers Included",
-                        "Locker / Safe Included", "Shoe Rack Included", "Walk-in Style"
-                    ],
-                    "Style": [
-                        "Built-in / Fitted", "Freestanding Modern",
-                        "Chinioti Carved", "Minimalist", "Two-Tone Finish"
-                    ],
-                    "Color / Finish": COLORS,
-                    "Brand": BRANDS,
-                }
-            elif any(w in t_lower for w in ["desk", "study table", "study desk", "office desk", "computer table", "computer desk", "writing table"]):
-                return {
-                    "Type": [
-                        "Study Table", "Office Desk", "Executive Desk",
-                        "Gaming Desk (RGB)", "Standing Desk (Height Adjustable)",
-                        "L-Shape Corner Desk", "Writing Table"
-                    ],
-                    "Material": [
-                        "Solid Sheesham Wood", "Ash Wood", "MDF / Lasani",
-                        "Glass Top with Metal Frame", "Laminated Chipboard", "Acrylic"
-                    ],
-                    "Size": [
-                        "Small (3 Feet)", "Standard (4 Feet)",
-                        "Large (5 Feet)", "Extra Large (6 Feet)", "L-Shape / Executive"
-                    ],
-                    "Storage": [
-                        "No Storage", "Single Drawer", "2 Drawers",
-                        "Side Pedestal (3 Drawers)", "Attached Bookshelf / Hutch", "Keyboard Tray"
-                    ],
-                    "Color / Finish": COLORS,
-                    "Brand": BRANDS,
-                }
-            elif any(w in t_lower for w in ["office chair", "gaming chair", "chair", "stool", "recliner", "rocker"]):
-                return {
-                    "Chair Type": [
-                        "Ergonomic Office Chair", "Executive High-Back",
-                        "Gaming Chair", "Dining Chair (Wooden)",
-                        "Dining Chair (Padded)", "Accent / Bedroom Chair",
-                        "Rocking Chair", "Recliner", "Bar Stool", "Folding Chair"
-                    ],
-                    "Upholstery Material": [
-                        "Breathable Mesh", "Premium Fabric", "Genuine Leather",
-                        "Faux Leather / PU", "Velvet", "Plastic Shell", "Wooden Seat"
-                    ],
-                    "Base / Legs": [
-                        "Chrome / Steel (5-Star Base)", "Heavy-Duty Nylon",
-                        "Solid Wood Legs", "Wrought Iron Legs", "Sled Base"
-                    ],
-                    "Features": [
-                        "Gas Lift (Height Adjustable)", "Tilt / Recline Mechanism",
-                        "360 Swivel", "Lumbar Support", "Headrest / Neck Pillow",
-                        "Fixed (No Adjustments)", "Armrests Included"
-                    ],
-                    "Color": COLORS,
-                    "Brand": BRANDS,
-                }
-            elif any(w in t_lower for w in ["bedroom set", "bedroom furniture"]):
-                return {
-                    "Set Includes": [
-                        "Bed + 2 Side Tables",
-                        "Bed + 2 Side Tables + Dressing Table",
-                        "Bed + 2 Side Tables + Wardrobe",
-                        "Complete Set (Bed + Side Tables + Wardrobe + Dressing Table)"
-                    ],
-                    "Bed Size": [
-                        "Double (48 x 72 inches)", "Queen (60 x 78 inches)",
-                        "King (72 x 78 inches)", "King (72 x 84 inches)"
-                    ],
-                    "Primary Material": [
-                        "Solid Sheesham Wood", "Teak Wood (Sagwan)", "Ash Wood",
-                        "MDF / Lasani", "UV Coated Board"
-                    ],
-                    "Style": STYLES,
-                    "Color / Finish": COLORS,
-                    "Brand": BRANDS,
-                }
-            else:
-                return {
-                    "Material": [
-                        "Solid Sheesham Wood", "Teak Wood (Sagwan)", "Ash Wood",
-                        "MDF / Lasani", "Metal / Iron", "Tempered Glass",
-                        "Genuine Leather", "Fabric / Velvet", "Rattan / Cane", "Marble"
-                    ],
-                    "Style": STYLES,
-                    "Color / Finish": COLORS,
-                    "Condition Detail": [
-                        "Brand New (Unused)", "Like New (Used Once)",
-                        "Good Condition (Minor Wear)", "Fair (Visible Wear)",
-                        "Needs Repair"
-                    ],
-                    "Brand": BRANDS,
-                }
 
         # --- For mobile: if GSMArena scrape was successful, bypass LLM entirely ---
         if category == "mobile" and web_context.startswith("OFFICIAL SPECS FROM GSMARENA:"):
@@ -726,6 +502,9 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                 "- GPU: e.g. 'Integrated', 'NVIDIA RTX 3050', 'AMD Radeon'.\n"
                 "- Generation: e.g. '10th Gen', '11th Gen', '12th Gen', '13th Gen'."
             ),
+            "furniture": furniture_type_hint,
+
+
         }.get(category, "Provide the most relevant configuration options for this product.")
 
         # Build grounding context section for the prompt
@@ -746,7 +525,7 @@ Copy the RAM, Storage, and Color values EXACTLY as they appear above. Do NOT par
                 "Use FULL official color names (e.g. 'Awesome Navy', not just 'Navy')."
             )
 
-        prompt = f"""You are an expert product database for the Pakistani mobile/tech market.
+        prompt = f"""You are an expert product database for the Pakistani mobile/tech/furniture market.
 Category: {category}
 Product Title: "{title}"
 

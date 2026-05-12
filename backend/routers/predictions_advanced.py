@@ -1710,7 +1710,7 @@ async def predict_price(request: PricePredictionRequest):
                 detail={
                     "error": "Title validation failed",
                     "message": validation_result.get("message", "Title is invalid"),
-                    "hints": validation_result.get("hints", _hints.get(category, {})),
+                    "hints": _hints.get(category, {}),
                     "missing_fields": validation_result.get("missing_fields", []),
                     "suggested_title": validation_result.get("suggested_title", ""),
                 }
@@ -2041,13 +2041,7 @@ async def validate_title(category: str, title: str, description: str = "", mater
             "laptop":    {"example": "Dell XPS 15 i7 12th Gen", "required": ["Brand + Model/Series"]},
             "furniture": {"example": "5-Seater L-Shape Fabric Sofa", "required": ["Furniture type"]},
         }
-        
-        # If LLM gave us dynamic hints based on context, prefer those
-        dynamic_hints = result.get("hints")
-        if dynamic_hints and isinstance(dynamic_hints, dict):
-            result["hints"] = dynamic_hints
-        else:
-            result["hints"] = _hints.get(category, {})
+        result["hints"] = _hints.get(category, {})
         
         return result
     
