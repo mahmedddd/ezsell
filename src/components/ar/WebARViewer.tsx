@@ -455,27 +455,31 @@ export function WebARViewer({
   const listenerCleanupRef = useRef<() => void>(() => {});
 
   const attachModelViewerRef = useCallback((mv: any) => {
-    // Always clean up the previous element's listeners
+    // Always clean up previous element's listeners first
     listenerCleanupRef.current();
     listenerCleanupRef.current = () => {};
     modelViewerRef.current = mv;
     if (!mv) return;
 
-    // Show loading immediately when a new element mounts
-    setModelLoading(true);
-    setBuildProgress(0);
+    // ── IMPORTANT: Do NOT pre-set modelLoading=true here. ────────────────
+    // Blob URLs (Fast View) load synchronously inside model-viewer — the
+    // 'load' event fires before our addEventListener call runs, so it is
+    // missed and modelLoading would be stuck at true (blank/blurred screen).
+    // Only set modelLoading=true when real network progress begins (p > 0).
 
     let safetyTimer: ReturnType<typeof setTimeout>;
 
     const onProgress = (e: any) => {
       const p = e.detail?.totalProgress ?? 0;
       setBuildProgress(Math.round(p * 100));
-      if (p >= 0.99) {
-        clearTimeout(safetyTimer);
-        setModelLoading(false);
-      } else if (p > 0) {
+      if (p > 0 && p < 0.99) {
+        // Real network download in progress — show loading indicator
+        setModelLoading(true);
         clearTimeout(safetyTimer);
         safetyTimer = setTimeout(() => setModelLoading(false), 10000);
+      } else if (p >= 0.99) {
+        clearTimeout(safetyTimer);
+        setModelLoading(false);
       }
     };
 
@@ -511,8 +515,17 @@ export function WebARViewer({
     mv.addEventListener('error', onError);
     mv.addEventListener('ar-status', onARStatus);
 
-    // Safety: clear loading after 45s regardless
-    safetyTimer = setTimeout(() => { console.warn('[WebARViewer] load timeout'); setModelLoading(false); }, 45000);
+    // Post-attachment loaded check: if model-viewer already loaded (e.g. cached
+    // HTTP or blob URL processed synchronously), clear loading immediately.
+    if (mv.loaded) {
+      setModelLoading(false);
+    } else {
+      // Safety net: if no load event arrives in 45s, clear loading
+      safetyTimer = setTimeout(() => {
+        console.warn('[WebARViewer] model-viewer load timeout — clearing loading state');
+        setModelLoading(false);
+      }, 45000);
+    }
 
     listenerCleanupRef.current = () => {
       mv.removeEventListener('progress', onProgress);
@@ -521,7 +534,7 @@ export function WebARViewer({
       mv.removeEventListener('ar-status', onARStatus);
       clearTimeout(safetyTimer);
     };
-  }, []); // stable — all setState/triggerHaptic/toast refs are stable
+  }, []); // stable — setState/triggerHaptic/toast are all stable refs
 
   // Only render for furniture
   if (category?.toLowerCase() !== 'furniture') return null;
