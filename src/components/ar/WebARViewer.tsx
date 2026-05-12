@@ -640,28 +640,32 @@ export function WebARViewer({
             // Append a cache-buster so model-viewer fetches the new file, not a stale cache
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
 
-            // ── Pre-warm the browser cache with an eager fetch BEFORE handing
-            //    the URL to model-viewer. This ensures model-viewer gets an
-            //    instant cache-hit instead of waiting for a cold network download.
-            const prime = bustedUrl
-              ? fetch(bustedUrl, { credentials: 'include', cache: 'default' }).catch(() => {})
-              : Promise.resolve();
+            // ── Switch view IMMEDIATELY (synchronous) ──────────────────────
+            // IMPORTANT: state updates must happen here, NOT inside a promise
+            // callback.  When setAiStage('complete') fires, React re-runs the
+            // useEffect cleanup which sets isMounted=false.  Any async
+            // prime.finally() callback would then see isMounted=false and bail
+            // out, leaving the UI stuck at 100% forever.
+            setTripoUrl(bustedUrl);
+            setViewMode('advanced');
+            setStep('model_ready');
+            setActiveTab('ar');
+            setModelLoading(false); // hidden preloader already warming the cache
+            setTimeout(() => setAiStage('idle'), 800);
+            onModelGenerated?.();
 
-            prime.finally(() => {
-              if (!isMounted) return;
-              // Transition to the new model — cache is already warm
-              setModelLoading(false); // no spinner — model loads instantly from cache
-              setTripoUrl(bustedUrl);
-              setViewMode('advanced');
-              setStep('model_ready');
-              setActiveTab('ar');
-              setTimeout(() => setAiStage('idle'), 800);
-              onModelGenerated?.();
-            });
+            // ── Background cache-warm (fire-and-forget) ────────────────────
+            // The hidden preloader <model-viewer> will also pick up the new
+            // tripoUrl and start loading via model-viewer's own pipeline.
+            // This fetch() call additionally warms the HTTP cache so any
+            // subsequent model-viewer instance gets an instant hit.
+            if (bustedUrl) {
+              fetch(bustedUrl, { credentials: 'include', cache: 'default' }).catch(() => {});
+            }
 
             toast({
               title: "✨ 3D Model Ready!",
-              description: "AI generation complete — switching to photorealistic view.",
+              description: "Switching to photorealistic view now…",
             });
           } else {
             setAiStage('failed');
