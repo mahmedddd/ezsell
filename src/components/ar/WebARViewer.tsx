@@ -461,23 +461,18 @@ export function WebARViewer({
     modelViewerRef.current = mv;
     if (!mv) return;
 
-    // ── IMPORTANT: Do NOT pre-set modelLoading=true here. ────────────────
-    // Blob URLs (Fast View) load synchronously inside model-viewer — the
-    // 'load' event fires before our addEventListener call runs, so it is
-    // missed and modelLoading would be stuck at true (blank/blurred screen).
-    // Only set modelLoading=true when real network progress begins (p > 0).
+    // Show loading immediately so users see feedback during network downloads.
+    // For in-memory blob URLs and cached responses, mv.loaded will be true
+    // right after we attach listeners, and we'll clear it instantly below.
+    setModelLoading(true);
+    setBuildProgress(0);
 
     let safetyTimer: ReturnType<typeof setTimeout>;
 
     const onProgress = (e: any) => {
       const p = e.detail?.totalProgress ?? 0;
       setBuildProgress(Math.round(p * 100));
-      if (p > 0 && p < 0.99) {
-        // Real network download in progress — show loading indicator
-        setModelLoading(true);
-        clearTimeout(safetyTimer);
-        safetyTimer = setTimeout(() => setModelLoading(false), 10000);
-      } else if (p >= 0.99) {
+      if (p >= 0.99) {
         clearTimeout(safetyTimer);
         setModelLoading(false);
       }
@@ -515,12 +510,14 @@ export function WebARViewer({
     mv.addEventListener('error', onError);
     mv.addEventListener('ar-status', onARStatus);
 
-    // Post-attachment loaded check: if model-viewer already loaded (e.g. cached
-    // HTTP or blob URL processed synchronously), clear loading immediately.
+    // If the model already finished loading (blob URLs load synchronously before
+    // this callback fires, leaving mv.loaded=true), clear the loading state now.
+    // For ongoing HTTP downloads, the safety timer ensures we recover if events stop.
     if (mv.loaded) {
+      clearTimeout(safetyTimer);
+      setBuildProgress(100);
       setModelLoading(false);
     } else {
-      // Safety net: if no load event arrives in 45s, clear loading
       safetyTimer = setTimeout(() => {
         console.warn('[WebARViewer] model-viewer load timeout — clearing loading state');
         setModelLoading(false);
@@ -606,21 +603,21 @@ export function WebARViewer({
 
   // ── Build (or fetch) the GLB ───────────────────────────────────────────────
   const prepareModel = useCallback(async () => {
-    if (proceduralUrl) return; // already built procedural model
-
-    // If the Advanced 3D URL is already loaded (from arAssets or a just-completed
-    // AI generation), skip the procedural build entirely — the model-viewer will
-    // use the cached GLB immediately.
-    if (tripoUrl) {
+    if (proceduralUrl) {
+      // Procedural GLB already built — just make sure step is correct
       setStep('model_ready');
       return;
     }
 
-    const hasAdvancedModel = !!arAssets?.model_glb_url;
+    // Show the correct initial state:
+    // - If an advanced model URL exists, show it immediately (step=model_ready)
+    //   while the procedural GLB builds in the background.
+    // - Otherwise show the building indicator.
+    const hasAdvancedModel = !!(tripoUrl || arAssets?.model_glb_url);
     if (hasAdvancedModel) {
-      setStep('model_ready');
+      setStep('model_ready'); // advanced model will show; procedural builds silently
     } else {
-      setStep('building_model');
+      setStep('building_model'); // no advanced model, show spinner
     }
 
     // Simulate progress ticks while async work runs
@@ -1145,8 +1142,8 @@ export function WebARViewer({
                   </div>
                 )}
 
-                {/* Model viewer — renders whenever we have a URL, regardless of step */}
-                {(step === 'model_ready' || step === 'scanning' || step === 'placed' || (step === 'idle' && tripoUrl)) && (proceduralUrl || tripoUrl) && (
+                {/* Model viewer — show whenever we have ANY URL to display */}
+                {(step === 'model_ready' || step === 'scanning' || step === 'placed' || (step === 'idle' && tripoUrl) || (step === 'building_model' && tripoUrl)) && (proceduralUrl || tripoUrl) && (
                   <div className="flex flex-col h-full">
                     {/* View Mode Toggle */}
                     <div className="px-5 pt-3 pb-1 bg-gradient-to-b from-gray-50 to-gray-50/50">
@@ -1155,6 +1152,8 @@ export function WebARViewer({
                           onClick={() => {
                             if (viewMode !== 'fast') {
                               setViewMode('fast');
+                              // Build the procedural GLB on-demand if not yet done
+                              if (!proceduralUrl) prepareModel();
                             }
                           }}
                           className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all duration-200 ${viewMode === 'fast' ? 'bg-white shadow text-[#2E6091]' : 'text-gray-500 hover:text-gray-700'
@@ -1228,9 +1227,13 @@ export function WebARViewer({
 
                       {/* ── model-viewer element ── */}
                       <model-viewer
-                        key={`${viewMode}-${tripoUrl || 'none'}`}
+                        key={`${viewMode}-${viewMode === 'advanced' ? (tripoUrl || 'none') : (proceduralUrl || tripoUrl || 'none')}`}
                         ref={attachModelViewerRef as any}
-                        src={(viewMode === 'advanced' && tripoUrl) ? tripoUrl : proceduralUrl || undefined}
+                        src={
+                          viewMode === 'advanced'
+                            ? (tripoUrl || undefined)
+                            : (proceduralUrl || tripoUrl || undefined) // fast view falls back to advanced if GLB not ready yet
+                        }
                         ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
                         alt={listingTitle}
                         ar
