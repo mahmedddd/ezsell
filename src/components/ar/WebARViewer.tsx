@@ -442,12 +442,86 @@ export function WebARViewer({
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
   const [modelLoading, setModelLoading] = useState(false);
 
-  const modelViewerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   // AR placement state — declared BEFORE early return to satisfy Rules of Hooks
   const [wallNear, setWallNear] = useState(false);
   const [groundLocked, setGroundLocked] = useState(false);
   const lastWallSnapRef = useRef(0);
+
+  // ── Callback ref for model-viewer ─────────────────────────────────────
+  // A callback ref fires SYNCHRONOUSLY when the element mounts/unmounts,
+  // eliminating the timing race with useEffect + isSheetOpen.
+  const modelViewerRef = useRef<any>(null); // keeps imperative access (.activateAR etc)
+  const listenerCleanupRef = useRef<() => void>(() => {});
+
+  const attachModelViewerRef = useCallback((mv: any) => {
+    // Always clean up the previous element's listeners
+    listenerCleanupRef.current();
+    listenerCleanupRef.current = () => {};
+    modelViewerRef.current = mv;
+    if (!mv) return;
+
+    // Show loading immediately when a new element mounts
+    setModelLoading(true);
+    setBuildProgress(0);
+
+    let safetyTimer: ReturnType<typeof setTimeout>;
+
+    const onProgress = (e: any) => {
+      const p = e.detail?.totalProgress ?? 0;
+      setBuildProgress(Math.round(p * 100));
+      if (p >= 0.99) {
+        clearTimeout(safetyTimer);
+        setModelLoading(false);
+      } else if (p > 0) {
+        clearTimeout(safetyTimer);
+        safetyTimer = setTimeout(() => setModelLoading(false), 10000);
+      }
+    };
+
+    const onLoad = () => {
+      clearTimeout(safetyTimer);
+      setBuildProgress(100);
+      setModelLoading(false);
+    };
+
+    const onError = (e: any) => {
+      console.error('[model-viewer] load error', e);
+      clearTimeout(safetyTimer);
+      setModelLoading(false);
+    };
+
+    const onARStatus = (e: any) => {
+      const status: string = e.detail?.status ?? '';
+      setArStatus(status);
+      if (status === 'session-started') {
+        setStep('scanning'); setScanPhase('tilting'); setScanDuration(0); triggerHaptic('success');
+      } else if (status === 'object-placed') {
+        setStep('placed'); setShowCoach(true); triggerHaptic('success');
+      } else if (status === 'not-presenting') {
+        setStep('model_ready'); setScanPhase('tilting');
+      } else if (status === 'failed') {
+        setStep('error'); triggerHaptic('error');
+        toast({ title: 'AR Failed', description: 'Could not start AR. Ensure camera access is granted.', variant: 'destructive' });
+      }
+    };
+
+    mv.addEventListener('progress', onProgress);
+    mv.addEventListener('load', onLoad);
+    mv.addEventListener('error', onError);
+    mv.addEventListener('ar-status', onARStatus);
+
+    // Safety: clear loading after 45s regardless
+    safetyTimer = setTimeout(() => { console.warn('[WebARViewer] load timeout'); setModelLoading(false); }, 45000);
+
+    listenerCleanupRef.current = () => {
+      mv.removeEventListener('progress', onProgress);
+      mv.removeEventListener('load', onLoad);
+      mv.removeEventListener('error', onError);
+      mv.removeEventListener('ar-status', onARStatus);
+      clearTimeout(safetyTimer);
+    };
+  }, []); // stable — all setState/triggerHaptic/toast refs are stable
 
   // Only render for furniture
   if (category?.toLowerCase() !== 'furniture') return null;
@@ -640,45 +714,27 @@ export function WebARViewer({
         if (!isMounted) return;
 
         if (status.status === 'SUCCEEDED') {
-          clearInterval(interval); // Stop polling immediately
+          clearInterval(interval);
 
-          // The backend already downloaded it to local_url
           if (status.local_url) {
-            setAiProgress(100);
-            // DO NOT set aiStage('complete') yet. We keep the big loading box
-            // visible on screen while we download the 5MB file into the browser cache.
-
             const fullUrl = getFullUrl(status.local_url);
-            // Append a cache-buster so model-viewer fetches the new file, not a stale cache
+            // Cache-bust so model-viewer always fetches the newest file
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
-
-            // ── Blocking Cache Warm ───────────────────────────────────────────
-            // Await the full download so that when model-viewer mounts, it hits
-            // the disk cache and renders instantly (0ms network delay).
-            if (bustedUrl) {
-              try {
-                await fetch(bustedUrl, { credentials: 'include', cache: 'force-cache' });
-              } catch (e) {
-                console.warn('Background model preload failed:', e);
-              }
-            }
 
             if (!isMounted) return;
 
-            // ── Switch view IMMEDIATELY (synchronous) ──────────────────────
+            // Switch view immediately — model-viewer will mount, the callback ref
+            // will attach listeners, and progress/load events will drive the UI.
             setAiStage('complete');
+            setAiProgress(100);
             setTripoUrl(bustedUrl);
             setViewMode('advanced');
             setStep('model_ready');
             setActiveTab('ar');
-            setModelLoading(false); 
             setTimeout(() => setAiStage('idle'), 800);
             onModelGenerated?.();
 
-            toast({
-              title: "✨ 3D Model Ready!",
-              description: "Switching to photorealistic view now…",
-            });
+            toast({ title: '✨ 3D Model Ready!', description: 'Switching to photorealistic view…' });
           } else {
             clearInterval(interval);
             setAiStage('failed');
@@ -754,96 +810,8 @@ export function WebARViewer({
   };
 
 
-  // ── model-viewer event handlers ───────────────────────────────────────────
-  // IMPORTANT: depend on `isSheetOpen`, NOT `modelViewerRef.current`.
-  // Refs don't trigger React re-renders, so using the ref as a dep causes
-  // the listeners to never attach after the sheet mounts. isSheetOpen flips
-  // true exactly when the sheet (and model-viewer inside it) mounts.
-  useEffect(() => {
-    if (!isSheetOpen) return; // model-viewer not mounted yet
 
-    let safetyTimer: ReturnType<typeof setTimeout>;
 
-    const mv = modelViewerRef.current;
-    if (!mv) return;
-
-    const onARStatus = (e: any) => {
-      const status: string = e.detail?.status ?? '';
-      setArStatus(status);
-
-      if (status === 'session-started') {
-        setStep('scanning');
-        setScanPhase('tilting');
-        setScanDuration(0);
-        triggerHaptic('success');
-      }
-
-      if (status === 'object-placed') {
-        setStep('placed');
-        setShowCoach(true);
-        triggerHaptic('success');
-      }
-
-      if (status === 'not-presenting') {
-        setStep('model_ready');
-        setScanPhase('tilting');
-      }
-
-      if (status === 'failed') {
-        setStep('error');
-        triggerHaptic('error');
-        toast({
-          title: 'AR Failed',
-          description: 'Could not start AR. Ensure camera access is granted.',
-          variant: 'destructive',
-        });
-      }
-    };
-
-    const onProgress = (e: any) => {
-      const p = e.detail?.totalProgress ?? 0;
-      setBuildProgress(Math.round(p * 100));
-      if (p > 0 && p < 1) {
-        setModelLoading(true);
-        // Safety net: if no further progress events arrive for 8s, clear the spinner
-        clearTimeout(safetyTimer);
-        safetyTimer = setTimeout(() => setModelLoading(false), 8000);
-      } else if (p >= 1) {
-        // Progress reached 100% — immediately clear loading state
-        clearTimeout(safetyTimer);
-        setModelLoading(false);
-      }
-    };
-
-    const onLoad = () => {
-      clearTimeout(safetyTimer);
-      setModelLoading(false);
-    };
-
-    const onError = () => {
-      clearTimeout(safetyTimer);
-      setModelLoading(false);
-    };
-
-    mv.addEventListener('ar-status', onARStatus);
-    mv.addEventListener('progress', onProgress);
-    mv.addEventListener('load', onLoad);
-    mv.addEventListener('error', onError);
-
-    // Safety net: if load event never fires within 45s (for heavy AI models), clear the spinner
-    safetyTimer = setTimeout(() => {
-      console.warn('[WebARViewer] Model load timeout reached.');
-      setModelLoading(false);
-    }, 45000);
-
-    return () => {
-      mv.removeEventListener('ar-status', onARStatus);
-      mv.removeEventListener('progress', onProgress);
-      mv.removeEventListener('load', onLoad);
-      mv.removeEventListener('error', onError);
-      clearTimeout(safetyTimer);
-    };
-  }, [isSheetOpen, toast, viewMode, tripoUrl]);
 
   // ── TF.js room-object detection (runs once camera access is obtained) ─────
   const runObjectDetection = useCallback(async () => {
@@ -1248,7 +1216,7 @@ export function WebARViewer({
                       {/* ── model-viewer element ── */}
                       <model-viewer
                         key={`${viewMode}-${tripoUrl || 'none'}`}
-                        ref={modelViewerRef as any}
+                        ref={attachModelViewerRef as any}
                         src={(viewMode === 'advanced' && tripoUrl) ? tripoUrl : proceduralUrl || undefined}
                         ios-src={(viewMode === 'advanced' && arAssets?.model_usdz_url) ? getFullUrl(arAssets.model_usdz_url) : usdzUrl || undefined}
                         alt={listingTitle}
