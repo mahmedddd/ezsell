@@ -406,19 +406,10 @@ export function WebARViewer({
       setTripoUrl(url);
       setViewMode('advanced');
       // ── Eager background fetch of the GLB so the browser caches it ──────
-      // Using fetch() is more reliable than <link rel="preload"> for binary
-      // assets served from a different origin — the response goes into the
-      // HTTP cache which model-viewer will hit when it later requests the URL.
+      // The response goes into the HTTP cache which model-viewer will hit 
+      // instantly when it later requests the URL.
       if (url) {
-        // Only fetch if not already cached (HEAD first to avoid re-downloading)
-        fetch(url, { method: 'HEAD', credentials: 'include' })
-          .then(res => {
-            // If not cached or expired, prime the cache with a full GET
-            if (!res.ok || res.headers.get('x-from-cache') !== 'true') {
-              return fetch(url, { credentials: 'include', cache: 'force-cache' });
-            }
-          })
-          .catch(() => { /* non-fatal — model will still load on demand */ });
+        fetch(url, { credentials: 'include', cache: 'force-cache' }).catch(() => {});
       }
     }
     if (arAssets?.model_usdz_url) {
@@ -639,43 +630,47 @@ export function WebARViewer({
         if (!isMounted) return;
 
         if (status.status === 'SUCCEEDED') {
+          clearInterval(interval); // Stop polling immediately
+
           // The backend already downloaded it to local_url
           if (status.local_url) {
             setAiProgress(100);
-            setAiStage('complete');
+            // DO NOT set aiStage('complete') yet. We keep the big loading box
+            // visible on screen while we download the 5MB file into the browser cache.
 
             const fullUrl = getFullUrl(status.local_url);
             // Append a cache-buster so model-viewer fetches the new file, not a stale cache
             const bustedUrl = fullUrl ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : null;
 
+            // ── Blocking Cache Warm ───────────────────────────────────────────
+            // Await the full download so that when model-viewer mounts, it hits
+            // the disk cache and renders instantly (0ms network delay).
+            if (bustedUrl) {
+              try {
+                await fetch(bustedUrl, { credentials: 'include', cache: 'force-cache' });
+              } catch (e) {
+                console.warn('Background model preload failed:', e);
+              }
+            }
+
+            if (!isMounted) return;
+
             // ── Switch view IMMEDIATELY (synchronous) ──────────────────────
-            // IMPORTANT: state updates must happen here, NOT inside a promise
-            // callback.  When setAiStage('complete') fires, React re-runs the
-            // useEffect cleanup which sets isMounted=false.  Any async
-            // prime.finally() callback would then see isMounted=false and bail
-            // out, leaving the UI stuck at 100% forever.
+            setAiStage('complete');
             setTripoUrl(bustedUrl);
             setViewMode('advanced');
             setStep('model_ready');
             setActiveTab('ar');
-            setModelLoading(false); // hidden preloader already warming the cache
+            setModelLoading(false); 
             setTimeout(() => setAiStage('idle'), 800);
             onModelGenerated?.();
-
-            // ── Background cache-warm (fire-and-forget) ────────────────────
-            // The hidden preloader <model-viewer> will also pick up the new
-            // tripoUrl and start loading via model-viewer's own pipeline.
-            // This fetch() call additionally warms the HTTP cache so any
-            // subsequent model-viewer instance gets an instant hit.
-            if (bustedUrl) {
-              fetch(bustedUrl, { credentials: 'include', cache: 'default' }).catch(() => {});
-            }
 
             toast({
               title: "✨ 3D Model Ready!",
               description: "Switching to photorealistic view now…",
             });
           } else {
+            clearInterval(interval);
             setAiStage('failed');
             toast({
               title: "AI Generation Failed",
@@ -757,94 +752,86 @@ export function WebARViewer({
   useEffect(() => {
     if (!isSheetOpen) return; // model-viewer not mounted yet
 
-    // Small rAF delay to let model-viewer fully mount into the DOM
-    let rafId: number;
     let safetyTimer: ReturnType<typeof setTimeout>;
 
-    rafId = requestAnimationFrame(() => {
-      const mv = modelViewerRef.current;
-      if (!mv) return;
+    const mv = modelViewerRef.current;
+    if (!mv) return;
 
-      const onARStatus = (e: any) => {
-        const status: string = e.detail?.status ?? '';
-        setArStatus(status);
+    const onARStatus = (e: any) => {
+      const status: string = e.detail?.status ?? '';
+      setArStatus(status);
 
-        if (status === 'session-started') {
-          setStep('scanning');
-          setScanPhase('tilting');
-          setScanDuration(0);
-          triggerHaptic('success');
-        }
+      if (status === 'session-started') {
+        setStep('scanning');
+        setScanPhase('tilting');
+        setScanDuration(0);
+        triggerHaptic('success');
+      }
 
-        if (status === 'object-placed') {
-          setStep('placed');
-          setShowCoach(true);
-          triggerHaptic('success');
-        }
+      if (status === 'object-placed') {
+        setStep('placed');
+        setShowCoach(true);
+        triggerHaptic('success');
+      }
 
-        if (status === 'not-presenting') {
-          setStep('model_ready');
-          setScanPhase('tilting');
-        }
+      if (status === 'not-presenting') {
+        setStep('model_ready');
+        setScanPhase('tilting');
+      }
 
-        if (status === 'failed') {
-          setStep('error');
-          triggerHaptic('error');
-          toast({
-            title: 'AR Failed',
-            description: 'Could not start AR. Ensure camera access is granted.',
-            variant: 'destructive',
-          });
-        }
-      };
+      if (status === 'failed') {
+        setStep('error');
+        triggerHaptic('error');
+        toast({
+          title: 'AR Failed',
+          description: 'Could not start AR. Ensure camera access is granted.',
+          variant: 'destructive',
+        });
+      }
+    };
 
-      const onProgress = (e: any) => {
-        const p = e.detail?.totalProgress ?? 0;
-        setBuildProgress(Math.round(p * 100));
-        if (p > 0 && p < 1) {
-          setModelLoading(true);
-          // Safety net: if no further progress events arrive for 8s, clear the spinner
-          clearTimeout(safetyTimer);
-          safetyTimer = setTimeout(() => setModelLoading(false), 8000);
-        } else if (p >= 1) {
-          // Progress reached 100% — immediately clear loading state
-          clearTimeout(safetyTimer);
-          setModelLoading(false);
-        }
-      };
-
-      const onLoad = () => {
+    const onProgress = (e: any) => {
+      const p = e.detail?.totalProgress ?? 0;
+      setBuildProgress(Math.round(p * 100));
+      if (p > 0 && p < 1) {
+        setModelLoading(true);
+        // Safety net: if no further progress events arrive for 8s, clear the spinner
+        clearTimeout(safetyTimer);
+        safetyTimer = setTimeout(() => setModelLoading(false), 8000);
+      } else if (p >= 1) {
+        // Progress reached 100% — immediately clear loading state
         clearTimeout(safetyTimer);
         setModelLoading(false);
-      };
+      }
+    };
 
-      const onError = () => {
-        clearTimeout(safetyTimer);
-        setModelLoading(false);
-      };
+    const onLoad = () => {
+      clearTimeout(safetyTimer);
+      setModelLoading(false);
+    };
 
-      mv.addEventListener('ar-status', onARStatus);
-      mv.addEventListener('progress', onProgress);
-      mv.addEventListener('load', onLoad);
-      mv.addEventListener('error', onError);
+    const onError = () => {
+      clearTimeout(safetyTimer);
+      setModelLoading(false);
+    };
 
-      // Safety net: if load event never fires within 45s (for heavy AI models), clear the spinner
-      safetyTimer = setTimeout(() => {
-        console.warn('[WebARViewer] Model load timeout reached.');
-        setModelLoading(false);
-      }, 45000);
+    mv.addEventListener('ar-status', onARStatus);
+    mv.addEventListener('progress', onProgress);
+    mv.addEventListener('load', onLoad);
+    mv.addEventListener('error', onError);
 
-      return () => {
-        mv.removeEventListener('ar-status', onARStatus);
-        mv.removeEventListener('progress', onProgress);
-        mv.removeEventListener('load', onLoad);
-        mv.removeEventListener('error', onError);
-        clearTimeout(safetyTimer);
-      };
-    });
+    // Safety net: if load event never fires within 45s (for heavy AI models), clear the spinner
+    safetyTimer = setTimeout(() => {
+      console.warn('[WebARViewer] Model load timeout reached.');
+      setModelLoading(false);
+    }, 45000);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      mv.removeEventListener('ar-status', onARStatus);
+      mv.removeEventListener('progress', onProgress);
+      mv.removeEventListener('load', onLoad);
+      mv.removeEventListener('error', onError);
+      clearTimeout(safetyTimer);
     };
   }, [isSheetOpen, toast, viewMode, tripoUrl]);
 
@@ -1035,44 +1022,6 @@ export function WebARViewer({
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      {/*
-        ── Hidden Advanced-3D GLB Preloader ────────────────────────────────────
-        Renders an invisible model-viewer element outside the Sheet so that the
-        GLB download starts immediately when the listing page loads — using
-        model-viewer's own internal fetch + cache pipeline.  By the time the
-        user taps "View in Your Room" and the Sheet mounts, model-viewer inside
-        the Sheet will get an instant cache-hit instead of a cold download.
-
-        • loading="eager"  → begins fetch immediately (no wait for IntersectionObserver)
-        • reveal="manual"  → never shows a poster/image — stays invisible
-        • style width/height 1px prevents the element from affecting layout
-        This element re-mounts (key changes) whenever tripoUrl changes so it
-        always preloads the latest generated model URL.
-      */}
-      {tripoUrl && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            top: '-9999px',
-            left: '-9999px',
-            width: '1px',
-            height: '1px',
-            overflow: 'hidden',
-            pointerEvents: 'none',
-            opacity: 0,
-            zIndex: -1,
-          }}
-        >
-          <model-viewer
-            key={`preload-${tripoUrl}`}
-            src={tripoUrl}
-            loading="eager"
-            reveal="manual"
-            style={{ width: '1px', height: '1px', display: 'block' } as any}
-          />
-        </div>
-      )}
       {/* ─── Trigger Button ─────────────────────────────────────────────── */}
       <button
         onClick={handleOpen}
