@@ -397,14 +397,14 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
         return "\n".join(snippets[:6])
 
 
-    async def generate_relevant_dropdowns(self, category: str, title: str) -> Dict[str, List[str]]:
+    async def generate_relevant_dropdowns(self, category: str, title: str) -> Dict[str, Any]:
         """
         Generates contextual dropdown options based on what the user is typing.
         For mobiles/laptops: first fetches real specs from the web, then grounds LLM on those facts.
         For furniture: uses structured LLM prompts.
         """
-        if not self.client or len(title.strip()) < 3:
-            return {}
+        if len(title.strip()) < 3:
+            return {"dropdowns": {}, "is_scraped": False}
 
         # --- Web-grounded spec fetching for mobile and laptop ---
         web_context = ""
@@ -413,7 +413,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             scraped_mobile_specs = await self._scrape_gsmarena_specs(title)
             if scraped_mobile_specs and any(scraped_mobile_specs.values()):
                 print(f"Returning GSMArena data directly (no LLM needed): {scraped_mobile_specs}")
-                return scraped_mobile_specs
+                return {"dropdowns": scraped_mobile_specs, "is_scraped": True}
             # Fallback if GSMArena fails
             web_context = await self._ddg_snippets(title, category)
         elif category == "laptop":
@@ -442,12 +442,13 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             )
         elif any(w in t_lower for w in ["dining", "dining table", "dining set"]):
             furniture_type_hint = (
-                "This is a DINING TABLE/SET. You MUST include: 'Seats', 'Shape', 'Material', 'Chair Included'.\n"
-                "- Seats: '4 Seats', '6 Seats', '8 Seats', '10 Seats', '12 Seats'.\n"
-                "- Shape: 'Rectangular', 'Round', 'Oval', 'Square'.\n"
-                "- Material: 'Solid Wood', 'Sheesham Wood', 'Glass Top', 'Marble Top', 'MDF', 'Metal Legs'.\n"
-                "- Chair Included: 'Yes - 4 Chairs', 'Yes - 6 Chairs', 'Chairs Not Included'.\n"
-                "Also add 'Style': 'Modern', 'Traditional', 'Chinioti', 'Industrial'."
+                "This is a DINING TABLE/SET. You MUST include a vast category of: 'Seats', 'Shape', 'Material', 'Chair Included', 'Table Top Material'.\n"
+                "- Seats: '2 Seats', '4 Seats', '6 Seats', '8 Seats', '10 Seats', '12 Seats'.\n"
+                "- Shape: 'Rectangular', 'Round', 'Oval', 'Square', 'Octagonal'.\n"
+                "- Material: 'Solid Teak Wood', 'Sheesham/Rosewood', 'Walnut Wood', 'Ash Wood', 'MDF with Veneer', 'Metal Legs'.\n"
+                "- Chair Included: 'Yes - Matching Chairs', 'Yes - Mixed Design Chairs', 'Chairs Not Included', 'With Bench'.\n"
+                "- Table Top Material: 'Tempered Glass', 'Italian Marble', 'Local Marble', 'Solid Wood', 'Laminated Board', 'Tiled Top'.\n"
+                "Also add 'Style': 'Modern Contemporary', 'Traditional Chinioti', 'Victorian', 'Industrial'."
             )
         elif any(w in t_lower for w in ["wardrobe", "almirah", "closet", "cupboard"]):
             furniture_type_hint = (
@@ -476,11 +477,11 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             )
         else:
             furniture_type_hint = (
-                "For this FURNITURE item, You MUST include: 'Material', 'Style', 'Color/Finish'.\n"
-                "- Material: 'Solid Wood', 'MDF', 'Metal', 'Leather', 'Fabric', 'Velvet', 'Rattan', 'Plastic'.\n"
-                "- Style: 'Modern', 'Traditional', 'Antique', 'Chinioti', 'Minimalist', 'Industrial'.\n"
-                "- Color/Finish: 'Dark Walnut', 'Light Oak', 'White', 'Black', 'Beige', 'Grey'.\n"
-                "Also add any other relevant specification fields for this specific furniture item."
+                "For this FURNITURE item, You MUST include a vast array of options for: 'Material', 'Style', 'Color/Finish'.\n"
+                "- Material: Provide a vast array of relevant materials (e.g. 'Solid Teak Wood', 'Sheesham/Rosewood', 'MDF/Engineered Wood', 'Genuine Leather', 'Premium Velvet', 'Breathable Mesh', 'Tempered Glass', 'Stainless Steel', 'Rattan/Wicker', 'High-Density Foam').\n"
+                "- Style: 'Modern Contemporary', 'Mid-Century Modern', 'Traditional Chinioti', 'Scandinavian', 'Industrial', 'Minimalist', 'Antique/Vintage'.\n"
+                "- Color/Finish: Provide a vast array of finishes (e.g. 'Dark Walnut Polish', 'Natural Oak', 'Matte Black', 'Glossy White', 'Distressed Vintage', 'Charcoal Grey', 'Navy Blue', 'Emerald Green', 'Beige/Cream').\n"
+                "Also add any other highly detailed specification fields relevant to this furniture item."
             )
 
         # --- For mobile: if GSMArena scrape was successful, bypass LLM entirely ---
@@ -488,22 +489,24 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             scraped = await self._scrape_gsmarena_specs(title)
             if scraped and any(scraped.values()):
                 print(f"Returning GSMArena data directly (no LLM needed): {scraped}")
-                return scraped
+                return {"dropdowns": scraped, "is_scraped": True}
 
         category_guidance = {
             "mobile": (
                 "You MUST include these exact keys: 'RAM', 'Storage', 'Color'.\n"
-                "- RAM: actual RAM options this specific model ships with (e.g. '8 GB', '12 GB'). CRITICAL: If the title is for a modern phone like Samsung Galaxy A55 or A56, DO NOT output 6 GB. They ship with '8 GB' and '12 GB' primarily.\n"
-                "- Storage: actual storage options (e.g. '128 GB', '256 GB').\n"
-                "- Color: the FULL official color names for this model (e.g. 'Awesome Navy', 'Awesome Iceblue')."
+                "- RAM: Provide ONLY the exact RAM configurations this specific model officially launched with (e.g. ['8 GB', '12 GB']). Do NOT invent generic options.\n"
+                "- Storage: Provide ONLY the exact storage variants officially released (e.g. ['128 GB', '256 GB', '512 GB']).\n"
+                "- Color: Provide the FULL, exact official marketing color names for this model (e.g. ['Desert Titanium', 'Natural Titanium', 'White Titanium', 'Black Titanium']). Do NOT miss signature colors."
             ),
             "laptop": (
-                "You MUST include these keys: 'Processor', 'RAM', 'Storage', 'GPU', 'Generation'.\n"
-                "- Processor: e.g. 'Intel Core i5', 'Intel Core i7', 'AMD Ryzen 5'.\n"
-                "- RAM: e.g. '8 GB', '16 GB', '32 GB'.\n"
-                "- Storage: e.g. '256 GB SSD', '512 GB SSD', '1 TB SSD'.\n"
-                "- GPU: e.g. 'Integrated', 'NVIDIA RTX 3050', 'AMD Radeon'.\n"
-                "- Generation: e.g. '10th Gen', '11th Gen', '12th Gen', '13th Gen'."
+                "You MUST include these keys: 'Processor', 'RAM', 'Storage', 'GPU', 'Display', 'Color'.\n"
+                "- Processor: Provide specific, realistic CPU options for this exact laptop (e.g. ['Intel Core Ultra 7 155H', 'Intel Core Ultra 9 185H'] or ['Apple M3 Pro 11-core', 'Apple M3 Max 14-core']).\n"
+                "- RAM: Provide realistic RAM options (e.g. ['16 GB LPDDR5X', '32 GB LPDDR5X', '64 GB LPDDR5X']).\n"
+                "- Storage: Provide realistic storage options (e.g. ['512 GB PCIe 4.0 NVMe SSD', '1 TB SSD', '2 TB SSD']).\n"
+                "- GPU: Specific GPUs (e.g. ['Integrated Intel Arc Graphics', 'NVIDIA GeForce RTX 4070 8GB GDDR6']).\n"
+                "- Display: Specific display options (e.g. ['14-inch OLED 120Hz (2880 x 1800)', '16-inch Liquid Retina XDR']).\n"
+                "- Color: Exact official marketing colors (e.g. ['Space Black', 'Silver', 'Midnight']).\n"
+                "Return as many valid variants as exist for this model."
             ),
             "furniture": furniture_type_hint,
 
@@ -511,7 +514,6 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
         }.get(category, "Provide the most relevant configuration options for this product.")
 
         # Build grounding context section for the prompt
-
         grounding_section = ""
         if web_context:
             grounding_section = f"""
@@ -519,22 +521,29 @@ REAL SPECS FROM THE WEB (use these as your PRIMARY source — they are ground tr
 ---
 {web_context}
 ---
-Copy the RAM, Storage, and Color values EXACTLY as they appear above. Do NOT paraphrase. Do NOT add extras.
+Copy values EXACTLY as they appear above. Do NOT paraphrase. Do NOT add extras.
 """
+        elif category in ["mobile", "laptop"]:
+            grounding_section = (
+                "No web data available. This product model might be unreleased or very new.\n"
+                "Use your training knowledge to provide the most likely and realistic configurations.\n"
+                "If you are absolutely certain the model is fake, return empty arrays, but if it is a real model (like iPhone 17 Pro), provide the expected official specs."
+            )
         else:
             grounding_section = (
-                "No web data available. Use your training knowledge carefully — "
-                "only include specs you are 100% certain about for this exact model. "
-                "Use FULL official color names (e.g. 'Awesome Navy', not just 'Navy')."
+                "No specific web data found. Since this is a furniture/generic item, provide a VAST array of realistic and premium options "
+                "relevant for this category in the Pakistani market (e.g. high-end woods, premium fabrics, diverse sizes)."
             )
 
-        prompt = f"""You are an expert product database for the Pakistani mobile/tech/furniture market.
+        prompt = f"""You are an expert product database for the Pakistani market.
 Category: {category}
 Product Title: "{title}"
 
 {grounding_section}
 
-Task: Return ONLY the exact configuration variants that this SPECIFIC product model was officially released with.
+Task: Return a JSON object with the key "dropdowns" containing comprehensive configuration options.
+- For Mobiles/Laptops: Provide the exact, official launched variants.
+- For Furniture: Provide a VAST and DIVERSE list of materials, styles, and finishes.
 
 {category_guidance}
 
@@ -558,13 +567,15 @@ Return EXCLUSIVELY a valid JSON object:
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model,
                 response_format={"type": "json_object"},
-                temperature=0.0,  # Zero temperature = fully deterministic, no creativity
+                temperature=0.0,
             )
-            result = json.loads(chat_completion.choices[0].message.content)
-            return result.get("dropdowns", {})
+            import json
+            raw_content = chat_completion.choices[0].message.content
+            result = json.loads(raw_content)
+            return {"dropdowns": result.get("dropdowns", {}), "is_scraped": False}
         except Exception as e:
             print(f"LLM Dropdown Gen Error: {e}")
-            return {}
+            return {"dropdowns": {}, "is_scraped": False}
 
 
 

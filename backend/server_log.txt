@@ -1,0 +1,42 @@
+INFO:     Started server process [19380]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[CONFIG] TRIPO_API_KEY length: 47
+OK [AR_ASSETS] AR Assets router initialized with AI support.
+INFO:     127.0.0.1:54108 - "GET /api/v1/validate-title?category=mobile&title=Samsung%20Galaxy%20S23&description=&material= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57345 - "GET /api/v1/validate-title?category=mobile&title=Samsung%20Galaxy%20S23&description=&material= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61303 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62080 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61500 - "GET /api/v1/validate-title?category=mobile&title=Samsung%20Galaxy%20S23&description=&material= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50644 - "GET /api/v1/validate-title?category=mobile&title=Samsung%20Galaxy%20S23&description=&material= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52677 - "GET /api/v1/validate-title?category=mobile&title=xyzabc&description=&material= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54686 - "GET /api/v1/validate-title?category=furniture&title=iPhone%2015%20Pro&description=&material= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50312 - "OPTIONS /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56553 - "OPTIONS /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54892 - "OPTIONS /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61944 - "GET /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51759 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57911 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54892 - "OPTIONS /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57911 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57911 - "GET /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51759 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57911 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57911 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54343 - "OPTIONS /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54343 - "OPTIONS /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54343 - "OPTIONS /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54687 - "GET /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54687 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54687 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54343 - "OPTIONS /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54687 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53525 - "OPTIONS /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51017 - "OPTIONS /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53525 - "OPTIONS /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55064 - "GET /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59714 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53525 - "OPTIONS /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55064 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK

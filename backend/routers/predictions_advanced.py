@@ -1649,9 +1649,11 @@ def prepare_furniture_features(data: Dict[str, Any]) -> pd.DataFrame:
 @router.get("/dynamic-dropdowns", response_model=Dict[str, Any])
 async def get_dynamic_dropdowns(category: str, title: str):
     """Get context-aware dropdown options for a listing title based on Pakistani market"""
-    dropdowns = await llm_pricing_service.generate_relevant_dropdowns(category, title)
-    is_scraped = bool(dropdowns) and category == "mobile"
-    return {"dropdowns": dropdowns, "gsmarena_sourced": is_scraped}
+    result = await llm_pricing_service.generate_relevant_dropdowns(category, title)
+    return {
+        "dropdowns": result.get("dropdowns", {}),
+        "gsmarena_sourced": result.get("is_scraped", False)
+    }
 
 
 @router.post("/predict-price", response_model=PricePredictionResponse)
