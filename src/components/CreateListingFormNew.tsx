@@ -718,6 +718,35 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     e.target.value = '';
   };
 
+  const removeImage = (indexToRemove: number) => {
+    // 1. Remove from imageFiles and imagePreviews
+    setImageFiles(prev => {
+      const updated = [...prev];
+      updated.splice(indexToRemove, 1);
+      return updated;
+    });
+
+    setImagePreviews(prev => {
+      const updated = [...prev];
+      updated.splice(indexToRemove, 1);
+      return updated;
+    });
+
+    // 2. Adjust imageValidations (shift indices down)
+    setImageValidations(prev => {
+      const updated: any = {};
+      Object.entries(prev).forEach(([key, val]) => {
+        const idx = parseInt(key);
+        if (idx < indexToRemove) {
+          updated[idx] = val;
+        } else if (idx > indexToRemove) {
+          updated[idx - 1] = val;
+        }
+      });
+      return updated;
+    });
+  };
+
   const handlePredictPrice = async () => {
     if (!titleValidation || !titleValidation.is_valid) {
       setPredictionError('Please provide a valid title with relevant product information');
@@ -1306,6 +1335,20 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                             <span className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                               {index + 1}
                             </span>
+
+                            {/* Remove Individual Image Button */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                removeImage(index);
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                              title="Remove image"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -1732,22 +1775,21 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="wood">General Wood</SelectItem>
-                              <SelectItem value="solid_wood">Solid Wood</SelectItem>
-                              <SelectItem value="sheesham">Sheesham / Rosewood</SelectItem>
-                              <SelectItem value="teak">Teak Wood</SelectItem>
-                              <SelectItem value="oak">Oak Wood</SelectItem>
-                              <SelectItem value="walnut">Walnut</SelectItem>
-                              <SelectItem value="mahogany">Mahogany</SelectItem>
-                              <SelectItem value="mdf">MDF / Engineered Wood</SelectItem>
-                              <SelectItem value="metal">Metal</SelectItem>
+                              <SelectItem value="solid_sheesham">Solid Sheesham Wood</SelectItem>
+                              <SelectItem value="teak_wood">Teak Wood (Sagwan)</SelectItem>
+                              <SelectItem value="ash_wood">Ash Wood</SelectItem>
+                              <SelectItem value="walnut_wood">Walnut Wood</SelectItem>
+                              <SelectItem value="mdf_lasani">MDF / Lasani</SelectItem>
+                              <SelectItem value="uv_board">UV / Tactile Board</SelectItem>
+                              <SelectItem value="acrylic">Acrylic Finish</SelectItem>
+                              <SelectItem value="metal_iron">Metal / Iron</SelectItem>
                               <SelectItem value="stainless_steel">Stainless Steel</SelectItem>
-                              <SelectItem value="glass">Glass</SelectItem>
-                              <SelectItem value="fabric">Fabric</SelectItem>
-                              <SelectItem value="velvet">Velvet</SelectItem>
+                              <SelectItem value="tempered_glass">Tempered Glass</SelectItem>
+                              <SelectItem value="velvet">Premium Velvet</SelectItem>
+                              <SelectItem value="fabric">Italian / Turkish Fabric</SelectItem>
                               <SelectItem value="leather">Genuine Leather</SelectItem>
-                              <SelectItem value="faux_leather">Faux / PU Leather</SelectItem>
-                              <SelectItem value="marble">Marble</SelectItem>
-                              <SelectItem value="rattan">Rattan / Bamboo</SelectItem>
+                              <SelectItem value="faux_leather">Faux Leather / Rexine</SelectItem>
+                              <SelectItem value="marble_italian">Italian / Carrara Marble</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1953,13 +1995,16 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                               <SelectValue placeholder="Select frame material" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="solid_wood">Solid Wood (Sheesham, Oak, etc.)</SelectItem>
-                              <SelectItem value="mdf">MDF / Engineered Wood</SelectItem>
-                              <SelectItem value="metal">Metal / Steel</SelectItem>
-                              <SelectItem value="plastic">Plastic / Resin</SelectItem>
-                              <SelectItem value="rattan">Rattan / Wicker</SelectItem>
-                              <SelectItem value="glass">Glass (Top/Frame)</SelectItem>
-                              <SelectItem value="mixed">Mixed Materials</SelectItem>
+                              <SelectItem value="solid_sheesham">Solid Sheesham Wood</SelectItem>
+                              <SelectItem value="teak_wood">Teak Wood (Sagwan)</SelectItem>
+                              <SelectItem value="ash_wood">Ash Wood</SelectItem>
+                              <SelectItem value="walnut_wood">Walnut Wood</SelectItem>
+                              <SelectItem value="mdf_lasani">MDF / Lasani</SelectItem>
+                              <SelectItem value="particle_board">Particle Board / Chipboard</SelectItem>
+                              <SelectItem value="metal_iron">Wrought Iron / Metal</SelectItem>
+                              <SelectItem value="brass">Brass / Metallic</SelectItem>
+                              <SelectItem value="upholstered">Upholstered / Fully Covered</SelectItem>
+                              <SelectItem value="bamboo_cane">Bamboo / Cane</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>

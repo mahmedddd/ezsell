@@ -427,13 +427,13 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                 "- Material: 'Premium Velvet', 'Italian Fabric', 'Genuine Leather', 'Faux Leather / Rexine', 'Suede', 'Cotton Blend', 'Linen', 'Microfiber', 'Jute / Textured Fabric', 'Turkish Fabric'.\n"
                 "- Style: 'Modern / Contemporary', 'Traditional / Classic', 'Chinioti / Carved', 'L-Shape / Corner', 'Reclinable', 'Sofa Cum Bed', 'Minimalist', 'Industrial', 'Chesterfield', 'Victorian'.\n"
                 "- Upholstery Type: 'Master MoltyFoam (High Density)', 'Spring Cushion', 'Memory Foam', 'Fiber Fill', 'Latex Layered'.\n"
-                "- Frame Material: 'Solid Sheesham Wood', 'Teak Wood', 'Kail Wood', 'MDF / Engineered Wood', 'Metal Frame (Iron)', 'Wrought Iron'."
+                "- Frame Material: 'Solid Sheesham Wood', 'Teak Wood (Sagwan)', 'Ash Wood', 'Walnut Wood', 'Kail Wood', 'MDF / Lasani', 'Metal Frame (Iron)', 'Wrought Iron', 'Upholstered / Fully Covered'."
             )
         elif any(w in t_lower for w in ["bed", "king", "queen", "double bed", "single bed", "bunk", "mattress"]):
             furniture_type_hint = (
                 "This is a BED or MATTRESS. You MUST include: 'Size', 'Frame Material', 'Storage Type', 'Mattress Type'.\n"
                 "- Size: 'Single (36\" x 72\")', 'Single (42\" x 78\")', 'Double (48\" x 72\")', 'Queen (60\" x 78\")', 'King (72\" x 78\")', 'King (72\" x 84\")', 'Super King (84\" x 84\")'.\n"
-                "- Frame Material: 'Solid Sheesham Wood', 'Teak Wood', 'Oak Wood', 'Ash Wood', 'MDF / Lasani', 'Particle Board', 'Wrought Iron / Metal', 'Upholstered / Tufted'.\n"
+                "- Frame Material: 'Solid Sheesham Wood', 'Teak Wood (Sagwan)', 'Oak Wood', 'Ash Wood', 'Walnut Wood', 'MDF / Lasani', 'Particle Board / Chipboard', 'Wrought Iron / Metal', 'Upholstered / Tufted Headboard', 'Bamboo / Cane'.\n"
                 "- Storage Type: 'No Storage', '2 Side Drawers', '4 Side Drawers', 'Front Drawer', 'Hydraulic / Gas-Lift Storage', 'Box / Lift-up Storage', 'Headboard Storage'.\n"
                 "- Mattress Type: 'Master MoltyFoam', 'Diamond Foam', 'Orthopedic / Medical', 'Pocket Spring (Luxury)', 'Bonnell Spring', 'Memory Foam', 'Latex Foam', 'Not Included'.\n"
                 "- Style: 'Modern Platform', 'Classic Chinioti', 'Tufted Headboard', 'Divan Style', 'Sleigh Bed', 'Minimalist', 'Floating Bed'."
@@ -443,7 +443,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                 "This is a DINING TABLE/SET. You MUST include: 'Seating Capacity', 'Table Shape', 'Top Material', 'Set Composition'.\n"
                 "- Seating Capacity: '2 Seats (Bistro)', '4 Seats', '6 Seats', '8 Seats', '10 Seats', '12 Seats'.\n"
                 "- Table Shape: 'Rectangular', 'Round', 'Oval', 'Square', 'Extendable'.\n"
-                "- Top Material: 'Solid Sheesham', 'Teak Wood', 'Tempered Glass (12mm)', 'Marble Top (Carrara/Italian)', 'Granite Top', 'MDF with Veneer', 'Inlaid / Marquetry'.\n"
+                "- Top Material: 'Solid Sheesham', 'Teak Wood', 'Tempered Glass (12mm)', 'Marble Top (Carrara/Italian)', 'Granite Top', 'MDF with Veneer', 'Inlaid / Marquetry', 'Brass / Metallic Finish'.\n"
                 "- Set Composition: 'Table Only', 'Table + 4 Chairs', 'Table + 6 Chairs', 'Table + 8 Chairs', 'Table + Chairs + Bench', 'Table + Chairs + Buffet'.\n"
                 "- Style: 'Modern / Contemporary', 'Traditional', 'Chinioti Carved', 'Industrial / Metal', 'Minimalist', 'Rustic', 'Mid-Century Modern'."
             )
@@ -451,7 +451,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             furniture_type_hint = (
                 "This is a WARDROBE/ALMIRAH. You MUST include: 'Number of Doors', 'Primary Material', 'Mirror/Glass', 'Storage Features'.\n"
                 "- Number of Doors: '1 Door', '2 Doors', '3 Doors', '4 Doors', '6 Doors', 'Sliding Doors (2 Track)', 'Sliding Doors (3 Track)'.\n"
-                "- Primary Material: 'Solid Sheesham Wood', 'MDF / Lasani', 'UV Coated Board', 'Acrylic Finish', 'Tactile Board', 'Metal / Steel (Safe)', 'Plastic / Portable'.\n"
+                "- Primary Material: 'Solid Sheesham Wood', 'Ash Wood', 'MDF / Lasani', 'UV Coated Board', 'Acrylic Finish', 'Tactile Board', 'Metal / Steel (Safe)', 'Plastic / Portable'.\n"
                 "- Mirror/Glass: 'Full Length Mirror', 'Partial Mirror', 'Frosted Glass', 'No Mirror'.\n"
                 "- Storage Features: 'Hanging Rail + Shelves', 'Drawers Included', 'Locker / Safe Included', 'Walk-in Style'.\n"
                 "- Style: 'Built-in / Fitted', 'Freestanding', 'Modern Minimalist', 'Antique Chinioti'."
@@ -459,18 +459,13 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
         elif any(w in t_lower for w in ["desk", "study desk", "office desk", "computer desk"]):
             furniture_type_hint = (
                 "This is a DESK. You MUST include: 'Material', 'Size / Dimensions', 'Storage Options', 'Type'.\n"
-                "- Material: 'Solid Wood', 'MDF / Lasani', 'Glass Top with Metal', 'Laminated Board', 'Acrylic'.\n"
+                "- Material: 'Solid Wood (Sheesham/Ash)', 'MDF / Lasani', 'Glass Top with Metal', 'Laminated Board', 'Acrylic'.\n"
                 "- Size / Dimensions: 'Small (3 Feet)', 'Standard (4 Feet)', 'Large (5+ Feet)', 'L-Shape / Executive'.\n"
                 "- Storage Options: 'No Storage', 'Single Drawer', 'Side Pedestal (3 Drawers)', 'Attached Bookshelf', 'Keyboard Tray'.\n"
                 "- Type: 'Study Table', 'Office Desk', 'Executive Desk', 'Gaming Desk (RGB)', 'Standing Desk (Height Adjustable)'."
             )
         elif any(w in t_lower for w in ["chair", "stool", "office chair"]):
             furniture_type_hint = (
-                "This is a CHAIR. You MUST include: 'Type', 'Material', 'Adjustable Height', 'Armrest'.\n"
-                "- Type: 'Office Chair', 'Gaming Chair', 'Dining Chair', 'Accent Chair', 'Recliner', 'Bar Stool'.\n"
-                "- Material: 'Mesh', 'Fabric', 'Leather', 'Rexine', 'Velvet', 'Plastic'.\n"
-                "- Adjustable Height: 'Yes - Gas Lift', 'Fixed Height'.\n"
-                "- Armrest: 'With Armrests', 'No Armrests', 'Adjustable Armrests'."
             )
         else:
             furniture_type_hint = (
