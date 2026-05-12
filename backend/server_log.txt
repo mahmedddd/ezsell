@@ -40,3 +40,21 @@ INFO:     127.0.0.1:59714 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
 INFO:     127.0.0.1:53525 - "OPTIONS /api/v1/notifications/unread/count HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55064 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+GSMArena scraped specs for 'iphone 17 pro max': {'RAM': ['12 GB'], 'Storage': ['256 GB', '512 GB', '1 TB', '2 TB'], 'Color': ['Silver', 'Cosmic Orange', 'Deep Blue']}
+Returning GSMArena data directly (no LLM needed): {'RAM': ['12 GB'], 'Storage': ['256 GB', '512 GB', '1 TB', '2 TB'], 'Color': ['Silver', 'Cosmic Orange', 'Deep Blue']}
+INFO:     127.0.0.1:63433 - "GET /api/v1/dynamic-dropdowns?category=mobile&title=iphone+17+pro+max HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55951 - "OPTIONS /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58518 - "OPTIONS /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55928 - "OPTIONS /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55478 - "OPTIONS /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55478 - "OPTIONS /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55478 - "OPTIONS /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58270 - "GET /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58270 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58270 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55478 - "OPTIONS /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58270 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58270 - "GET /api/v1/messages/unread/count HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63423 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62273 - "GET /api/v1/my-listings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62273 - "GET /api/v1/notifications/unread/count HTTP/1.1" 200 OK

@@ -16,11 +16,53 @@ load_dotenv(dotenv_path=env_path, override=True)  # Always prefer .env values ov
 
 class LLMPricingService:
     def __init__(self):
-        self.api_key = os.getenv("GROQ_API_KEY")
-        if not self.api_key:
-            print("WARNING: GROQ_API_KEY not found in environment. LLM features will be disabled.")
-        self.client = Groq(api_key=self.api_key) if self.api_key else None
+        # Multi-key rotation to handle high traffic and avoid 429 Rate Limit errors
+        self.api_keys = [
+            os.getenv("GROQ_API_KEY"),
+            os.getenv("GROQ_CHATBOT_API_KEY")
+        ]
+        self.api_keys = [k for k in self.api_keys if k]
+        self.current_key_idx = 0
+        
+        if not self.api_keys:
+            print("WARNING: No GROQ API keys found in environment. LLM features will be disabled.")
+            self.client = None
+        else:
+            self.client = Groq(api_key=self.api_keys[0])
+            
         self.model = "llama-3.3-70b-versatile"
+
+    async def _call_llm_safe(self, prompt: str, is_json: bool = True) -> Dict[str, Any]:
+        """
+        Executes an LLM call with automatic key rotation on rate limits (429).
+        Ensures the service remains operational for all users in Pakistan.
+        """
+        if not self.api_keys:
+            return {}
+
+        max_retries = len(self.api_keys) * 2
+        for attempt in range(max_retries):
+            try:
+                chat_completion = self.client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=self.model,
+                    response_format={"type": "json_object"} if is_json else None,
+                    temperature=0.0 if is_json else 0.1,
+                )
+                if is_json:
+                    return json.loads(chat_completion.choices[0].message.content)
+                return {"content": chat_completion.choices[0].message.content}
+            except Exception as e:
+                err_str = str(e)
+                if ("rate_limit_reached" in err_str or "429" in err_str) and len(self.api_keys) > 1:
+                    print(f"Rate limit hit for key {self.current_key_idx}. Rotating...")
+                    self.current_key_idx = (self.current_key_idx + 1) % len(self.api_keys)
+                    self.client = Groq(api_key=self.api_keys[self.current_key_idx])
+                    await asyncio.sleep(1) # Small pause before retry
+                    continue
+                print(f"LLM Call Error: {e}")
+                raise e
+        return {}
 
     async def validate_listing_content(self, category: str, title: str, description: str) -> Dict[str, Any]:
         """
@@ -135,7 +177,7 @@ VALIDATION RULES BY CATEGORY:
 
 RULE 1 — MOBILES (category=mobile):
 ✅ VALID: Brand name + ANY model identifier (number, series name, letter, variant).
-   Examples: "iPhone 6s", "Samsung Galaxy S22", "Redmi Note 13", "Tecno Spark 20 Pro", "QMobile Noir S8"
+   Examples: "iPhone 6s", "Samsung Galaxy S22", "Redmi Note 13", "Tecno Spark 20 Pro", "Infinix Note 40", "VGO TEL I7", "QMobile Noir S8"
 ❌ INVALID: Brand alone ("Samsung"), category word alone ("Phone", "Mobile"), adjective phrases ("Nice Phone", "Good Smartphone"), or any laptop/furniture-related terms without a phone brand+model.
 
 RULE 2 — LAPTOPS (category=laptop):
@@ -168,13 +210,7 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
 """
 
         try:
-            chat_completion = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model,
-                response_format={"type": "json_object"},
-                temperature=0.0,
-            )
-            result = json.loads(chat_completion.choices[0].message.content)
+            result = await self._call_llm_safe(prompt)
             return result
         except Exception as e:
             import traceback
@@ -221,8 +257,13 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
                     for link in links:
                         candidate = f"https://www.gsmarena.com/{link.lstrip('/')}"
                         if re.match(r'^https://www\.gsmarena\.com/[a-zA-Z0-9_-]+-\d+\.php$', candidate):
-                            gsmarena_url = candidate
-                            break
+                            # Strict check: URL should contain key numbers from title (e.g. '17')
+                            # to avoid picking 'iPhone 14 Pro' when searching for 'iPhone 17 Pro'
+                            url_clean = re.sub(r'[^a-zA-Z0-9]', '', link.lower())
+                            numbers_in_title = re.findall(r'\d+', title)
+                            if all(n in url_clean for n in numbers_in_title):
+                                gsmarena_url = candidate
+                                break
         except Exception as e:
             print(f"GSMArena direct search failed: {e}")
 
@@ -563,15 +604,7 @@ Return EXCLUSIVELY a valid JSON object:
 }}
 """
         try:
-            chat_completion = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model,
-                response_format={"type": "json_object"},
-                temperature=0.0,
-            )
-            import json
-            raw_content = chat_completion.choices[0].message.content
-            result = json.loads(raw_content)
+            result = await self._call_llm_safe(prompt)
             return {"dropdowns": result.get("dropdowns", {}), "is_scraped": False}
         except Exception as e:
             print(f"LLM Dropdown Gen Error: {e}")
@@ -874,13 +907,7 @@ Return EXCLUSIVELY this JSON:
 """
 
         try:
-            chat_completion = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model,
-                response_format={"type": "json_object"},
-                temperature=0.1,
-            )
-            result = json.loads(chat_completion.choices[0].message.content)
+            result = await self._call_llm_safe(prompt)
             return result
         except Exception as e:
             error_msg = str(e)

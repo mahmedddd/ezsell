@@ -1652,7 +1652,8 @@ async def get_dynamic_dropdowns(category: str, title: str):
     result = await llm_pricing_service.generate_relevant_dropdowns(category, title)
     return {
         "dropdowns": result.get("dropdowns", {}),
-        "gsmarena_sourced": result.get("is_scraped", False)
+        "gsmarena_sourced": result.get("is_scraped", False),
+        "api_version": "2.2-VastOptions"
     }
 
 
