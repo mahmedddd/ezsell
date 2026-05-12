@@ -141,11 +141,9 @@ RULE 2 — LAPTOPS (category=laptop):
 ❌ INVALID: Brand alone ("Dell"), category word alone ("Laptop", "Gaming Laptop"), adjective phrases ("Nice Laptop", "Fast Laptop"), or any mobile/furniture-related terms without a laptop brand+model.
 
 RULE 3 — FURNITURE (category=furniture):
-✅ VALID: Furniture TYPE clearly named, with at least ONE qualifier (size, material, style, brand, seating count).
-   Examples: "King Size Bed", "L-Shape Sofa", "5 Seater Sofa", "Chinioti Wardrobe", "Office Chair", "Wooden Dining Table", "6 Seater Dining Set"
-   — "Office Chair", "Gaming Chair", "Dining Chair" ARE valid (type qualifier present).
-   — A bare furniture word with NO qualifier ("Sofa", "Bed", "Table", "Chair") is INVALID.
-❌ INVALID: Bare type word only, adjective-only ("Nice Sofa", "Old Chair", "Big Bed"), or any mobile/laptop-related titles.
+✅ VALID: Any clear furniture item name. Qualifiers (size, material, style) are HIGHLY RECOMMENDED for better pricing but NOT strictly required if the item type is clear.
+   Examples: "Sofa", "Bed", "King Size Bed", "L-Shape Sofa", "Chinioti Wardrobe", "Wooden Dining Table"
+❌ INVALID: Adjective-only ("Nice", "Old", "Big") without the furniture type, or any mobile/laptop-related titles.
 
 CRITICAL RULES (ALL categories):
 - NEVER approve a title that is clearly from a different category.
@@ -160,6 +158,9 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
   "message": "Title looks good! Ready to predict price." or specific rejection reason,
   "missing_fields": [] or ["Model name", "Size qualifier"] (informational hints only),
   "suggested_title": "same as input if valid, improved version if vague",
+  "hints": {{
+    "example": "Provide an example of a good title for this specific product, e.g. 'Modern 5 Seater L-Shape Velvet Sofa'"
+  }},
   "extracted_specs": {{}} (any specs extractable from title/description)
 }}
 """

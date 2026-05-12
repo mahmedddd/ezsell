@@ -90,6 +90,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     has_backlit_keyboard: false,
     // Furniture specs
     material: '',
+    frame_material: '',
+    furniture_style: '',
+    storage_type: '',
     furniture_type: '',
     furniture_subtype: '',
     seating_capacity: 0,
@@ -137,9 +140,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     if (k.includes('material') || k.includes('upholstery') || k.includes('fabric')) return 'material';
     if (k.includes('mattress')) return 'has_mattress';
     if (k.includes('seating') || k.includes('capacity') || k.includes('seats') || k.includes('seater')) return 'seating_capacity';
-    if (k.includes('style') || k.includes('design')) return 'furniture_type';
+    if (k.includes('style') || k.includes('design')) return 'furniture_style';
     if (k.includes('door') || k.includes('compartment') || k.includes('subtype')) return 'furniture_subtype';
-    if (k.includes('frame')) return 'material'; // frame material → material
+    if (k.includes('frame')) return 'frame_material';
     if (k === 'size' && category === 'furniture') return 'furniture_subtype';
     if (k.includes('chair') || k.includes('seat_type') || k.includes('type')) return 'furniture_type';
     if (k.includes('mirror') || k.includes('shelf') || k.includes('shelv')) return 'furniture_subtype';
@@ -163,7 +166,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       const formDataUpdates: Record<string, any> = {};
       const numericFields = ['ram', 'storage', 'camera', 'seating_capacity', 'screen_size', 'battery', 'generation'];
       const booleanFields = ['has_mattress', 'has_storage', 'is_imported', 'is_handmade', 'is_antique'];
-      const stringFields = ['color', 'brand', 'furniture_brand', 'processor', 'gpu', 'material', 'furniture_type', 'furniture_subtype'];
+      const stringFields = ['color', 'brand', 'furniture_brand', 'processor', 'gpu', 'material', 'furniture_type', 'furniture_subtype', 'frame_material', 'furniture_style', 'storage_type'];
 
       Object.entries(dropdowns).forEach(([key, options]: [string, any]) => {
         const lowerTitle = title.toLowerCase();
@@ -374,6 +377,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
         is_touchscreen: !!existingData.is_touchscreen,
         has_backlit_keyboard: !!existingData.has_backlit_keyboard,
         material: existingData.material || '',
+        frame_material: existingData.frame_material || '',
+        furniture_style: existingData.furniture_style || '',
+        storage_type: existingData.storage_type || '',
         furniture_type: existingData.furniture_type || '',
         furniture_subtype: existingData.furniture_subtype || '',
         seating_capacity: typeof existingData.seating_capacity === 'number' ? existingData.seating_capacity : 0,
@@ -618,6 +624,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       formData.title, formData.category, formData.condition, formData.description,
       formData.material, formData.ram, formData.storage, formData.processor,
       formData.gpu, formData.generation, formData.furniture_type, formData.furniture_subtype,
+      formData.frame_material, formData.furniture_style, formData.storage_type,
       formData.seating_capacity, formData.has_pta, formData.has_warranty, formData.has_box,
       formData.has_5g, formData.has_amoled, formData.has_ssd, formData.is_gaming,
       formData.is_touchscreen, formData.is_antique, formData.is_handmade, formData.is_imported,
@@ -655,6 +662,7 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
     formData.has_ssd, formData.is_gaming, formData.is_touchscreen,
     formData.gpu, formData.processor, formData.generation,
     formData.furniture_type, formData.furniture_subtype, formData.seating_capacity,
+    formData.frame_material, formData.furniture_style, formData.storage_type,
     formData.is_antique, formData.is_handmade, formData.is_imported, formData.has_storage,
     dynamicSpecsKey,
   ]);
@@ -756,6 +764,9 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
       } else if (formData.category === 'furniture') {
         Object.assign(requestData, {
           material: formData.material,
+          frame_material: formData.frame_material,
+          furniture_style: formData.furniture_style,
+          storage_type: formData.storage_type,
           furniture_type: formData.furniture_type,
           furniture_subtype: formData.furniture_subtype,
           seating_capacity: formData.seating_capacity,
@@ -1910,6 +1921,44 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                         )}
 
                         <div>
+                          <Label>Furniture Style</Label>
+                          <Select value={formData.furniture_style} onValueChange={(v) => setFormData({ ...formData, furniture_style: v })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select style (e.g., Modern, Antique)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="modern">Modern / Contemporary</SelectItem>
+                              <SelectItem value="traditional">Traditional / Classic</SelectItem>
+                              <SelectItem value="antique">Antique / Vintage</SelectItem>
+                              <SelectItem value="chinioti">Chinioti / Carved</SelectItem>
+                              <SelectItem value="minimalist">Minimalist</SelectItem>
+                              <SelectItem value="industrial">Industrial</SelectItem>
+                              <SelectItem value="rustic">Rustic / Farmhouse</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Frame Material</Label>
+                          <Select value={formData.frame_material} onValueChange={(v) => setFormData({ ...formData, frame_material: v })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select frame material" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="solid_wood">Solid Wood (Sheesham, Oak, etc.)</SelectItem>
+                              <SelectItem value="mdf">MDF / Engineered Wood</SelectItem>
+                              <SelectItem value="metal">Metal / Steel</SelectItem>
+                              <SelectItem value="plastic">Plastic / Resin</SelectItem>
+                              <SelectItem value="rattan">Rattan / Wicker</SelectItem>
+                              <SelectItem value="glass">Glass (Top/Frame)</SelectItem>
+                              <SelectItem value="mixed">Mixed Materials</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
                           <Label>Seating Capacity (if applicable)</Label>
                           <Select value={String(formData.seating_capacity)} onValueChange={(v) => setFormData({ ...formData, seating_capacity: parseInt(v) })}>
                             <SelectTrigger>
@@ -1987,14 +2036,33 @@ export function CreateListingFormNew({ editMode = false, listingId, existingData
                         </div>
                       )}
 
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={formData.has_storage}
-                          onCheckedChange={(checked) => setFormData({ ...formData, has_storage: checked as boolean })}
-                        />
-                        <Label className="font-normal cursor-pointer">In-built Storage</Label>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={formData.has_storage}
+                            onCheckedChange={(checked) => setFormData({ ...formData, has_storage: checked as boolean })}
+                          />
+                          <Label className="font-normal cursor-pointer">In-built Storage</Label>
+                        </div>
+                        {formData.has_storage && (
+                          <div className="pl-6 pt-1">
+                            <Label className="text-xs mb-1 block">Storage Type</Label>
+                            <Select value={formData.storage_type} onValueChange={(v) => setFormData({ ...formData, storage_type: v })}>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Select storage type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="drawers">Drawers</SelectItem>
+                                <SelectItem value="hydraulic">Hydraulic / Lift-up</SelectItem>
+                                <SelectItem value="box">Box Storage</SelectItem>
+                                <SelectItem value="shelves">Shelves</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 h-fit mt-1">
                         <Checkbox
                           checked={formData.is_antique}
                           onCheckedChange={(checked) => setFormData({ ...formData, is_antique: checked as boolean })}
