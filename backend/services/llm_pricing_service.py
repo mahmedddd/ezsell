@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import json
 import asyncio
 from typing import Dict, Any, List, Optional
@@ -9,7 +10,9 @@ try:
 except ImportError:
     from duckduckgo_search import DDGS  # legacy fallback
 
-load_dotenv()
+# Load .env file explicitly using absolute path to avoid CWD issues on EC2
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)  # Always prefer .env values over stale system env vars (critical for EC2)
 
 class LLMPricingService:
     def __init__(self):

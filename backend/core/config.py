@@ -5,8 +5,10 @@ from typing import List, Union
 from dotenv import load_dotenv
 import os
 
-# Load .env file explicitly
-load_dotenv()
+from pathlib import Path
+# Load .env file explicitly using absolute path to avoid CWD issues on EC2
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)  # Always prefer .env values over stale system env vars (critical for EC2)
 
 class Settings(BaseSettings):
     model_config = ConfigDict(extra='allow', case_sensitive=True, env_file=".env")
