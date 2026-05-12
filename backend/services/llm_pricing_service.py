@@ -424,37 +424,37 @@ Return EXCLUSIVELY this JSON (no extra text, no markdown):
             furniture_type_hint = (
                 "This is a SOFA. You MUST include: 'Seating Capacity', 'Material', 'Style', 'Upholstery Type'.\n"
                 "- Seating Capacity: '1 Seater', '2 Seater', '3 Seater', '4 Seater', '5 Seater', '6 Seater', '7 Seater'.\n"
-                "- Material: 'Velvet', 'Fabric', 'Leather', 'Rexine', 'Suede', 'Cotton Blend'.\n"
-                "- Style: 'Modern', 'Traditional', 'Chinioti', 'L-Shape', 'Corner', 'Reclinable', 'Sofa Cum Bed'.\n"
+                "- Material: 'Velvet', 'Fabric', 'Leather', 'Faux Leather', 'Rexine', 'Suede', 'Cotton Blend', 'Linen', 'Microfiber', 'Jute'.\n"
+                "- Style: 'Modern', 'Traditional', 'Chinioti', 'L-Shape', 'Corner', 'Reclinable', 'Sofa Cum Bed', 'Minimalist', 'Industrial', 'Chesterfield', 'Contemporary'.\n"
                 "- Upholstery Type: 'Foam Cushion', 'Spring Cushion', 'High-Density Foam', 'Memory Foam', 'Fiber Fill'.\n"
-                "Also add 'Frame Material': 'Solid Wood', 'MDF', 'Metal Frame'."
+                "Also add 'Frame Material': 'Solid Wood', 'Sheesham Wood', 'Teak Wood', 'MDF', 'Metal Frame', 'Iron', 'Wrought Iron', 'Rattan', 'Plastic'."
             )
         elif any(w in t_lower for w in ["bed", "king", "queen", "double bed", "single bed", "bunk"]):
             furniture_type_hint = (
                 "This is a BED. You MUST include: 'Size', 'Frame Material', 'Storage', 'Mattress Included'.\n"
                 "- Size: 'Single (36x72)', 'Double (48x72)', 'Queen (60x72)', 'King (72x72)', 'King (72x84)'.\n"
-                "- Frame Material: 'Solid Wood', 'Sheesham Wood', 'MDF', 'Metal', 'Upholstered'.\n"
-                "- Storage: 'No Storage', 'Side Drawers', 'Hydraulic Storage', 'Box Storage'.\n"
+                "- Frame Material: 'Solid Wood', 'Sheesham Wood', 'Teak Wood', 'Oak Wood', 'MDF', 'Particle Board', 'Metal', 'Iron', 'Wrought Iron', 'Rattan', 'Upholstered'.\n"
+                "- Storage: 'No Storage', 'Side Drawers', 'Hydraulic Storage', 'Box Storage', 'Shelves'.\n"
                 "- Mattress Included: 'Yes - Spring Mattress', 'Yes - Foam Mattress', 'Not Included'.\n"
-                "Also add 'Style': 'Modern', 'Classic', 'Chinioti Carved', 'Divan Style', 'Platform Bed'."
+                "Also add 'Style': 'Modern', 'Classic', 'Chinioti Carved', 'Divan Style', 'Platform Bed', 'Minimalist', 'Industrial', 'Rustic', 'Vintage', 'Scandinavian'."
             )
         elif any(w in t_lower for w in ["dining", "dining table", "dining set"]):
             furniture_type_hint = (
                 "This is a DINING TABLE/SET. You MUST include: 'Seats', 'Shape', 'Material', 'Chair Included'.\n"
                 "- Seats: '4 Seats', '6 Seats', '8 Seats', '10 Seats', '12 Seats'.\n"
                 "- Shape: 'Rectangular', 'Round', 'Oval', 'Square'.\n"
-                "- Material: 'Solid Wood', 'Sheesham Wood', 'Glass Top', 'Marble Top', 'MDF', 'Metal Legs'.\n"
+                "- Material: 'Solid Wood', 'Sheesham Wood', 'Teak Wood', 'Oak Wood', 'Glass Top', 'Marble Top', 'Granite Top', 'MDF', 'Metal Legs', 'Wrought Iron', 'Plastic'.\n"
                 "- Chair Included: 'Yes - 4 Chairs', 'Yes - 6 Chairs', 'Chairs Not Included'.\n"
-                "Also add 'Style': 'Modern', 'Traditional', 'Chinioti', 'Industrial'."
+                "Also add 'Style': 'Modern', 'Traditional', 'Chinioti', 'Industrial', 'Minimalist', 'Rustic', 'Mid-Century Modern'."
             )
         elif any(w in t_lower for w in ["wardrobe", "almirah", "closet", "cupboard"]):
             furniture_type_hint = (
                 "This is a WARDROBE/ALMIRAH. You MUST include: 'Doors', 'Material', 'Mirror', 'Compartments'.\n"
                 "- Doors: '2 Doors', '3 Doors', '4 Doors', 'Sliding Doors'.\n"
-                "- Material: 'Solid Wood', 'MDF', 'Steel/Metal', 'Engineered Wood'.\n"
+                "- Material: 'Solid Wood', 'Sheesham Wood', 'MDF', 'Particle Board', 'Steel/Metal', 'Iron', 'Engineered Wood', 'Plastic/Fabric'.\n"
                 "- Mirror: 'With Full Mirror', 'With Half Mirror', 'No Mirror'.\n"
                 "- Compartments: 'Hanging + Shelves', 'Shelves Only', 'With Drawers', 'Full Shelves'.\n"
-                "Also add 'Style': 'Modern', 'Classic', 'Walk-in Style', 'Chinioti Carved'."
+                "Also add 'Style': 'Modern', 'Classic', 'Walk-in Style', 'Chinioti Carved', 'Minimalist', 'Industrial'."
             )
         elif any(w in t_lower for w in ["desk", "study desk", "office desk", "computer desk"]):
             furniture_type_hint = (
