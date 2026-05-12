@@ -154,13 +154,10 @@ function getFullUrl(url: string | null | undefined): string | null {
 
   if (url.startsWith('http')) {
     try {
-      // If the URL is absolute, rewrite its origin to match the current backend.
-      // This prevents issues where old IPs (e.g. from previous wifi sessions) are stored in the DB.
       const parsedUrl = new URL(url);
-      const parsedBase = new URL(cleanBase);
       
-      // Only rewrite if it looks like a media path from our backend, 
-      // otherwise it might be a genuinely external URL (like an S3 bucket).
+      // If the URL is already pointing to our current backend domain/port, or is external,
+      // we only want to rewrite it if it's a media URL that has the WRONG backend IP.
       if (parsedUrl.pathname.includes('/media/')) {
         return `${cleanBase}${parsedUrl.pathname}${parsedUrl.search}`;
       }
@@ -424,12 +421,6 @@ export function WebARViewer({
       const url = getFullUrl(arAssets.model_glb_url);
       setTripoUrl(url);
       setViewMode('advanced');
-      // ── Eager background fetch of the GLB so the browser caches it ──────
-      // The response goes into the HTTP cache which model-viewer will hit 
-      // instantly when it later requests the URL.
-      if (url) {
-        fetch(url, { credentials: 'include', cache: 'force-cache' }).catch(() => {});
-      }
     }
     if (arAssets?.model_usdz_url) {
       setUsdzUrl(getFullUrl(arAssets.model_usdz_url));
@@ -1251,20 +1242,6 @@ export function WebARViewer({
                         <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-green-600/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow animate-in fade-in duration-300">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           Floor locked
-                        </div>
-                      )}
-
-                      {/* ── Loading Overlay ── */}
-                      {modelLoading && (
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-50/50 backdrop-blur-[2px] animate-in fade-in duration-300">
-                          <div className="flex flex-col items-center gap-3 bg-white/90 px-6 py-4 rounded-2xl shadow-lg border border-gray-100">
-                            <Loader2 className="h-8 w-8 text-[#2E6091] animate-spin" />
-                            <div className="text-center">
-                              <p className="text-[11px] font-bold text-gray-800 uppercase tracking-wider">Downloading Model</p>
-                              <p className="text-[10px] text-gray-500 font-medium mt-0.5">{buildProgress}% Complete</p>
-                            </div>
-                            <Progress value={buildProgress} className="w-32 h-1.5 bg-gray-200" />
-                          </div>
                         </div>
                       )}
 
