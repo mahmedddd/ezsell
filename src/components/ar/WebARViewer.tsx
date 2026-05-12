@@ -520,6 +520,14 @@ export function WebARViewer({
   const prepareModel = useCallback(async () => {
     if (proceduralUrl) return; // already built procedural model
 
+    // If the Advanced 3D URL is already loaded (from arAssets or a just-completed
+    // AI generation), skip the procedural build entirely — the model-viewer will
+    // use the cached GLB immediately.
+    if (tripoUrl) {
+      setStep('model_ready');
+      return;
+    }
+
     const hasAdvancedModel = !!arAssets?.model_glb_url;
     if (hasAdvancedModel) {
       setStep('model_ready');
@@ -589,7 +597,7 @@ export function WebARViewer({
     } finally {
       clearInterval(interval);
     }
-  }, [arAssets, fType, dims, proceduralUrl, subtypeText, listingTitle, listingDescription, furnitureMaterial, furnitureImageUrl, allImageUrls, toast]);
+  }, [arAssets, tripoUrl, fType, dims, proceduralUrl, subtypeText, listingTitle, listingDescription, furnitureMaterial, furnitureImageUrl, allImageUrls, toast]);
 
   // ── AI Generation Logic ──────────────────────────────────────────────────
   const startAIGeneration = async (useAllImages: boolean = false) => {
@@ -1045,12 +1053,15 @@ export function WebARViewer({
         <div
           aria-hidden="true"
           style={{
-            position: 'absolute',
-            width: 0,
-            height: 0,
+            position: 'fixed',
+            top: '-9999px',
+            left: '-9999px',
+            width: '1px',
+            height: '1px',
             overflow: 'hidden',
             pointerEvents: 'none',
             opacity: 0,
+            zIndex: -1,
           }}
         >
           <model-viewer
@@ -1194,8 +1205,8 @@ export function WebARViewer({
                   </div>
                 )}
 
-                {/* Model viewer */}
-                {(step === 'model_ready' || step === 'scanning' || step === 'placed') && (proceduralUrl || tripoUrl) && (
+                {/* Model viewer — renders whenever we have a URL, regardless of step */}
+                {(step === 'model_ready' || step === 'scanning' || step === 'placed' || (step === 'idle' && tripoUrl)) && (proceduralUrl || tripoUrl) && (
                   <div className="flex flex-col h-full">
                     {/* View Mode Toggle */}
                     <div className="px-5 pt-3 pb-1 bg-gradient-to-b from-gray-50 to-gray-50/50">
