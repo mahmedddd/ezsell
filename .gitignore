@@ -49,3 +49,17 @@ secrets.json
 # Project Specific
 docs/temp/
 scripts/*.log
+
+# FYP Reports & Diagrams
+EZSell_Abbreviations.docx
+EZSell_Class_Diagram.png
+EZSell_Executive_Summary.docx
+EZSell_FYP_Final_Report.docx
+EZSell_FYP_Final_Report_FINAL.docx
+EZSell_FYP_Final_Report_v3.docx
+EZSell_FYP_Final_Report_v4.docx
+EZSell_Hybrid_Class_Diagram.png
+EZSell_Linked_Class_Diagram.png
+EZSell_Use_Case_Diagram.png
+EZSell_Use_Cases.docx
+FYP_Final Report_Sring 2026_Template (Updated) (1).docx
